@@ -197,29 +197,33 @@ function cleanSeqData(dataMain, dataSeq) {
  * @returns {string[]} An array of the chemical names pulled from the main data structure.
  */
 function getChemNames(dataMain, chemNameSuffix = "(ESI+)") {
-  let chemNames = [];
+  try {
+    let chemNames = [];
 
-  // allow for "Chemical Name" or "Chemical_Name" as keys
-  let chemNameKey;
-  if (Object.keys(dataMain[0]).includes("Chemical Name")) {
-    chemNameKey = "Chemical Name";
-  } else if (Object.keys(dataMain[0]).includes("Chemical_Name")) {
-    chemNameKey = "Chemical_Name";
-  } else {
-    // if no chemical names found, generate a list of empty strings
-    dataMain.forEach(() => {
-      chemNames.push("");
+    // allow for "Chemical Name" or "Chemical_Name" as keys
+    let chemNameKey;
+    if (Object.keys(dataMain[0]).includes("Chemical Name")) {
+      chemNameKey = "Chemical Name";
+    } else if (Object.keys(dataMain[0]).includes("Chemical_Name")) {
+      chemNameKey = "Chemical_Name";
+    } else {
+      // if no chemical names found, generate a list of empty strings
+      dataMain.forEach(() => {
+        chemNames.push("");
+      });
+
+      return chemNames
+    }
+
+    // now pull the chemical names using the key found above
+    dataMain.forEach(row => {
+      chemNames.push(`${row[chemNameKey]} ${chemNameSuffix}`);
     });
 
-    return chemNames
+    return chemNames;
+  } catch {
+    return [];
   }
-
-  // now pull the chemical names using the key found above
-  dataMain.forEach(row => {
-    chemNames.push(`${row[chemNameKey]} ${chemNameSuffix}`);
-  });
-
-  return chemNames
 }
 
 /**
@@ -230,66 +234,71 @@ function getChemNames(dataMain, chemNameSuffix = "(ESI+)") {
  * @returns {object[]} And array of objects with all key: value pairs needed for plotting.
  */
 function getPlottingData(dataMain, seqGroupMap, chemNameSuffix = "(ESI+)") {
-  // get key for chemical name
-  let chemNameKey = false;
-  if (Object.keys(dataMain[0]).includes("Chemical Name")) {
-    chemNameKey = "Chemical Name";
-  } else if (Object.keys(dataMain[0]).includes("Chemical_Name")) {
-    chemNameKey = "Chemical_Name";
-  }
-
-  // get sequence sample names
-  let seqNames = Object.keys(seqGroupMap);
-
-  // list of blank sample prefixes
-  const blankHeaders = [
-    "MB",
-    "Mb",
-    "mb",
-    "BLANK",
-    "Blank",
-    "blank",
-    "BLK",
-    "Blk"
-  ];
-
-  // setup our main data structure for plotting and iterate over rows of data
-  let plottingData = [];
-  dataMain.forEach(row => {
-    // store relevant row data in variables
-    let featureID = row["Feature ID"];
-    let chemName = "";
-    if (chemNameKey !== false) {
-      chemName = row[chemNameKey];
+  try {
+    // get key for chemical name
+    let chemNameKey = false;
+    if (Object.keys(dataMain[0]).includes("Chemical Name")) {
+      chemNameKey = "Chemical Name";
+    } else if (Object.keys(dataMain[0]).includes("Chemical_Name")) {
+      chemNameKey = "Chemical_Name";
     }
 
-    // now we can generate the object of data for each sequence (point on scatter plot)
-    let pointData = {};
-    for (let [colName, value] of Object.entries(row)) {
-      if (seqNames.includes(colName)) {
-        if (value === "") {
-          continue;
-        }
-        let sequenceBaseName = blankHeaders.includes(colName.slice(0, colName.length-1)) ? colName.slice(0, colName.length-1) : colName.split("_")[0] + "_";
-        pointData["featureID"] = featureID;
-        pointData["sequenceName"] = colName;
-        pointData["sequenceBaseName"] = sequenceBaseName;
-        pointData["groupName"] = seqGroupMap[colName];
-        pointData["chemName"] = `${chemName} ${chemNameSuffix}`;
-        pointData["abundance"] = value;
-        pointData["formattedAbundance"] = Number(Number(value).toFixed(0)).toLocaleString();
-        pointData["seqIndex"] = seqNames.indexOf(colName);
-        pointData["CV"] = Number(row[`CV ${sequenceBaseName}`]).toFixed(4);
-        if (pointData["CV"] === "0.0000") {
-          pointData["CV"] = "0";
-        }
-        plottingData.push(pointData);
-        pointData = {};
+    // get sequence sample names
+    let seqNames = Object.keys(seqGroupMap);
+
+    // list of blank sample prefixes
+    const blankHeaders = [
+      "MB",
+      "Mb",
+      "mb",
+      "BLANK",
+      "Blank",
+      "blank",
+      "BLK",
+      "Blk"
+    ];
+
+    // setup our main data structure for plotting and iterate over rows of data
+    let plottingData = [];
+    dataMain.forEach(row => {
+      // store relevant row data in variables
+      let featureID = row["Feature ID"];
+      let chemName = "";
+      if (chemNameKey !== false) {
+        chemName = row[chemNameKey];
       }
-    }
-  });
 
-  return plottingData;
+      // now we can generate the object of data for each sequence (point on scatter plot)
+      let pointData = {};
+      for (let [colName, value] of Object.entries(row)) {
+        if (seqNames.includes(colName)) {
+          if (value === "") {
+            continue;
+          }
+          let sequenceBaseName = blankHeaders.includes(colName.slice(0, colName.length-1)) ? colName.slice(0, colName.length-1) : colName.split("_")[0] + "_";
+          pointData["featureID"] = featureID;
+          pointData["sequenceName"] = colName;
+          pointData["sequenceBaseName"] = sequenceBaseName;
+          pointData["groupName"] = seqGroupMap[colName];
+          pointData["chemName"] = `${chemName} ${chemNameSuffix}`;
+          pointData["abundance"] = value;
+          pointData["formattedAbundance"] = Number(Number(value).toFixed(0)).toLocaleString();
+          pointData["seqIndex"] = seqNames.indexOf(colName);
+          pointData["CV"] = Number(row[`CV ${sequenceBaseName}`]).toFixed(4);
+          if (pointData["CV"] === "0.0000") {
+            pointData["CV"] = "0";
+          }
+          plottingData.push(pointData);
+          pointData = {};
+        }
+      }
+    });
+
+    return plottingData;
+  }
+  catch {
+    return [];
+  }
 }
 
 /**
@@ -1594,6 +1603,8 @@ async function mainRunSequence(xlsxPath, seqPath) {
   // });
 }
 
-const xlsxPath = "../data/TM_7ppm_10MRL_NTA_WebApp_results.xlsx";
-const seqCsvPath = "../data/WW2DW_sequence-jon.csv";
+// const xlsxPath = "../data/TM_7ppm_10MRL_NTA_WebApp_results.xlsx";
+// const seqCsvPath = "../data/WW2DW_sequence-jon.csv";
+const xlsxPath = "../data/only_negative_data.xlsx";
+const seqCsvPath = "../data/denise_seq.csv";
 mainRunSequence(xlsxPath, seqCsvPath);
