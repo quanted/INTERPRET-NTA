@@ -1,0 +1,30 @@
+Parameter,Value
+Project name,Example nta
+Date & time,56:17.9
+Run test files only (debugging),no
+Positive mode file,1a_MZmine3_pos.csv
+Negative mode file,1b_MZmine3_neg.csv
+Positive mode adducts,"['Na', 'K', 'NH4']"
+Negative mode adducts,"['Cl', 'HCO2', 'CH3CO2', 'FA']"
+Neutral losses (both modes),"['H2O', 'CO2']"
+Adduct / duplicate mass accuracy units,ppm
+Adduct / duplicate mass accuracy,10
+Adduct / duplicate retention time accuracy (mins),0.05
+Run sequence positive mode file,WW2DW_sequence_cal(longer names).csv
+Run sequence negative mode file,WW2DW_sequence_cal(longer names).csv
+Tracer file,WW2DW_Tracers_Amenable.csv
+Tracer mass accuracy units,ppm
+Tracer mass accuracy,5
+Tracer retention time accuracy (mins),0.1
+Tracer plot y-axis scaling,log
+Tracer plot trendlines shown,yes
+Min replicate hits (%),66.7
+Min replicate hits in blanks (%),66
+Max replicate CV,0.5
+MRL standard deviation multiplier,10
+Parent ion mass accuracy (ppm),5
+Discard features below this retention time (mins),0
+Search DSSTox for possible structures,no
+Search Cheminformatics Hazard Module for toxicity data,no
+Search dashboard by,mass
+Save top result only?,no

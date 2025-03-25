@@ -1,0 +1,19 @@
+{
+  "name": "nta_wa-occurence_heatmap",
+  "version": "1.0.0",
+  "description": "Interactive heatmap for the NTA WebApp",
+  "main": "occurrence_heatmap.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "E. Tyler Carr",
+  "license": "ISC",
+  "dependencies": {
+    "three": "^0.172.0",
+    "tween": "^0.9.0",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-latest/xlsx-latest.tgz"
+  },
+  "devDependencies": {
+    "vite": "^6.0.7"
+  }
+}
