@@ -1603,8 +1603,6 @@ async function mainRunSequence(xlsxPath, seqPath) {
   // });
 }
 
-// const xlsxPath = "../data/TM_7ppm_10MRL_NTA_WebApp_results.xlsx";
-// const seqCsvPath = "../data/WW2DW_sequence-jon.csv";
-const xlsxPath = "../data/only_negative_data.xlsx";
-const seqCsvPath = "../data/denise_seq.csv";
+const xlsxPath = "../data/results.xlsx";
+const seqCsvPath = "../data/sequence.csv";
 mainRunSequence(xlsxPath, seqCsvPath);
