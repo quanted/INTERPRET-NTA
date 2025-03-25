@@ -31,6 +31,8 @@ The run sequence plots show the chemical abundance vs the sequence it was ran in
 
 ![Static 2x2 example of run sequence plots](./resources/static_2x2.png)
 
+It should be noted that there are GIFs at the bottom of each section below. It can take a while for these to load depending on network speed.
+
 ### On-Hovers
 
 Hovering over a node will populate the tooltip with data about that point. Notice that the vertical bar to the left of the tooltip changes color to match the group of the point you are hovering over.
