@@ -212,6 +212,9 @@ function getPointData(data, uniqueSampleNames) {
       pointDatum[`BlankSub Mean`] = row[`BlankSub Mean ${sampleName}`];
       pointDatum[`logBlankSub Mean`] = row[`logBlankSub Mean ${sampleName}`];
       pointDatum["Sample Name"] = sampleName;
+      pointDatum["Enabled"] = true;
+      pointDatum["Color"] = "rgb(1, 199, 234)";
+      pointData["Hovered"] = false;
 
       columnsToKeep.forEach(colName => {
         pointDatum[colName] = row[colName];
@@ -371,7 +374,7 @@ function makeTooltip(parentGrid) {
     .attr("id", "calCurveTooltip")
     .style("position", "absolute")
     .style("border-left", "1px solid black")
-    .style("background-color", "#69b3a2")
+    .style("background-color", "rgb(1, 199, 234)")
     .style("height", "150px")
     .style("width", "350px")
     .style("margin-top", "50px");
@@ -412,7 +415,8 @@ function makeCalCurvesXxY(
   chemNames,  
   tooltip, 
   tooltipContainer, 
-  confidence = "95%"
+  confidence = "95%",
+  chemNamesAll = []
 ) {
   // store values based on our resolution in variables for easy access
   const nSVGs = resolutionData[resolution]["n"];
@@ -432,7 +436,7 @@ function makeCalCurvesXxY(
     .style("grid-template-columns", gridTemplateCols)
     .style("grid-template-rows", gridTemplateRows);
 
-  svgParentGrid.selectAll("*").remove();
+  svgParentGrid.selectAll("svg").remove();
 
   // now we can iterate through our SVGs and chemNames to generate our plots one by one
   for (let i = 0; i < nSVGs; i++) {
@@ -457,7 +461,9 @@ function makeCalCurvesXxY(
       circleR,
       bestFitLW,
       nYTicks,
-      fontSize
+      fontSize,
+      chemNamesAll,
+      plottingData
     );
   }
 }
@@ -475,7 +481,9 @@ function makeCalCurve(
   circleR = 10,
   bestFitLW = 5,
   nYticks = 6,
-  fontSize = "20px"
+  fontSize = "20px",
+  chemNames = [],
+  pointDataAll = []
 ) {
   // reset svg contents
   svg.innerHTML = "";
@@ -485,12 +493,13 @@ function makeCalCurve(
     return;
   }
 
-  pointData = getPlottingDataForChem(pointData, chemName);
+  const pointDataChem = getPlottingDataForChem(pointData, chemName);
 
   // Add X axis
+  const tickFontSize = resolution === "3x3" ? "12px" : "14px";
   let widthOffset = 50;
   let heightOffset = 20;
-  let [ xMin, xMax ] = d3.extent(pointData, d => d["logConc"]);
+  let [ xMin, xMax ] = d3.extent(pointDataChem, d => d["logConc"]);
   xMin -= 0.1;
   xMax += 0.1;
   const x = d3.scaleLinear()
@@ -498,24 +507,59 @@ function makeCalCurve(
     .range([widthOffset, svgWidth-10]);
   svg.append("g")
     .attr("transform", `translate(0, ${svgHeight - heightOffset})`) // Adjusted transformation
-    .call(d3.axisBottom(x).ticks(5));
+    .call(d3.axisBottom(x).ticks(5))
+    .selectAll("text")
+    .style("font-size", tickFontSize);
+
+  // Calculate linear regression coefficients
+  const filteredPointData = pointDataChem.filter(d => d["Enabled"]);
+  const [ slope, intercept, r_sq ] = ols(filteredPointData, "logConc", "logBlankSub Mean")
+  
+  // Calculate prediction intervals
+  let plotPredictionIntervals = filteredPointData.length < 3 ? false : true;
+  let plotBestFitLine = filteredPointData.length < 2 ? false : true;
+  let predictionIntervals;
+  let yMin, yMax;
+  if (pointDataChem.length > 2) {
+    
+    // calculate prediction intervals for entire dataset first to determine the y-axis limits
+    const [ slopeTemp, interceptTemp, r_sqTemp ] = ols(pointDataChem, "logConc", "logBlankSub Mean")
+    predictionIntervals = calculatePredictionIntervals(pointDataChem, "logConc", "logBlankSub Mean", slopeTemp, interceptTemp, confidence);
+    yMin = d3.min(predictionIntervals, d => d["yLower"]) - 0.1;
+    yMax = d3.max(predictionIntervals, d => d["yUpper"]) + 0.1;
+
+    if (resolution === "1x1") {
+      console.log(predictionIntervals)
+    }
+
+    // now get the actual prediction intervals that will be used on the plot
+    if (plotPredictionIntervals) {
+      predictionIntervals = calculatePredictionIntervals(filteredPointData, "logConc", "logBlankSub Mean", slope, intercept, confidence);
+      const yMinFiltered = d3.min(predictionIntervals, d => d["yLower"]) - 0.1;
+      const yMaxFiltered = d3.max(predictionIntervals, d => d["yUpper"]) + 0.1;
+
+      yMin = Math.min(yMin, yMinFiltered);
+      yMax = Math.max(yMax, yMaxFiltered);
+    }
+  } else {
+    yMin = d3.min(pointDataChem, d => d["logBlankSub Mean"]) - 0.1;
+    yMax = d3.max(pointDataChem, d => d["logBlankSub Mean"]) + 0.1;
+  }
 
   // Add Y axis
-  let [ yMin, yMax ] = d3.extent(pointData, d => d["logBlankSub Mean"]);
-  yMin = 0;
-  yMax = Math.ceil(yMax)+1;
   let yTicks = [];
-  let stepSize = yMax / nYticks;
-  stepSize = yMax / (nYticks - 1);
-  for (let i = 0; i < nYticks; i++) {
-    yTicks.push(i*stepSize);
+  let stepSize = (yMax - yMin) / nYticks;
+  for (let i = 0; i <= nYticks; i++) {
+    yTicks.push(yMin + i*stepSize);
   }
   const y = d3.scaleLinear()
     .domain([yMin, yMax])
     .range([svgHeight-heightOffset, 75]);
   svg.append("g")
     .attr("transform", `translate(${widthOffset}, 0)`)
-    .call(d3.axisLeft(y).tickValues(yTicks));
+    .call(d3.axisLeft(y).tickValues(yTicks))
+    .selectAll("text")
+    .style("font-size", tickFontSize);
 
   // Define clipping path
   svg.append("defs")
@@ -534,91 +578,171 @@ function makeCalCurve(
   // Add dots
   svg.append('g')
     .selectAll("circle")
-    .data(pointData)
+    .data(pointDataChem)
     .enter()
     .append("circle")
       .attr("cx", function (d) { return x(d["logConc"]); } )
       .attr("cy", function (d) { return y(d["logBlankSub Mean"]); } )
-      .attr("r", circleR)
-      .style("fill", "#69b3a2")
+      .attr("r", d => !d["Hovered"] ? circleR : circleR * 1.8)
+      .attr("class", "enabled")
+      .style("fill", d => d["Color"])
+      .style("opacity", "0.7")
       .style("stroke", "black")
-      .style("stroke-width", "1px")
+      .style("stroke-width", "1.2px")
       .on("mouseover", function(event, d) {
-        d3.selectAll("circle").transition().duration(300).attr("r", circleR);
-        d3.select(this).transition().duration(300).attr("r", circleR * 1.8);
+        d["Hovered"] = true;
+        d3.selectAll("circle").transition().duration(300).attr("r", circleR).style("opacity", "0.7");
+        d3.select(this).transition().duration(300).attr("r", circleR * 1.8).style("opacity", "1");
         tooltipContainer.style("visibility", "visible");
         tooltipContainer.transition().duration(300).style("opacity", 1);
-        tooltip.html(`<b>Chemical:</b> ${d["Chemical Name"]}<br><b>Feature ID:</b> ${d["Feature ID"]}<br><b>Sample Name:</b> ${d["Sample Name"]}<br><b>log<sub>10</sub>(Conc):</b> ${d["logConc"].toFixed(2)}<br><b>log<sub>10</sub>(Mean Area):</b> ${d["logBlankSub Mean"].toFixed(2)}`);
+        tooltip.html(`<b>Chemical:</b> ${d["Chemical Name"]}<br><b>Feature ID:</b> ${d["Feature ID"]}<br><b>Sample Name:</b> ${d["Sample Name"]}<br><b>log<sub>10</sub>(Conc):</b> ${d["logConc"].toFixed(3)}<br><b>log<sub>10</sub>(Mean Area):</b> ${d["logBlankSub Mean"].toFixed(3)}`);
+
+        d3.select("#calCurveTooltip").transition().duration(300).style("background", d["Color"]);
       })
+      .on("mouseout", function(event, d) {
+        d["Hovered"] = false;
+      })
+      .on("click", function(event, d) {
+        // toggle color and enabled status
+        d["Enabled"] = !d["Enabled"];
+        if (d["Enabled"]) {
+          d["Color"] = "rgb(1, 199, 234)";
+        } else {
+          d["Color"] = "rgb(0, 0, 0)"
+        }
 
-  // Calculate linear regression coefficients
-  const [ slope, intercept, r_sq ] = ols(pointData, "logConc", "logBlankSub Mean")
-  
-  // console.log(`y-intercept: ${intercept}\nslope: ${slope}\nr_sq: ${r_sq}`)
+        // update this plot
+        makeCalCurve(
+          svg, 
+          svgWidth,
+          svgHeight,
+          pointData, 
+          chemName, 
+          resolution,
+          tooltip, 
+          tooltipContainer, 
+          confidence,
+          circleR,
+          bestFitLW,
+          nYticks,
+          fontSize,
+          chemNames,
+          pointDataAll
+        );
 
-  // Calculate prediction intervals
-  const predictionIntervals = calculatePredictionIntervals(pointData, "logConc", "logBlankSub Mean", slope, intercept, confidence);
+        // update the tooltip
+        d3.select("#calCurveTooltip").transition().duration(300).style("background", d["Color"]);
+
+        // update table of slopes
+        const tableData = chemNames.map(thisChemName => {
+          const pData = getPlottingDataForChem(pointDataAll, thisChemName);
+
+          const filteredPData = pData.filter(d => d["Enabled"]);
+          const [ slopeT, interceptT, r_sqT ] = ols(filteredPData, "logConc", "logBlankSub Mean");
+
+          return [thisChemName, slopeT]
+        });
+
+        const tableRows = d3.select("#slopeTableContainer").select("tbody").selectAll("tr")
+          .data(tableData);
+
+        tableRows.enter()
+          .append("tr")
+          .merge(tableRows)
+          .selectAll("td")
+          .data(d => d)
+          .join("td")
+          .style("border", "1px solid black")
+          .style("padding", "6px 10px")
+          .text((d, i) => i % 2 === 0 ? d : Number(d) === Number(d) ? Number(d).toFixed(3) : "");
+      
+        tableRows.exit().remove();
+
+      });
+    
+  // mark all circles as non-hovered in case mouseout event doesn't get triggered after click event
+  pointData.forEach(d => d["Hovered"] = false);
 
   // Create line of best fit
-  const lineData = [
-    { x: xMin, y: slope * xMin + intercept },
-    { x: xMax, y: slope * xMax + intercept }
-  ];
+  if (plotBestFitLine) {
+    xMin = d3.min(filteredPointData, d => d["logConc"]);
+    xMax = d3.max(filteredPointData, d => d["logConc"]);
 
-  const line = d3.line()
-    .x(d => x(d.x))
-    .y(d => y(d.y));
+    const lineData = [
+      { x: xMin, y: slope * xMin + intercept },
+      { x: xMax, y: slope * xMax + intercept }
+    ];
 
-  plotArea.append("path")
-    .datum(lineData)
-    .attr("class", "regression-line")
-    .attr("d", line)
-    .style("stroke", "magenta")
-    .style("stroke-width", bestFitLW)
-    .style("fill", "none");
+    const line = d3.line()
+      .x(d => x(d.x))
+      .y(d => y(d.y));
 
+    plotArea.append("path")
+      .datum(lineData)
+      .attr("class", "regression-line")
+      .attr("d", line)
+      .style("stroke", "rgb(0, 0, 0)")
+      .style("stroke-width", bestFitLW+2.2)
+      .style("fill", "none")
+      .style("stroke-linecap", "round")
+      .attr("pointer-events", "none");
+    plotArea.append("path")
+      .datum(lineData)
+      .attr("class", "regression-line")
+      .attr("d", line)
+      .style("stroke", "rgb(1, 199, 234)")
+      .style("stroke-width", bestFitLW+1)
+      .style("fill", "none")
+      .style("stroke-linecap", "round")
+      .attr("pointer-events", "none");
+
+  }
+  
   // Plot prediction intervals
-  const area = d3.area()
-    .x(d => x(d.x))
-    .y0(d => y(d.yLower))
-    .y1(d => y(d.yUpper));
+  if (plotPredictionIntervals) {
 
-  const predArea = plotArea.append("path")
-    .datum(predictionIntervals)
-    .attr("class", "prediction-interval")
-    .attr("d", area)
-    .style("fill", "lightblue")
-    .style("opacity", 0.35);
+    const area = d3.area()
+      .x(d => x(d.x))
+      .y0(d => y(d.yLower))
+      .y1(d => y(d.yUpper));
 
-  predArea.lower();
+    const predArea = plotArea.append("path")
+      .datum(predictionIntervals)
+      .attr("class", "prediction-interval")
+      .attr("d", area)
+      .style("fill", "rgba(233, 255, 31, 0.19)")
+      .style("opacity", 0.35);
 
-  // Plot upper bound
-  const upperBound = d3.line()
-    .x(d => x(d.x))
-    .y(d => y(d.yUpper));
+    // Plot upper bound
+    const upperBound = d3.line()
+      .x(d => x(d.x))
+      .y(d => y(d.yUpper));
 
-  plotArea.append("path")
-    .datum(predictionIntervals)
-    .attr("class", "upper-bound")
-    .attr("d", upperBound)
-    .style("stroke", "rgb(252, 137, 7)")
-    .style("stroke-width", 2)
-    .style("stroke-dasharray", "6,3")
-    .style("fill", "none");
+    plotArea.append("path")
+      .datum(predictionIntervals)
+      .attr("class", "upper-bound")
+      .attr("d", upperBound)
+      .style("stroke", "rgba(252, 126, 47, 0.95)")
+      .style("stroke-width", bestFitLW)
+      .style("stroke-dasharray", "6,3")
+      .style("fill", "none");
 
-  // Plot lower bound
-  const lowerBound = d3.line()
-    .x(d => x(d.x))
-    .y(d => y(d.yLower));
+    // Plot lower bound
+    const lowerBound = d3.line()
+      .x(d => x(d.x))
+      .y(d => y(d.yLower));
 
-  plotArea.append("path")
-    .datum(predictionIntervals)
-    .attr("class", "lower-bound")
-    .attr("d", lowerBound)
-    .style("stroke", "rgb(252, 137, 7)")
-    .style("stroke-width", bestFitLW)
-    .style("stroke-dasharray", "6,3")
-    .style("fill", "none");
+    plotArea.append("path")
+      .datum(predictionIntervals)
+      .attr("class", "lower-bound")
+      .attr("d", lowerBound)
+      .style("stroke", "rgba(252, 126, 47, 0.95)")
+      .style("stroke-width", bestFitLW)
+      .style("stroke-dasharray", "6,3")
+      .style("fill", "none");
+
+    predArea.lower();
+  }
 
   // Add gridlines
   const gridGroup = svg.append("g")
@@ -637,7 +761,7 @@ function makeCalCurve(
     .attr("stroke-width", 1);
 
   gridGroup.selectAll(".x-grid")
-    .data(x.ticks())
+    .data(x.ticks(5))
     .enter()
     .append("line")
     .attr("class", "x-grid")
@@ -658,20 +782,27 @@ function makeCalCurve(
     .attr("font-size", fontSize)
     .attr("font-weight", "bold")
     .text(chemName);
-  svg.append("foreignObject")
-    .attr("x", widthOffset + 5)
-    .attr("y", 28)
-    .attr("width", resolution === "1x1" ? "280px" : "250px")
-    .attr("height", ["1x1", "2x2"].includes(resolution) ? "50px" : resolution === "3x3" ? "40px" : "35px")
-    .append("xhtml:div")
-    .style("background-color", "rgba(0, 238, 255, 0.05)")
-    .style("border", "1px solid black")
-    .style("border-radius", "3px")
-    .style("padding", "5px")
-    .style("padding-left", "4px")
-    .style("line-height", resolution === "1x1" ? "11px" : "8px")
-    .style("font-size", resolution === "1x1" ? "18px" : "16px")
-    .html(`LogArea = ${intercept.toFixed(2)} + ${slope.toFixed(2)}log<sub>10</sub>(Conc)<br>R<sup>2</sup> = ${r_sq.toFixed(2)}`);
+  if (plotBestFitLine) {
+    const foreignObjectWidth = resolution === "1x1" ? 400 : resolution === "2x2" ? 340 : 320;
+    let objectX = svgWidth / 2 + widthOffset / 2 - foreignObjectWidth / 2;
+    objectX -= 10;
+    svg.append("foreignObject")
+      .attr("x", objectX)
+      .attr("y", 28)
+      .attr("text-anchor", "middle")
+      .attr("width", resolution === "1x1" ? "400px" : resolution === "2x2" ? "340px" : "320px")
+      .attr("height", ["1x1", "2x2"].includes(resolution) ? "50px" : resolution === "3x3" ? "40px" : "35px")
+      .append("xhtml:div")
+      .style("text-align", "center")
+      .style("background-color", "rgba(0, 238, 255, 0.05)")
+      .style("border", "1px solid black")
+      .style("border-radius", "3px")
+      .style("padding", "5px")
+      .style("padding-left", "4px")
+      .style("line-height", resolution === "1x1" ? "11px" : "8px")
+      .style("font-size", resolution === "1x1" ? "18px" : "16px")
+      .html(`log<sub>10</sub>(Mean Area) = ${intercept.toFixed(3)} + ${slope.toFixed(3)}log<sub>10</sub>(Conc)<br>R<sup>2</sup> = ${r_sq.toFixed(3)}`);
+  }
 }
 
 async function calCurvesMain(inputXlsxPath) {
@@ -830,7 +961,7 @@ async function calCurvesMain(inputXlsxPath) {
       "grid-template-rows": "auto 1fr 1fr",
       "svgWidth": 363.5,
       "svgHeight": 173.3,
-      "nYTicks": 5,
+      "nYTicks": 4,
       "fontSize": "20px"
     },
     "4x4": {
@@ -874,7 +1005,8 @@ async function calCurvesMain(inputXlsxPath) {
     chemNamesToggled,
     tooltip,
     tooltipContainer,
-    confidence
+    confidence,
+    chemNames
   );
 
   // pagination buttons
@@ -932,7 +1064,8 @@ async function calCurvesMain(inputXlsxPath) {
         chemNamesTemp,
         tooltip,
         tooltipContainer,
-        confidence
+        confidence,
+        chemNames
       );
     });
 
@@ -1051,7 +1184,9 @@ async function calCurvesMain(inputXlsxPath) {
         resolutionData[resolution]["circleR"],
         resolutionData[resolution]["bestFitLW"],
         resolutionData[resolution]["nYTicks"],
-        resolutionData[resolution]["fontSize"]
+        resolutionData[resolution]["fontSize"],
+        chemNames,
+        plottingData
       );
 
       // update dropdown menu to reflect the current chemical name
@@ -1095,11 +1230,12 @@ async function calCurvesMain(inputXlsxPath) {
         chemNamesToggled,
         tooltip,
         tooltipContainer,
-        confidence
+        confidence,
+        chemNames
       );
     });
 
-  // add confidence dropdown
+  // add confidence dropdown and slope table toggle
   const confidenceDropdownDiv = buttonGridContainer.append("div")
     .style("background-color", "#f0f0f0")
     .style("border-radius", "3px")
@@ -1107,14 +1243,35 @@ async function calCurvesMain(inputXlsxPath) {
     .style("display", "flex")
     .style("flex-direction", "column")
     .style("align-items", "center");
+
+  confidenceDropdownDiv.append("button")
+    .text("Slope Table")
+    .style("padding", "5px 8px")
+    .style("font-size", "16px")
+    .style("margin-top", "5px")
+    .on("click", function() {
+      const t = d3.select("#slopeTableContainer")
+        if (t.style("visibility") === "hidden") {
+          t.style("visibility", "visible")
+            .style("pointer-events", "all");
+        } else {
+          t.style("visibility", "hidden")
+            .style("pointer-events", "none");
+        }
+    });
   
-  confidenceDropdownDiv.append("text")
+  const confDiv = confidenceDropdownDiv.append("div")
+    .style("display", "flex")
+    .style("flex-direction", "column")
+    .style("align-items", "center");
+
+  confDiv.append("text")
     .text("Prediction:")
     .style("font-size", "18px")
-    .style("margin-top", "28px")
+    .style("margin-top", "14px")
     .style("font-weight", "bold");
 
-  const confidenceDropdown = confidenceDropdownDiv.append("select")
+  const confidenceDropdown = confDiv.append("select")
     .attr("id", "confidence-dropdown")
     .style("grid-area", "confidence")
     .style("font-size", "22px")
@@ -1140,14 +1297,17 @@ async function calCurvesMain(inputXlsxPath) {
         chemNamesTemp,
         tooltip,
         tooltipContainer,
-        confidence
+        confidence,
+        chemNames
       );
     });
 
   Object.keys(tStatisticValues).forEach(conf => {
-    confidenceDropdown.append("option")
+    if (["90%", "95%", "99%"].includes(conf)) {
+      confidenceDropdown.append("option")
       .attr("value", conf)
       .text(conf);
+    }
   });
 
   // Set the default value to "95%"
@@ -1180,7 +1340,8 @@ async function calCurvesMain(inputXlsxPath) {
           chemNamesToggled,
           tooltip,
           tooltipContainer,
-          confidence
+          confidence,
+          chemNames
         );
 
         // update dropdown menus
@@ -1343,7 +1504,8 @@ async function calCurvesMain(inputXlsxPath) {
           chemNamesToggled,
           tooltip,
           tooltipContainer,
-          confidence
+          confidence,
+          chemNames
         );
 
         // add group name to plot
@@ -1402,7 +1564,8 @@ async function calCurvesMain(inputXlsxPath) {
               chemNamesToggled,
               tooltip,
               tooltipContainer,
-              confidence
+              confidence,
+              chemNames
             );
 
             // remove group title on plot if exists
@@ -1413,6 +1576,19 @@ async function calCurvesMain(inputXlsxPath) {
           groupCount--;
         }
       });
+
+      // Add checkbox for disabling group from output
+      const groupCheckDiv = groupDiv.append("div")
+        .style("display", "flex")
+        .style("align-items", "center");
+      groupCheckDiv.append("label")
+        .text("Remove group chemicals from output: ")
+        .style("margin-bottom", "4px");
+      groupCheckDiv.append("input")
+        .attr("type", "checkbox")
+        .attr("class", "disable-checkbox")
+        .style("width", "20px")
+        .style("height", "20px");
   }
 
   /**
@@ -1498,14 +1674,32 @@ async function calCurvesMain(inputXlsxPath) {
         .select("textarea")
         .property("value");
 
+      const groupDisabled = d3.select(group)
+        .select(".disable-checkbox")
+        .property("checked");
+
+      let disabledString = groupDisabled ? "Disabled" : "Enabled";
+
       const groupDatum = [
-        groupTitle, groupDesc, chemicalNames, chemicalModes
+        groupTitle, groupDesc, chemicalNames, chemicalModes, disabledString
       ];
 
       groupData.push(groupDatum);
     });
 
     return groupData;
+  }
+
+
+  function getDisabledData() {
+    const disabledData = [];
+    pointData.forEach(row => {
+      if (!row["Enabled"]) {
+        disabledData.push([row["Chemical Name"], row["Feature ID"], row["Sample Name"], "Disabled"]);
+      }
+    });
+
+    return disabledData;
   }
 
   /** Uncomment below to test the getGroupData() function */
@@ -1515,7 +1709,176 @@ async function calCurvesMain(inputXlsxPath) {
   //   console.log(dat)
   // });
 
+  /** Uncomment below to test the getDisabledData() function */
+
+  // d3.select("body").append("button").text("get disabled data").on("click", () => {
+  //   const dat = getDisabledData();
+  //   console.log(dat);
+  // });
+
+  // build table of slopes for best fit lines
+  const tableData = chemNames.map(chemName => {
+    const pData = getPlottingDataForChem(pointData, chemName);
+
+    filteredPointData = pData.filter(d => d["Enabled"]);
+    [ slope, intercept, r_sq ] = ols(filteredPointData, "logConc", "logBlankSub Mean");
+
+    return [chemName, slope]
+  });
+
+  const tableContainer = gridContainer.append("div")
+    .attr("id", "slopeTableContainer")
+    .style("visibility", "hidden")
+    .style("pointer-events", "none")
+    .style("height", "500px")
+    .style("overflow-y", "scroll")
+    .style("position", "absolute")
+    .style("background-color", "white")
+    .style("display", "grid")
+    .style("grid-template-columns", "1fr 100px")
+    .style("margin-left", d => gridContainer.node().getBoundingClientRect().width / 2 - 100 + "px")
+    .style("border", "3px solid black")
+    .style("border-radius", "5px")
+    .style("margin-top", "5px");
+    
+  const tableDiv = tableContainer.append("div")
+    .style("padding", "8px");
+
+  const table = tableDiv
+    .append("table")
+    .attr("id", "slopeTable")
+    .style("margin-top", "10px")
+    .style("margin-left", "20px")
+    .style("border-collapse", "collapse")
+    .style("border", "1px solid black");
+
+  const tableHeader = table.append("thead")
+    .append("tr");
+
+  tableHeader.selectAll("th")
+    .data(["Chemical Name", "Slope"])
+    .enter()
+    .append("th")
+    .style("border", "1px solid black")
+    .style("padding", "5px")
+    .style("cursor", "pointer")
+    .text(d => d)
+    .on("click", function(event, d) {
+      sortTable(d);
+    });
+
+  const tableBody = table.append("tbody");
+
+  tableBody.selectAll("tr")
+    .data(tableData)
+    .enter()
+    .append("tr")
+    .selectAll("td")
+    .data(d => d)
+    .enter()
+    .append("td")
+    .style("border", "1px solid black")
+    .style("padding", "6px 10px")
+    .text((d, i) => i % 2 === 0 ? d : Number(d) === Number(d) ? Number(d).toFixed(3) : "");
+
+  // Create the button and add it to the DOM
+  const buttonDiv = tableContainer.append("div")
+    .style("position", "sticky")
+    .style("top", "0")
+    .style("margin-top", "12px")
+    .style("height", "300px");
+
+  // create button for exporting to XLSX file
+  const exportButton = buttonDiv
+    .append("button")
+    .text("Export to XLSX")
+    .style("height", "50px")
+    .style("top", "10px")
+    .style("right", "10px")
+    .style("margin-top", "5px")
+    .style("margin-left", "12px")
+    .style("margin-right", "5px")
+    .on("click", exportTableToXLSX);
+
+  const copyButton = buttonDiv
+    .append("button")
+    .text("Copy to Clipboard")
+    .style("height", "50px")
+    .style("top", "10px")
+    .style("right", "10px")
+    .style("margin-top", "10px")
+    .style("margin-left", "12px")
+    .style("margin-right", "5px")
+    .on("click", copyTableToClipboard);
+
+  // Function to copy the table content to the clipboard
+  function copyTableToClipboard() {
+    const table = d3.select("table").node();
+    const range = document.createRange();
+    range.selectNode(table);
+    console.log(range)
+    window.getSelection().removeAllRanges(); // Clear any existing selections
+    window.getSelection().addRange(range);
+    document.execCommand("copy");
+    window.getSelection().removeAllRanges(); // Clear the selection after copying
+  }
+
   
+
+  // Function to export the table to an XLSX file
+  function exportTableToXLSX() {
+    const table = d3.select("#slopeTable").node();
+    const rows = table.querySelectorAll("tr");
+    const data = [];
+
+    // Extract table data
+    rows.forEach(row => {
+      const cells = row.querySelectorAll("th, td");
+      const rowData = Array.from(cells).map(cell => cell.innerText);
+      data.push(rowData);
+    });
+
+    // Create a worksheet from the data
+    const worksheet = XLSX.utils.aoa_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Slopes");
+
+    // Write the workbook to a file
+    XLSX.writeFile(workbook, "Slopes.xlsx");
+  }
+
+  // Function to sort the table
+  let sortAscending = true;
+  function sortTable(column) {
+    sortAscending = !sortAscending;
+    const columnIndex = column === "Chemical Name" ? 0 : 1;
+    let sortedData = tableData.sort((a, b) => {
+      const aValue = Number.isNaN(a[columnIndex]) ? -Infinity : a[columnIndex];
+      const bValue = Number.isNaN(b[columnIndex]) ? -Infinity : b[columnIndex];
+      if (sortAscending) {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+
+    if (column === "Chemical Name") {
+      sortedData = chemNames.map(chemName => {
+        const pData = getPlottingDataForChem(pointData, chemName);
+    
+        filteredPointData = pData.filter(d => d["Enabled"]);
+        [ slope, intercept, r_sq ] = ols(filteredPointData, "logConc", "logBlankSub Mean");
+    
+        return [chemName, slope]
+      });
+    }
+
+    tableBody.selectAll("tr")
+      .data(sortedData)
+      .selectAll("td")
+      .data(d => d)
+      .text((d, i) => i % 2 === 0 ? d : Number(d) === Number(d) ? Number(d).toFixed(3) : "");
+  }
 
 }
 
