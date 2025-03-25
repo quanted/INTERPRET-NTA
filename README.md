@@ -32,6 +32,8 @@ The Calibration Curves are scatter plots of log(Mean Area) vs log(Concentration)
 
 ![Static 1x1 plot](./resources/static_1x1.png)
 
+It should be noted that each section below ends with an associate GIF. There is ~25MB of data, so it could take some time for everything to display depending on network speed.
+
 ### On-hovers
 
 Hovering over a node on one of the plots will populate a tooltip with relevant information about that point.
