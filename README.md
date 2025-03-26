@@ -48,3 +48,13 @@ Clicking on the title will increase the thickness of all red cells, making it ea
 You can change your parameter thresholds by using the sliders in the bottom right and see how your data updates in real time.
 
 ![Widen red cells and update parameter thresholds](./resources/red_thickness-sliders.gif)
+
+## Licensing
+
+### Code
+
+The code in this repository is licensed under the [CC0 1.0 Universal (CC0 1.0) Public Domain Dedication](./LICENSE_CODE).
+
+### Data
+
+The dataset used in this project is licensed under a custom proprietary license. Please refer to the [data license file](./LICENSE_DATA) for more details.
