@@ -15,7 +15,7 @@ The decision tree is a visualization to aid in a NTA QA/QC workflow by showing h
 
 1. Replicate threshold: samples should be ran in replicate, this check ensures that an occurrence wasn't just an anomaly. For example, if you ran a sample 3 times and set the replicate threshold to 66.7%, an occurrence would only pass this step if it was seen at least 2 out of 3 times.
 2. CV threshold: we want the occurrences to be below a certain coefficient of variation (CV) value.
-3. MRL multiplier: the MRL compares the mean abundance of an occurrence against $\text{Blank\_Mean\_Abundance} + \text{std}(\text{mrlMult})$. If the abundance is greater than or equal to this value, it passes.
+3. MRL multiplier: the MRL compares the mean abundance of an occurrence against $\text{BlankMeanAbundance} + \text{std}(\text{mrlMult})$. If the abundance is greater than or equal to this value, it passes.
 
 ## Functionality
 
