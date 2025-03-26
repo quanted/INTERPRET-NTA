@@ -83,3 +83,13 @@ Points can be excluded from your dataset by clicking the node on a plot. This wi
 Entire chemicals (or groups of chemicals) may be excluded from your dataset by creating a group and checking the "Remove group chemicals from output: " checkbox at the bottom of the group interface.
 
 ![Exclusion functionality](./resources/exclusion_functionality.gif)
+
+## Licensing
+
+### Code
+
+The code in this repository is licensed under the [CC0 1.0 Universal (CC0 1.0) Public Domain Dedication](./LICENSE_CODE).
+
+### Data
+
+The dataset used in this project is licensed under a custom proprietary license. Please refer to the [data license file](./LICENSE_DATA) for more details.
