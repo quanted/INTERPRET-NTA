@@ -76,3 +76,13 @@ To apply a Box Cox transformation to your data, click on the $\lambda$ button in
 There is a help button in the bottom right of the histogram. Hovering over this button will display a tooltip that explains the functionality the histogram provides. Clicking this button will toggle the help tooltip so that it will not go away until you click the button again.
 
 ![Help button](./resources/helpButton.gif)
+
+## Licensing
+
+### Code
+
+The code in this repository is licensed under the [CC0 1.0 Universal (CC0 1.0) Public Domain Dedication](./LICENSE_CODE).
+
+### Data
+
+The dataset used in this project is licensed under a custom proprietary license. Please refer to the [data license file](./LICENSE_DATA) for more details.
