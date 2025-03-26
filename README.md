@@ -70,3 +70,13 @@ Once populated with chemicals, you can choose to view only the chemicals in that
 A group may be deleted by clicking the red trash bin in the bottom right of the group interface. If the group has been assigned a name or has been populated with chemicals, a popup will display confirming that you meant to delete the group.
 
 ![Grouping interface](./resources/groups.gif)
+
+## Licensing
+
+### Code
+
+The code in this repository is licensed under the [CC0 1.0 Universal (CC0 1.0) Public Domain Dedication](./LICENSE_CODE).
+
+### Data
+
+The dataset used in this project is licensed under a custom proprietary license. Please refer to the [data license file](./LICENSE_DATA) for more details.
