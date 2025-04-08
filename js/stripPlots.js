@@ -43,7 +43,7 @@ async function readInterpretOutputXLSX(filePath) {
 
   // access data from desired tracer detection sheet and write to json object
   const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
-  const sheetName = "Sheet1";
+  const sheetName = "Surrogate Detection Statistics";
   const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
 
   return jsonData;
