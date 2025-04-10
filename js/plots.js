@@ -1,5 +1,5 @@
 // ======= UTILITY FUNCTIONS ====================================================================================================
-
+// testing git
 // Returns the contents of the input CSV. Values in the last column have a "\r" added to the end, so make sure the last column is not needed for the vis
 async function parseCSV(filePath) {
   
