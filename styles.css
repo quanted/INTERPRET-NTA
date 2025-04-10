@@ -1,0 +1,229 @@
+.body {position: absolute;}
+
+#tripod-settings-container {
+    height: 600px;
+    width: 500px; 
+    position: relative;
+    left: 1630px;
+    top: -770px;
+}
+
+#tripod-main-container {
+    height: 775px;
+    width: 1500px; 
+    position: relative;
+    left: 8px;
+    top: 0px
+}
+
+.tripod-chart {
+  height: 700px;
+  width: 536px;
+  top: 85px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+}
+
+#tripod-StructureToolTip{
+  position: absolute;
+  top: 180px;
+  left: 20px;
+  border: solid;
+  border-width : 1px;
+  border-radius: 8px;
+  padding: 2px;
+}
+
+#tripod-StructureToolTip:hover{
+  cursor : pointer;
+  border-width : 3px;
+}
+
+.tripod-arrow-first{
+  position: absolute;
+  left: 1326px;
+  top: 9px;
+  cursor : pointer;
+}
+
+.tripod-arrow-left{
+  position: absolute;
+  left: 1366px;
+  top: 9px;
+  cursor : pointer;
+}
+
+#input-feature{
+  position: absolute;
+  left: 1406px;
+  top: 10px;
+  width: 81px;
+  height: 26px;
+}
+
+#feature-input-button{
+  position: absolute;
+  left: 1492px;
+  top: 10px;
+  font-weight: bold;
+  cursor : pointer;
+}
+
+.tripod-arrow-right{
+  position: absolute;
+  left: 1530px;
+  top: 9px;
+  cursor : pointer;
+}
+
+.tripod-arrow-last{
+  position: absolute;
+  left: 1570px;
+  top: 9px;
+  cursor : pointer;
+}
+
+#tripod-chart-meta {
+    position: absolute; 
+}
+
+#tripod-chart-hazard {
+  position: absolute;
+  left: 1074px;
+}
+
+#tripod-chart-MS2 {
+  position: absolute;
+  left: 537px;
+}
+
+#tripod-xaxis {
+    height: 30px;
+    width: 1310px; 
+    position: absolute;
+    z-index:-1;
+    top: 787px;
+}
+
+#metadata-legend {
+  height: 210px;
+  width: 25%;
+  position: absolute;
+  left: 45px;
+  z-index:1;
+}
+
+#tripod-infobox {
+  position: absolute;
+  top: 435px;
+  z-index:1;
+}
+
+#tripod-title {
+    height: 30px;
+    width: 50%;
+    position: relative;
+    float: left;
+    padding-top: 15px;
+    padding-left: 20px;
+}
+
+#tripod-title text{
+  white-space: pre;
+}
+
+#tripod-chart-container {
+    position: relative;
+    height: 800px;
+    width: 1500px;
+}
+
+#tripod-ylabel-meta {font-size: 14px;}
+#tripod-ylabel-hazard {font-size: 14px;}
+#tripod-ylabel-MS2 {font-size: 14px;}
+
+.tripod-xlabel {font-size: 14px;}
+
+#tripod-Top5ToggleButton {
+  position: absolute;
+  left: 140px;
+  top: 340px;
+  z-index: 1;
+  background-color: #DBE4F0;
+}
+
+#tripod-Top5ToggleButton:hover {
+  background-color: #3d4e634d;
+}
+
+#tripod-tooltipbar {
+  z-index: 10;
+}
+
+#tripod-gradient-rect{
+  position: absolute;
+  left: 80px;
+  top: 240px;
+}
+
+#tripod-outlink{
+  position: absolute;
+  left: -135px;
+  top: -70px;
+  transform: scale(0.06);
+  cursor: pointer;
+}
+
+#input-meta{
+  position: absolute;
+  left: 512px;
+  top: 55px;
+  transform: scale(1.2);
+  z-index: 10;
+}
+
+#input-hazard{
+  position: absolute;
+  left: 1584px;
+  top: 55px;
+  transform: scale(1.2);
+  z-index: 10;
+}
+
+#input-MS2{
+  position: absolute;
+  left: 1047px;
+  top: 55px;
+  transform: scale(1.2);
+  z-index: 10;
+}
+
+/* ag grid styles --------------------------------------------------------------------*/
+#tripod-grid {
+    height: 800px;
+    width: 2090px; 
+    position: absolute;
+    left: 8px;
+    top: 820px;
+}
+
+#tripod-grid .ag-input-wrapper:before{
+  height: 0px
+}
+
+#tripod-grid .ag-row-position-absolute .ag-cell-value{
+  display: flex;
+  align-items: center;
+}
+
+#tripod-grid .ag-theme-balham {
+  --ag-odd-row-background-color: #fafcff;
+}
+
+#tripod-grid .ag-header{
+  background-color: #DBE4F0;
+}
+
+#tripod-grid .ag-header-cell-label{
+  color: #000000;
+}
