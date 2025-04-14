@@ -1704,6 +1704,33 @@ updateData("STRUCTURE_TOTAL_NORM")
 makeLegend()
 
 makeLargeGrid()
+
+function makeExportButton(){
+  const exportButton = makeSvgElement(30, 30, 'tripod-export-button', d3.select("#tripod-grid"));
+      exportButton.attr('id', "tripod-export-button")
+      exportButton.append("rect")
+      .attr("id", "export-button-rect")
+        .attr("width", "30px")
+        .attr("height", "30px")
+        .attr("rx", "6px")
+        .attr("x", "1")
+        .attr("y", "1")
+        .attr("fill", "#DBE4F0")  
+      exportButton.append('path')
+        .attr('d', 'M25 0H7a7 7 0 0 0-7 7v18a7 7 0 0 0 7 7h18a7 7 0 0 0 7-7V7a7 7 0 0 0-7-7zm5 25a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5h18a5 5 0 0 1 5 5z')  
+      exportButton.append("path")
+      .attr("d", "M12 6.25C12.4142 6.25 12.75 6.58579 12.75 7V12.1893L14.4697 10.4697C14.7626 10.1768 15.2374 10.1768 15.5303 10.4697C15.8232 10.7626 15.8232 11.2374 15.5303 11.5303L12.5303 14.5303C12.3897 14.671 12.1989 14.75 12 14.75C11.8011 14.75 11.6103 14.671 11.4697 14.5303L8.46967 11.5303C8.17678 11.2374 8.17678 10.7626 8.46967 10.4697C8.76256 10.1768 9.23744 10.1768 9.53033 10.4697L11.25 12.1893V7C11.25 6.58579 11.5858 6.25 12 6.25Z")
+      .attr('transform', 'translate(-5.5, -6) scale(1.8) ')
+      exportButton.append("path")
+      .attr("d", "M7.25 17C7.25 16.5858 7.58579 16.25 8 16.25H16C16.4142 16.25 16.75 16.5858 16.75 17C16.75 17.4142 16.4142 17.75 16 17.75H8C7.58579 17.75 7.25 17.4142 7.25 17Z")
+      .attr('transform', 'translate(-5.5, -6) scale(1.8) ')
+
+      exportButton.attr("onmouseover", "document.getElementById('export-button-rect').setAttribute('fill', '#3d4e634d')")
+      exportButton.attr("onmouseout", "document.getElementById('export-button-rect').setAttribute('fill', '#DBE4F0')")
+      document.getElementById('tripod-export-button').addEventListener('click', function(event) {window.gridAPI.exportDataAsCsv()});
+}  
+makeExportButton()
+
 loadData(data)
 
 metaInput.checked = false

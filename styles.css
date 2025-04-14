@@ -153,6 +153,14 @@
   background-color: #3d4e634d;
 }
 
+#tripod-export-button{
+  position: absolute;
+  top: 6px;
+  left: 1646px;
+  cursor : pointer;
+  z-index: 1;
+}
+
 #tripod-tooltipbar {
   z-index: 10;
 }
