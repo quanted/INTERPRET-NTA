@@ -1184,7 +1184,19 @@ function loadData(data){
   height = subGroupData.length * 30;
 
 // Create a tooltip for the stacked bars -----------------------------------------------------------------
-  var tooltipBar = d3.select("#tripod-chart-meta")
+  var tooltipBarMeta = d3.select("#tripod-chart-meta")
+    .append("div")
+    .style("display", "none")
+    .attr("class", "tooltip")
+    .style("background-color", "white")
+    .style("border", "solid")
+    .style("border-width", "1px")
+    .style("border-radius", "5px")
+    .style("padding", "8px")
+    .style("position", "fixed")
+    .attr("id", "tripod-tooltipbar");
+
+  var tooltipBarHazard = d3.select("#tripod-chart-hazard")
     .append("div")
     .style("display", "none")
     .attr("class", "tooltip")
@@ -1218,7 +1230,7 @@ function loadData(data){
 
 
     var categoryValue = d.srcElement.__data__.data[catName + "_COUNT_COLLAPSED"];
-    tooltipBar
+    tooltipBarMeta
         .html(labelName + ": " + categoryValue)
         .style("opacity", 1)
 
@@ -1230,13 +1242,13 @@ function loadData(data){
 
   }
   var mousemoveBarMeta = function(event) {
-    tooltipBar
+    tooltipBarMeta
       .style("left", (event.pageX + 20) + "px")
       .style("top", (event.pageY - window.pageYOffset + 10) + "px")
       .style("display", "block")
   }
   var mouseleaveBarMeta = function() {
-    tooltipBar
+    tooltipBarMeta
       .style("display", "none");
 
     if (clickedDTXCID != d3.select(this)._groups[0][0]["__data__"]["data"]["DTXCID_INDIVIDUAL_COMPONENT"])
@@ -1253,7 +1265,7 @@ function loadData(data){
   }
 
   var mouseleaveBarMS2Hazard = function() {
-  tooltipBar
+  tooltipBarHazard
     .style("display", "none");
 
   // Make the corresponding y-axis label black again
@@ -1274,7 +1286,7 @@ function loadData(data){
   var mouseoverBarHazard = function(d) {
     var HScore = d3.select(this)._groups[0][0]["__data__"]["Hazard Score"];
     var HCompScore = d3.select(this)._groups[0][0]["__data__"]["Hazard Completeness Score"];
-    tooltipBar
+    tooltipBarHazard
       .html("Hazard Score: " + HScore + "<br>" + "Hazard Completeness Score: " + HCompScore)
       .style("opacity", 1)
 
@@ -1286,7 +1298,7 @@ function loadData(data){
     })  
   }
   var mousemoveBarHazard = function(event) {
-    tooltipBar
+    tooltipBarHazard
       .style("left", (event.pageX + 20) + "px")
       .style("top", (event.pageY - window.pageYOffset + 10) + "px")
       .style("display", "block")
