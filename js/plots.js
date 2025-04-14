@@ -25,7 +25,6 @@ async function parseCSV(filePath) {
   // Remove rows with no feature ID
   const cleaned_result = result.filter(feature => feature['Feature ID'] != "")
 
-  console.log(cleaned_result)
   return cleaned_result;
 }
 
@@ -1806,7 +1805,37 @@ function makeLargeGrid(){
 
         metaInput.checked = true
         hazardInput.checked = true
+
+        console.log(event.data["DTXCID"])
+        var DTXCIDname = event.data["DTXCID"]
+        previousClickedDTXCID = clickedDTXCID
+        clickedDTXCID = DTXCIDname
+        imageDiv.removeChild(image)
+        imageDiv.appendChild(getImage(DTXCIDname))
+      
+        if (previousClickedDTXCID == clickedDTXCID){
+          fieldList.forEach(key =>{
+            let IdToHighlight = document.getElementById(`ylabel-${DTXCIDname}-${key}`);
+            IdToHighlight.setAttribute("fill", "red");
+            IdToHighlight.style.fontWeight = "bold";
+            })
+          return}
+      
+        else {
+          fieldList.forEach(key =>{
+            let IdToHighlight = document.getElementById(`ylabel-${DTXCIDname}-${key}`);
+            IdToHighlight.setAttribute("fill", "red");
+            IdToHighlight.style.fontWeight = "bold";
+          
+            if (previousClickedDTXCID)  {
+              try {
+                let IdToHighlight2 = document.getElementById(`ylabel-${previousClickedDTXCID}-${key}`);
+                IdToHighlight2.setAttribute("fill", "black");
+                IdToHighlight2.style.fontWeight = "normal";}
+              catch{return}}
+        })} 
       }
+      
     },
   }
 
@@ -1896,3 +1925,4 @@ hazardInput.checked = true
 // ======= CALL MAIN FUNCTION ==================================================================================================
 const dataPath = "./data/WW2DW_Data_Analysis_file_5.csv";
 generatePlots(dataPath);
+
