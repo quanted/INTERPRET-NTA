@@ -1635,6 +1635,15 @@ function makeLargeGrid(){
     document.getElementById('tripod-title').innerHTML= ""
     updateData("STRUCTURE_TOTAL_NORM")
     loadData(data)
+
+    // highlight the y-axis label after sorting. 
+    if (clickedDTXCID){
+      fieldList.forEach(key =>{
+        let IdToHighlight = document.getElementById(`ylabel-${clickedDTXCID}-${key}`);
+        IdToHighlight.setAttribute("fill", "red");
+        IdToHighlight.style.fontWeight = "bold";
+        })}
+
   }
 
   function onGridFilter(){
@@ -1664,6 +1673,18 @@ function makeLargeGrid(){
 
     metaInput.checked = originallyCheckedMeta
     hazardInput.checked = originallyCheckedHazard
+
+    // highlight the y-axis label after filtering. 
+    if (clickedDTXCID){
+      try{
+        fieldList.forEach(key =>{
+          let IdToHighlight = document.getElementById(`ylabel-${clickedDTXCID}-${key}`);
+          IdToHighlight.setAttribute("fill", "red");
+          IdToHighlight.style.fontWeight = "bold";
+          })}
+      catch(error){return}  
+  
+    }
   }
 }
 
