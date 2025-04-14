@@ -1583,6 +1583,33 @@ function makeLargeGrid(){
 
         metaInput.checked = true
 
+        var DTXCIDname = event.data["DTXCID_INDIVIDUAL_COMPONENT"]
+        previousClickedDTXCID = clickedDTXCID
+        clickedDTXCID = DTXCIDname
+        imageDiv.removeChild(image)
+        imageDiv.appendChild(getImage(DTXCIDname))
+      
+        if (previousClickedDTXCID == clickedDTXCID){
+          fieldList.forEach(key =>{
+            let IdToHighlight = document.getElementById(`ylabel-${DTXCIDname}-${key}`);
+            IdToHighlight.setAttribute("fill", "red");
+            IdToHighlight.style.fontWeight = "bold";
+            })
+          return}
+      
+        else {
+          fieldList.forEach(key =>{
+            let IdToHighlight = document.getElementById(`ylabel-${DTXCIDname}-${key}`);
+            IdToHighlight.setAttribute("fill", "red");
+            IdToHighlight.style.fontWeight = "bold";
+            if (previousClickedDTXCID)  {
+              try {
+                let IdToHighlight2 = document.getElementById(`ylabel-${previousClickedDTXCID}-${key}`);
+                IdToHighlight2.setAttribute("fill", "black");
+                IdToHighlight2.style.fontWeight = "normal";}
+              catch{return}}
+        })} 
+
       }
     },
   }
