@@ -1806,7 +1806,7 @@ function makeLargeGrid(){
         metaInput.checked = true
         hazardInput.checked = true
 
-        console.log(event.data["DTXCID"])
+        // highlight the selected DTXCID on the y-axis labels
         var DTXCIDname = event.data["DTXCID"]
         previousClickedDTXCID = clickedDTXCID
         clickedDTXCID = DTXCIDname
@@ -1834,6 +1834,17 @@ function makeLargeGrid(){
                 IdToHighlight2.style.fontWeight = "normal";}
               catch{return}}
         })} 
+
+        // // When a row is clicked, the AG grid will filter to only show that feature. Perhaps add this later? Not sure if it would be useful. 
+        // window.gridAPI.setFilterModel({
+        //   "Feature ID": {
+        //     type: "equals", 
+        //     filter: event.data["Feature ID"]
+        //   }
+        // })
+        // window.gridAPI.onFilterChanged()
+
+
       }
       
     },
@@ -1861,6 +1872,15 @@ function makeLargeGrid(){
     document.getElementById('tripod-title').innerHTML= ""
     updateData("Structure_total_norm")
     loadData(data)
+  
+    // highlight the y-axis label after sorting. 
+    if (clickedDTXCID){
+      fieldList.forEach(key =>{
+        let IdToHighlight = document.getElementById(`ylabel-${clickedDTXCID}-${key}`);
+        IdToHighlight.setAttribute("fill", "red");
+        IdToHighlight.style.fontWeight = "bold";
+        })}
+
   }
 
   function onGridFilter(){
@@ -1894,7 +1914,20 @@ function makeLargeGrid(){
     metaInput.checked = originallyCheckedMeta
     MS2Input.checked = originallyCheckedMS2
     hazardInput.checked = originallyCheckedHazard
+
+    // highlight the y-axis label after filtering. 
+    if (clickedDTXCID){
+
+      try{
+        fieldList.forEach(key =>{
+          let IdToHighlight = document.getElementById(`ylabel-${clickedDTXCID}-${key}`);
+          IdToHighlight.setAttribute("fill", "red");
+          IdToHighlight.style.fontWeight = "bold";
+          })}
+      catch(error){return}  
+
   }
+}
 }
 
 updateData("Structure_total_norm")
