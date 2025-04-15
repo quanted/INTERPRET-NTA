@@ -1227,9 +1227,8 @@ function loadData(data){
     
     let wordsList = categoryName.split("_");
     let catName = wordsList[0];
-
-
     var categoryValue = d.srcElement.__data__.data[catName + "_COUNT_COLLAPSED"];
+
     tooltipBarMeta
         .html(labelName + ": " + categoryValue)
         .style("opacity", 1)
@@ -1727,7 +1726,7 @@ function makeExportButton(){
 
       exportButton.attr("onmouseover", "document.getElementById('export-button-rect').setAttribute('fill', '#3d4e634d')")
       exportButton.attr("onmouseout", "document.getElementById('export-button-rect').setAttribute('fill', '#DBE4F0')")
-      document.getElementById('tripod-export-button').addEventListener('click', function(event) {window.gridAPI.exportDataAsCsv()});
+      document.getElementById('tripod-export-button').addEventListener('click', function(event) {window.gridAPI.exportDataAsCsv({fileName:"candidate_ranking_grid_data.csv"})});
 }  
 makeExportButton()
 
