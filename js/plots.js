@@ -24,7 +24,6 @@ async function parseCSV(filePath) {
 
   // Remove rows with no feature ID
   const cleaned_result = result.filter(feature => feature['Feature ID'] != "")
-
   return cleaned_result;
 }
 
@@ -43,11 +42,11 @@ function sortData(data, category = null) {
     else{return []}
 
   const headers_norm = [] //contains normalized headers (not including total norm)
-  headers.forEach((key) => {if (key.includes("norm") && !key.includes("total")) {headers_norm.push(key);}});
+  headers.forEach((key) => {if (key.includes("NORM") && !key.includes("TOTAL")) {headers_norm.push(key);}});
 
   let itemToRemove = []
   for (let i = 0; i < data.length; i++) { 
-    if (data[i]['Structure_total_norm'] == 0){itemToRemove.push(data[i]);}
+    if (data[i]['STRUCTURE_TOTAL_NORM'] == 0){itemToRemove.push(data[i]);}
     
     for (let j = 0; j < headers_norm.length; j++){
       const currentHeader = headers_norm[j];
@@ -67,23 +66,23 @@ function sortData(data, category = null) {
 function cleanData(data, keysToKeep) {
   const keysToNum = [
     "Feature ID",
-    "Structure_Sources",
-    "Structure_Patents",
-    "Structure_Articles",
-    "Structure_PubMed Record Count",
+    "SOURCE_COUNT_COLLAPSED",
+    "PATENT_COUNT_COLLAPSED",
+    "LITERATURE_COUNT_COLLAPSED",
+    "PUBMED_COUNT_COLLAPSED",
     "Structure_AMOS methods count",
     "Structure_AMOS fact sheets count",
     "Structure_AMOS spectra count",
     "Structure_Presence in water lists count",
-    "Structure_Sources_norm",
-    "Structure_Patents_norm",
-    "Structure_Articles_norm",
-    "Structure_PubMed Record Count_norm",
+    "SOURCE_COUNT_COLLAPSED_NORM",
+    "PATENT_COUNT_COLLAPSED_NORM",
+    "LITERATURE_COUNT_COLLAPSED_NORM",
+    "PUBMED_COUNT_COLLAPSED_NORM",
     "Structure_AMOS methods count_norm",
     "Structure_AMOS fact sheets count_norm",
     "Structure_AMOS spectra count_norm",
     "Structure_Presence in water lists count_norm",
-    "Structure_total_norm",
+    "STRUCTURE_TOTAL_NORM",
     "MS2 quotient score", 
     "Median blanksub mean feature abundance",
     "Final Occurrence Percentage", 
@@ -182,24 +181,24 @@ function getTop5Rows(arr, categoryField, valueField) {
 
   let usefulKeys = [
     "Feature ID",
-    "DTXCID",
-    "Structure_Sources",
-    "Structure_Patents",
-    "Structure_Articles",
-    "Structure_PubMed Record Count",
+    "DTXCID_INDIVIDUAL_COMPONENT",
+    "SOURCE_COUNT_COLLAPSED",
+    "PATENT_COUNT_COLLAPSED",
+    "LITERATURE_COUNT_COLLAPSED",
+    "PUBMED_COUNT_COLLAPSED",
     "Structure_AMOS methods count",
     "Structure_AMOS fact sheets count",
     "Structure_AMOS spectra count",
     "Structure_Presence in water lists count",
-    "Structure_Sources_norm",
-    "Structure_Patents_norm",
-    "Structure_Articles_norm",
-    "Structure_PubMed Record Count_norm",
+    "SOURCE_COUNT_COLLAPSED_NORM",
+    "PATENT_COUNT_COLLAPSED_NORM",
+    "LITERATURE_COUNT_COLLAPSED_NORM",
+    "PUBMED_COUNT_COLLAPSED_NORM",
     "Structure_AMOS methods count_norm",
     "Structure_AMOS fact sheets count_norm",
     "Structure_AMOS spectra count_norm",
     "Structure_Presence in water lists count_norm",
-    "Structure_total_norm",
+    "STRUCTURE_TOTAL_NORM",
     "MS2 quotient score", 
     "Acute Mammalian Toxicity Oral_authority_mapped",
     "Acute Mammalian Toxicity Inhalation_authority_mapped",
@@ -405,7 +404,7 @@ async function generatePlots(filePath) {
 const fullData = await parseCSV(filePath)
 
 // Gets the dataset containing only the top 5 highest metadata rows. 
-const top5groups = getTop5Rows(fullData, 'Feature ID', 'Structure_total_norm');
+const top5groups = getTop5Rows(fullData, 'Feature ID', 'STRUCTURE_TOTAL_NORM');
 
 // Get a list of all unique features in the dataset, sorted from smallest to largest
 var uniqueFeatureList = [...new Set(fullData.map(item =>item['Feature ID']))]
@@ -456,7 +455,7 @@ function createTop5ToggleButton(){
 
       document.getElementById('tripod-chart-meta').innerHTML= ""
       document.getElementById('tripod-title').innerHTML= ""
-      updateData("Structure_total_norm")
+      updateData("STRUCTURE_TOTAL_NORM")
       loadData(data)
 
       metaInput.checked = false;
@@ -486,7 +485,7 @@ function createTop5ToggleButton(){
 
       document.getElementById('tripod-chart-meta').innerHTML= ""
       document.getElementById('tripod-title').innerHTML= ""
-      updateData("Structure_total_norm")
+      updateData("STRUCTURE_TOTAL_NORM")
       loadData(data)
 
       metaInput.checked = false;
@@ -508,22 +507,6 @@ function createTop5ToggleButton(){
       }
     });
 }
-
-// function createExportButton(){
-//   const button = document.createElement('button')
-//     button.textContent = "Export grid data";
-//     button.id = 'tripod-exportDataButton';
-//     button.style.padding = '5px 10px';
-//     button.style.border = 'none';
-//     button.style.borderRadius = '5px';
-//     button.style.cursor = 'pointer';
-//     document.getElementById('tripod-infobox').appendChild(button);
-  
-//   button.addEventListener('click', function() {
-//     window.gridAPI.exportDataAsCsv()
-//     });
-// }
-// createExportButton()
 
 // function to shuttle between feature IDs. argument position = 'first', 'last', 'forward', 'back', or 'input'
 function goToPosition(event, position){
@@ -554,7 +537,7 @@ function goToPosition(event, position){
 
   document.getElementById('tripod-chart-meta').innerHTML= ""
   document.getElementById('tripod-title').innerHTML= ""
-  updateData("Structure_total_norm")
+  updateData("STRUCTURE_TOTAL_NORM")
   loadData(data)
 
   metaInput.checked = false;
@@ -709,26 +692,26 @@ xHazard = addXaxis(12, pre_space = 410)
 // Keys to keep for cleaning data
 const keysToKeep = [
     "Feature ID",
-    "DTXCID",
+    "DTXCID_INDIVIDUAL_COMPONENT",
     "Mass", 
     "Retention Time",
-    "Structure_Sources",
-    "Structure_Patents",
-    "Structure_Articles",
-    "Structure_PubMed Record Count",
+    "SOURCE_COUNT_COLLAPSED",
+    "PATENT_COUNT_COLLAPSED",
+    "LITERATURE_COUNT_COLLAPSED",
+    "PUBMED_COUNT_COLLAPSED",
     "Structure_AMOS methods count",
     "Structure_AMOS fact sheets count",
     "Structure_AMOS spectra count",
     "Structure_Presence in water lists count",
-    "Structure_Sources_norm",
-    "Structure_Patents_norm",
-    "Structure_Articles_norm",
-    "Structure_PubMed Record Count_norm",
+    "SOURCE_COUNT_COLLAPSED_NORM",
+    "PATENT_COUNT_COLLAPSED_NORM",
+    "LITERATURE_COUNT_COLLAPSED_NORM",
+    "PUBMED_COUNT_COLLAPSED_NORM",
     "Structure_AMOS methods count_norm",
     "Structure_AMOS fact sheets count_norm",
     "Structure_AMOS spectra count_norm",
     "Structure_Presence in water lists count_norm",
-    "Structure_total_norm", 
+    "STRUCTURE_TOTAL_NORM", 
     "Hazard Score", 
     "Hazard Completeness Score",
     "MS2 quotient score", 
@@ -777,24 +760,24 @@ const keysToKeep = [
   ];
 // Keys to keep for cleaning data further for sub-grouping on bar plot
 const subgroupKeys = [
-    "DTXCID",
-    "Structure_Sources",
-    "Structure_Patents",
-    "Structure_Articles",
-    "Structure_PubMed Record Count",
+    "DTXCID_INDIVIDUAL_COMPONENT",
+    "SOURCE_COUNT_COLLAPSED",
+    "PATENT_COUNT_COLLAPSED",
+    "LITERATURE_COUNT_COLLAPSED",
+    "PUBMED_COUNT_COLLAPSED",
     "Structure_AMOS methods count",
     "Structure_AMOS fact sheets count",
     "Structure_AMOS spectra count",
     "Structure_Presence in water lists count",
-    "Structure_Sources_norm",
-    "Structure_Patents_norm",
-    "Structure_Articles_norm",
-    "Structure_PubMed Record Count_norm",
+    "SOURCE_COUNT_COLLAPSED_NORM",
+    "PATENT_COUNT_COLLAPSED_NORM",
+    "LITERATURE_COUNT_COLLAPSED_NORM",
+    "PUBMED_COUNT_COLLAPSED_NORM",
     "Structure_AMOS methods count_norm",
     "Structure_AMOS fact sheets count_norm",
     "Structure_AMOS spectra count_norm",
     "Structure_Presence in water lists count_norm",
-    "Structure_total_norm", 
+    "STRUCTURE_TOTAL_NORM", 
     "Hazard Score", 
     "Hazard Completeness Score",
     "MS2 quotient score", 
@@ -830,11 +813,11 @@ function updateData (category){
   subGroupData = sortData(unsorted_subGroupData, category)
   numCandidatesRemoved = unsorted_subGroupData.length - subGroupData.length
   const subGroupHeaders = []; //includes all norm headers exept total norm
-  Object.entries(subGroupData[0]).forEach(([key]) => {if (key.includes("norm") && !key.includes("total")) {subGroupHeaders.push(key);}});
+  Object.entries(subGroupData[0]).forEach(([key]) => {if (key.includes("NORM") && !key.includes("TOTAL")) {subGroupHeaders.push(key);}});
 
   //Check status of the Top-5 toggle button
   if (showingTop5) {
-    subGroupData = sortData(unsorted_subGroupData, "Structure_total_norm").slice(0, 5);
+    subGroupData = sortData(unsorted_subGroupData, "STRUCTURE_TOTAL_NORM").slice(0, 5);
     subGroupData = sortData(subGroupData, category)
   } 
 
@@ -848,10 +831,10 @@ var keysToInclude = [
   "Structure_AMOS fact sheets count_norm", 
   "Structure_AMOS methods count_norm", 
   "Structure_AMOS spectra count_norm",
-  "Structure_PubMed Record Count_norm",
-  "Structure_Articles_norm", 
-  "Structure_Patents_norm",
-  "Structure_Sources_norm",
+  "PUBMED_COUNT_COLLAPSED_NORM",
+  "LITERATURE_COUNT_COLLAPSED_NORM", 
+  "PATENT_COUNT_COLLAPSED_NORM",
+  "SOURCE_COUNT_COLLAPSED_NORM",
   "Structure_Presence in water lists count_norm",
   ] 
 
@@ -860,10 +843,10 @@ var showKeys = [
   "Structure_AMOS fact sheets count_norm", 
   "Structure_AMOS methods count_norm", 
   "Structure_AMOS spectra count_norm",
-  "Structure_PubMed Record Count_norm",
-  "Structure_Articles_norm", 
-  "Structure_Patents_norm",
-  "Structure_Sources_norm",
+  "PUBMED_COUNT_COLLAPSED_NORM",
+  "LITERATURE_COUNT_COLLAPSED_NORM", 
+  "PATENT_COUNT_COLLAPSED_NORM",
+  "SOURCE_COUNT_COLLAPSED_NORM",
   "Structure_Presence in water lists count_norm",
   ] 
  
@@ -878,7 +861,7 @@ var yMS2 = null
 //Create y axis for all three plots
 function yAxisMeta(data){
   height = subGroupData.length * 30;
-  let Ygroups = data.map(d => (d.DTXCID))
+  let Ygroups = data.map(d => (d.DTXCID_INDIVIDUAL_COMPONENT))
   yMeta = d3.scaleBand() 
     .domain(Ygroups)
     .range([0, height])
@@ -906,7 +889,7 @@ function yAxisMeta(data){
 }
 function yAxisHazard(data){
   height = subGroupData.length * 30;
-  let Ygroups = data.map(d => (d.DTXCID))
+  let Ygroups = data.map(d => (d.DTXCID_INDIVIDUAL_COMPONENT))
   yHazard = d3.scaleBand() 
     .domain(Ygroups)
     .range([0, height])
@@ -934,7 +917,7 @@ function yAxisHazard(data){
 }
 function yAxisMS2(data){
   height = subGroupData.length * 30;
-  let Ygroups = data.map(d => (d.DTXCID))
+  let Ygroups = data.map(d => (d.DTXCID_INDIVIDUAL_COMPONENT))
   yMS2 = d3.scaleBand() 
     .domain(Ygroups)
     .range([0, height])
@@ -1049,7 +1032,7 @@ var ylabelClick = function(event){
 
 // Define function for bar click on metadata plot
 var barClickMeta = function(){
-  var DTXCIDname = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["data"]["DTXCID"]}-meta`).innerHTML
+  var DTXCIDname = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["data"]["DTXCID_INDIVIDUAL_COMPONENT"]}-meta`).innerHTML
   previousClickedDTXCID = clickedDTXCID
   clickedDTXCID = DTXCIDname
   imageDiv.removeChild(image)
@@ -1084,7 +1067,7 @@ var barClickMeta = function(){
 
 // Define function for bar click on MS2 and hazard plot
 var barClickMS2Hazard = function(){
-  var DTXCIDname = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["DTXCID"]}-MS2`).innerHTML
+  var DTXCIDname = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["DTXCID_INDIVIDUAL_COMPONENT"]}-MS2`).innerHTML
   previousClickedDTXCID = clickedDTXCID
   clickedDTXCID = DTXCIDname
   imageDiv.removeChild(image)
@@ -1247,10 +1230,10 @@ var legendClick = function(event, d, i) {
       "Structure_AMOS fact sheets count_norm", 
       "Structure_AMOS methods count_norm", 
       "Structure_AMOS spectra count_norm",
-      "Structure_PubMed Record Count_norm",
-      "Structure_Articles_norm", 
-      "Structure_Patents_norm",
-      "Structure_Sources_norm", 
+      "PUBMED_COUNT_COLLAPSED_NORM",
+      "LITERATURE_COUNT_COLLAPSED_NORM", 
+      "PATENT_COUNT_COLLAPSED_NORM",
+      "SOURCE_COUNT_COLLAPSED_NORM", 
       "Structure_Presence in water lists count_norm",
     ]
 
@@ -1373,42 +1356,58 @@ function loadData(data){
   // Hover functions for Metadata bars
   var mouseoverBarMeta = function(d) {
     var categoryName = d3.select(this.parentNode).datum().key;
+    let wordsList = categoryName.split("_");
+
     var labelName = null
     if (categoryName.includes("fact")){
       labelName = "AMOS Fact Sheets"
+      let catName = wordsList[1];
+      var categoryValue = d.srcElement.__data__.data["Structure_" +catName];
     }
     else if (categoryName.includes("methods")){
       labelName = "AMOS Methods"
+      let catName = wordsList[1];
+      var categoryValue = d.srcElement.__data__.data["Structure_" +catName];
     }
     else if (categoryName.includes("spectra")){
       labelName = "AMOS Spectra"
+      let catName = wordsList[1];
+      var categoryValue = d.srcElement.__data__.data["Structure_" +catName];
     }
-    else if (categoryName.includes("Articles")){
+    else if (categoryName.includes("LITERATURE")){
       labelName = "PubChem Articles"
+      let catName = wordsList[0];
+      var categoryValue = d.srcElement.__data__.data[catName + "_COUNT_COLLAPSED"];
     }
-    else if (categoryName.includes("Patents")){
+    else if (categoryName.includes("PATENT")){
       labelName = "PubChem Patents"
+      let catName = wordsList[0];
+      var categoryValue = d.srcElement.__data__.data[catName + "_COUNT_COLLAPSED"];
     }
     else if (categoryName.includes("water")){
       labelName = "Dashboard Water Lists"
+      let catName = wordsList[1];
+      var categoryValue = d.srcElement.__data__.data["Structure_" +catName];
     }
-    else if (categoryName.includes("PubMed")){
+    else if (categoryName.includes("PUBMED")){
       labelName = "PubMed Articles"
+      let catName = wordsList[0];
+      var categoryValue = d.srcElement.__data__.data[catName + "_COUNT_COLLAPSED"];
     }
-    else if (categoryName.includes("Sources")){
+    else if (categoryName.includes("SOURCE")){
       labelName = "PubChem Sources"
+      let catName = wordsList[0];
+      var categoryValue = d.srcElement.__data__.data[catName + "_COUNT_COLLAPSED"];
     }
-    
-    let wordsList = categoryName.split("_");
-    let catName = wordsList[1];
-    var categoryValue = d.srcElement.__data__.data["Structure_" +catName];
+
+
     tooltipBarMeta
         .html(labelName + ": " + categoryValue)
         .style("opacity", 1)
 
     // Make the corresponding y-axis label red
     fieldList.forEach(key =>{
-      let IdToHighlight = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["data"]["DTXCID"]}-${key}`);
+      let IdToHighlight = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["data"]["DTXCID_INDIVIDUAL_COMPONENT"]}-${key}`);
       IdToHighlight.setAttribute("fill", "#FF13F0");
       IdToHighlight.style.fontWeight = "bold";})
 
@@ -1423,14 +1422,14 @@ function loadData(data){
     tooltipBarMeta
       .style("display", "none");
 
-    if (clickedDTXCID != d3.select(this)._groups[0][0]["__data__"]["data"]["DTXCID"])
+    if (clickedDTXCID != d3.select(this)._groups[0][0]["__data__"]["data"]["DTXCID_INDIVIDUAL_COMPONENT"])
       {fieldList.forEach(key =>{
-        let IdToHighlight = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["data"]["DTXCID"]}-${key}`)
+        let IdToHighlight = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["data"]["DTXCID_INDIVIDUAL_COMPONENT"]}-${key}`)
         IdToHighlight.setAttribute("fill", "black");
         IdToHighlight.style.fontWeight = "normal";
     })} 
     else {fieldList.forEach(key =>{
-      let IdToHighlight = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["data"]["DTXCID"]}-${key}`)
+      let IdToHighlight = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["data"]["DTXCID_INDIVIDUAL_COMPONENT"]}-${key}`)
       IdToHighlight.setAttribute("fill", "red");
       IdToHighlight.style.fontWeight = "bold";
     })}  
@@ -1445,7 +1444,7 @@ function loadData(data){
 
     // Make the corresponding y-axis label red
     fieldList.forEach(key =>{
-      let IdToHighlight = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["DTXCID"]}-${key}`)
+      let IdToHighlight = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["DTXCID_INDIVIDUAL_COMPONENT"]}-${key}`)
       IdToHighlight.setAttribute("fill", "#FF13F0");
       IdToHighlight.style.fontWeight = "bold";
     })  
@@ -1464,14 +1463,14 @@ function loadData(data){
     .style("display", "none");  
 
   // Make the corresponding y-axis label black again
-  if (clickedDTXCID != d3.select(this)._groups[0][0]["__data__"]["DTXCID"])
+  if (clickedDTXCID != d3.select(this)._groups[0][0]["__data__"]["DTXCID_INDIVIDUAL_COMPONENT"])
     {fieldList.forEach(key =>{
-      let IdToHighlight = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["DTXCID"]}-${key}`)
+      let IdToHighlight = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["DTXCID_INDIVIDUAL_COMPONENT"]}-${key}`)
       IdToHighlight.setAttribute("fill", "black");
       IdToHighlight.style.fontWeight = "normal";
     })}  
   else {fieldList.forEach(key =>{
-    let IdToHighlight = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["DTXCID"]}-${key}`)
+    let IdToHighlight = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["DTXCID_INDIVIDUAL_COMPONENT"]}-${key}`)
     IdToHighlight.setAttribute("fill", "red");
     IdToHighlight.style.fontWeight = "bold";
     })}  
@@ -1487,7 +1486,7 @@ function loadData(data){
 
     // Make the corresponding y-axis label red
     fieldList.forEach(key =>{
-      let IdToHighlight = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["DTXCID"]}-${key}`)
+      let IdToHighlight = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["DTXCID_INDIVIDUAL_COMPONENT"]}-${key}`)
       IdToHighlight.setAttribute("fill", "#FF13F0");
       IdToHighlight.style.fontWeight = "bold";
     })  
@@ -1510,7 +1509,7 @@ showBarsMetadata = function(keys2Include, data){
   // enter a second time = loop subgroup per subgroup to add all rectangles
   .data(d => {return d})
   .join("rect")
-    .attr("y", d => yMeta(d.data.DTXCID))
+    .attr("y", d => yMeta(d.data.DTXCID_INDIVIDUAL_COMPONENT))
     .attr("x", d => xMeta(d[0]))
     .attr("transform", `translate(137, 20)`)
     .attr("width", d => xMeta(d[1]) - xMeta(d[0]))
@@ -1528,7 +1527,7 @@ showBarsHazard = function(data){
   .enter().append("rect").attr("fill", "red").attr("opacity", d => d["Hazard Completeness Score"])
   .attr("transform", `translate(137, 20)`)
   .attr("class", "hazard-bar")
-  .attr("y", d => yHazard(d.DTXCID))
+  .attr("y", d => yHazard(d.DTXCID_INDIVIDUAL_COMPONENT))
   .attr("x", 0)
   .attr("width", d => xHazard(d["Hazard Score"]))
   .attr("height", yHazard.bandwidth())
@@ -1545,7 +1544,7 @@ showBarsMS2 = function(data){
   .enter().append("rect").attr("fill", "#93AEC5")
   .attr("transform", `translate(137, 20)`)
   .attr("class", "MS2-bar")
-  .attr("y", d => yMS2(d.DTXCID))
+  .attr("y", d => yMS2(d.DTXCID_INDIVIDUAL_COMPONENT))
   .attr("x", 0)
   .attr("width", d => xMS2(d["MS2 quotient score"]))
   .attr("height", yMS2.bandwidth())
@@ -1718,10 +1717,10 @@ function makeLargeGrid(){
         cellRenderer: params => {
           try {
             var image = document.createElement('img');
-            image.src = structureImageURL + params.data.DTXCID
+            image.src = structureImageURL + params.data.DTXCID_INDIVIDUAL_COMPONENT
           
             image.style = "width:80px;height:80px;padding-top:2px;padding-bottom:2px;";
-            image.alt = `Structure image for ${params.data.DTXCID}`
+            image.alt = `Structure image for ${params.data.DTXCID_INDIVIDUAL_COMPONENT}`
             return image;
           } 
           catch (error) {
@@ -1732,24 +1731,24 @@ function makeLargeGrid(){
           }
         }
         },
-        {field: 'DTXCID', filter: 'agTextColumnFilter', floatingFilter: true, width: 120, sortingOrder: ['desc', 'asc', null], 
+        {headerName: "DTXCID", field: 'DTXCID_INDIVIDUAL_COMPONENT', filter: 'agTextColumnFilter', floatingFilter: true, width: 120, sortingOrder: ['desc', 'asc', null], 
           cellRenderer: params => {
-          return "<a href='" + comptoxURL + params.data.DTXCID + "' target='_blank'>" + params.data.DTXCID + "</a>"
+          return "<a href='" + comptoxURL + params.data.DTXCID_INDIVIDUAL_COMPONENT + "' target='_blank'>" + params.data.DTXCID_INDIVIDUAL_COMPONENT + "</a>"
           }
         },
       ]},
     {headerName: "Metadata", 
       openByDefault: true,
       children: [
-        {columnGroupShow: "closed", headerName: "Metadata Score", field: 'Structure_total_norm', floatingFilter: true, filter: 'agNumberColumnFilter', width: 200, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Metadata Score", field: 'Structure_total_norm', floatingFilter: true, filter: 'agNumberColumnFilter', width: 140, sortingOrder: ['desc', 'asc', null]},
+        {columnGroupShow: "closed", headerName: "Metadata Score", field: 'STRUCTURE_TOTAL_NORM', floatingFilter: true, filter: 'agNumberColumnFilter', width: 200, sortingOrder: ['desc', 'asc', null]},
+        {columnGroupShow: "open", headerName: "Metadata Score", field: 'STRUCTURE_TOTAL_NORM', floatingFilter: true, filter: 'agNumberColumnFilter', width: 140, sortingOrder: ['desc', 'asc', null]},
         {columnGroupShow: "open", headerName: "AMOS Fact Sheets", field: 'Structure_AMOS fact sheets count', floatingFilter: true, filter: 'agNumberColumnFilter', width: 150, sortingOrder: ['desc', 'asc', null]},
         {columnGroupShow: "open", headerName: "AMOS Methods", field: 'Structure_AMOS methods count', floatingFilter: true, filter: 'agNumberColumnFilter', width: 130, sortingOrder: ['desc', 'asc', null]},
         {columnGroupShow: "open", headerName: "AMOS Spectra", field: 'Structure_AMOS spectra count', floatingFilter: true, filter: 'agNumberColumnFilter', width: 130, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "PubMed Articles", field: 'Structure_PubMed Record Count', floatingFilter: true, filter: 'agNumberColumnFilter', width: 150, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "PubChem Articles", field: 'Structure_Articles', floatingFilter: true, filter: 'agNumberColumnFilter', width: 150, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "PubChem Patents", field: 'Structure_Patents', floatingFilter: true, filter: 'agNumberColumnFilter', width: 150, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "PubChem Sources", field: 'Structure_Sources', floatingFilter: true, filter: 'agNumberColumnFilter', width: 150, sortingOrder: ['desc', 'asc', null]},
+        {columnGroupShow: "open", headerName: "PubMed Articles", field: 'PUBMED_COUNT_COLLAPSED', floatingFilter: true, filter: 'agNumberColumnFilter', width: 150, sortingOrder: ['desc', 'asc', null]},
+        {columnGroupShow: "open", headerName: "PubChem Articles", field: 'LITERATURE_COUNT_COLLAPSED', floatingFilter: true, filter: 'agNumberColumnFilter', width: 150, sortingOrder: ['desc', 'asc', null]},
+        {columnGroupShow: "open", headerName: "PubChem Patents", field: 'PATENT_COUNT_COLLAPSED', floatingFilter: true, filter: 'agNumberColumnFilter', width: 150, sortingOrder: ['desc', 'asc', null]},
+        {columnGroupShow: "open", headerName: "PubChem Sources", field: 'SOURCE_COUNT_COLLAPSED', floatingFilter: true, filter: 'agNumberColumnFilter', width: 150, sortingOrder: ['desc', 'asc', null]},
         {columnGroupShow: "open", headerName: "Dashboard Water Lists", field: 'Structure_Presence in water lists count', floatingFilter: true, filter: 'agNumberColumnFilter', width: 175, sortingOrder: ['desc', 'asc', null]},
       ]
     },   
@@ -1826,7 +1825,7 @@ function makeLargeGrid(){
 
         document.getElementById('tripod-chart-meta').innerHTML= ""
         document.getElementById('tripod-title').innerHTML= ""
-        updateData("Structure_total_norm")
+        updateData("STRUCTURE_TOTAL_NORM")
         loadData(data)
 
         metaInput.checked = false;
@@ -1850,7 +1849,7 @@ function makeLargeGrid(){
         hazardInput.checked = true
 
         // highlight the selected DTXCID on the y-axis labels
-        var DTXCIDname = event.data["DTXCID"]
+        var DTXCIDname = event.data["DTXCID_INDIVIDUAL_COMPONENT"]
         previousClickedDTXCID = clickedDTXCID
         clickedDTXCID = DTXCIDname
         imageDiv.removeChild(image)
@@ -1912,7 +1911,7 @@ function makeLargeGrid(){
     createYToolTip()
 
     document.getElementById('tripod-title').innerHTML= ""
-    updateData("Structure_total_norm")
+    updateData("STRUCTURE_TOTAL_NORM")
     loadData(data)
   
     // highlight the y-axis label after sorting. 
@@ -1972,7 +1971,7 @@ function makeLargeGrid(){
 }
 }
 
-updateData("Structure_total_norm")
+updateData("STRUCTURE_TOTAL_NORM")
 makeLegend()
 
 makeLargeGrid()
