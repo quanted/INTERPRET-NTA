@@ -1794,7 +1794,6 @@ function makeLargeGrid(){
       },    
     {headerName: "MS2", children: [{headerName: 'MS2 Score', 
       field: 'MS2 quotient score', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], 
-      // cellRenderer: params => {params.value === "" ? "N/A" : params.value}, 
       valueGetter: (params) => {return params.data?.["MS2 quotient score"] ?? 'N/A'}
     }]},
     {headerName: "Hazard", 
@@ -2043,7 +2042,7 @@ function makeExportButton(){
 
       exportButton.attr("onmouseover", "document.getElementById('export-button-rect').setAttribute('fill', '#3d4e634d')")
       exportButton.attr("onmouseout", "document.getElementById('export-button-rect').setAttribute('fill', '#DBE4F0')")
-      document.getElementById('tripod-export-button').addEventListener('click', function(event) {window.gridAPI.exportDataAsCsv({fileName:"candidate_ranking_grid_data.csv"})});
+      document.getElementById('tripod-export-button').addEventListener('click', function(event) {window.gridAPI.exportDataAsCsv({fileName:"candidate_ranking_grid_data.csv", skipColumnGroupHeaders:"true"})});
 }  
 makeExportButton()
 
