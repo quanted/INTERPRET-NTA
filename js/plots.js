@@ -1984,7 +1984,7 @@ hazardInput.checked = true
 }
 
 // ======= CALL MAIN FUNCTION ==================================================================================================
-const dataPath = "./data/data_with_MS2.csv";
-// const dataPath = "./data/data_without_MS2.csv";
+// const dataPath = "./data/data_with_MS2.csv";
+const dataPath = "./data/data_without_MS2.csv";
 generatePlots(dataPath);
 
