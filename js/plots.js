@@ -1,5 +1,5 @@
 // ======= UTILITY FUNCTIONS ====================================================================================================
-// testing git
+
 // Returns the contents of the input CSV. Values in the last column have a "\r" added to the end, so make sure the last column is not needed for the vis
 async function parseCSV(filePath) {
   
@@ -66,15 +66,16 @@ function sortData(data, category = null) {
 function cleanData(data, keysToKeep) {
   const keysToNum = [
     "Feature ID",
-    "PATENT_COUNT_COLLAPSED",
-    "PATENT_COUNT_COLLAPSED_NORM",
-    "LITERATURE_COUNT_COLLAPSED",
-    "LITERATURE_COUNT_COLLAPSED_NORM",
-    "PUBMED_COUNT_COLLAPSED",
-    "PUBMED_COUNT_COLLAPSED_NORM",
     "SOURCE_COUNT_COLLAPSED",
+    "PATENT_COUNT_COLLAPSED",
+    "LITERATURE_COUNT_COLLAPSED",
+    "PUBMED_COUNT_COLLAPSED",
     "SOURCE_COUNT_COLLAPSED_NORM",
+    "PATENT_COUNT_COLLAPSED_NORM",
+    "LITERATURE_COUNT_COLLAPSED_NORM",
+    "PUBMED_COUNT_COLLAPSED_NORM",
     "STRUCTURE_TOTAL_NORM",
+    "MS2 quotient score", 
     "Acute Mammalian Toxicity Oral_authority_mapped",
     "Acute Mammalian Toxicity Inhalation_authority_mapped",
     "Acute Mammalian Toxicity Dermal_authority_mapped",
@@ -171,15 +172,16 @@ function getTop5Rows(arr, categoryField, valueField) {
   let usefulKeys = [
     "Feature ID",
     "DTXCID_INDIVIDUAL_COMPONENT",
-    "PATENT_COUNT_COLLAPSED",
-    "PATENT_COUNT_COLLAPSED_NORM",
-    "LITERATURE_COUNT_COLLAPSED",
-    "LITERATURE_COUNT_COLLAPSED_NORM",
-    "PUBMED_COUNT_COLLAPSED",
-    "PUBMED_COUNT_COLLAPSED_NORM",
     "SOURCE_COUNT_COLLAPSED",
+    "PATENT_COUNT_COLLAPSED",
+    "LITERATURE_COUNT_COLLAPSED",
+    "PUBMED_COUNT_COLLAPSED",
     "SOURCE_COUNT_COLLAPSED_NORM",
+    "PATENT_COUNT_COLLAPSED_NORM",
+    "LITERATURE_COUNT_COLLAPSED_NORM",
+    "PUBMED_COUNT_COLLAPSED_NORM",
     "STRUCTURE_TOTAL_NORM",
+    "MS2 quotient score", 
     "Acute Mammalian Toxicity Oral_authority_mapped",
     "Acute Mammalian Toxicity Inhalation_authority_mapped",
     "Acute Mammalian Toxicity Dermal_authority_mapped",
@@ -355,20 +357,6 @@ infoBox.append("text")
 const comptoxURL = "https://ccte-res-ncd.epa.gov/dashboard/dsstoxdb/results?search="
 const structureImageURL = "https://comptox.epa.gov/dashboard-api/ccdapp1/chemical-files/image/by-dtxcid/"
 
-// create checkboxes for selecting plots to load
-var metaInput = document.createElement("input")
-  metaInput.setAttribute('type', 'checkbox')
-  metaInput.setAttribute('id', 'input-meta')
-  document.getElementById("tripod-main-container").appendChild(metaInput)
-var hazardInput = document.createElement("input")
-  hazardInput.setAttribute('type', 'checkbox')
-  hazardInput.setAttribute('id', 'input-hazard')
-  document.getElementById("tripod-main-container").appendChild(hazardInput)
-
-// Initially, all plots are selected to sort 
-metaInput.checked = true
-hazardInput.checked = true
-
 addHazardLegend()
 addInfoBox()
 
@@ -377,6 +365,41 @@ async function generatePlots(filePath) {
 
 // Import the input csv
 const fullData = await parseCSV(filePath)
+
+// Check if the dataset contains MS2 data
+const hasMS2 = Object.keys(fullData[0]).some(col => col.includes("MS2"))
+
+// create checkboxes for selecting plots to load
+var metaInput = document.createElement("input")
+  metaInput.setAttribute('type', 'checkbox')
+  metaInput.setAttribute('id', 'input-meta')
+  document.getElementById("tripod-main-container").appendChild(metaInput)
+metaInput.checked = true  
+
+var hazardInput = document.createElement("input")
+  hazardInput.setAttribute('type', 'checkbox')
+  hazardInput.setAttribute('id', 'input-hazard')
+  document.getElementById("tripod-main-container").appendChild(hazardInput)
+hazardInput.checked = true  
+
+if (hasMS2){  
+var MS2Input = document.createElement("input")
+  MS2Input.setAttribute('type', 'checkbox')
+  MS2Input.setAttribute('id', 'input-MS2')
+  document.getElementById("tripod-main-container").appendChild(MS2Input)
+MS2Input.checked = true
+}
+else{
+  const mySpan = document.createElement('span')
+  noMS2Text = document.createTextNode("No MS2 data found.")
+  mySpan.appendChild(noMS2Text)
+  document.getElementById("tripod-chart-MS2").appendChild(mySpan)
+  mySpan.style.position = "absolute"
+  mySpan.style.top = "200px"
+  mySpan.style.left = "190px"
+  mySpan.style.fontSize = '22px';
+}
+
 
 // Gets the dataset containing only the top 5 highest metadata rows. 
 const top5groups = getTop5Rows(fullData, 'Feature ID', 'STRUCTURE_TOTAL_NORM');
@@ -424,7 +447,7 @@ function createTop5ToggleButton(){
       makeLargeGrid()
       metaInput.checked = true;
       hazardInput.checked = false;
-      // MS2Input.checked = false;
+      if (hasMS2){MS2Input.checked = false;}
 
       document.getElementById('tripod-chart-meta').innerHTML= ""
       document.getElementById('tripod-title').innerHTML= ""
@@ -438,7 +461,16 @@ function createTop5ToggleButton(){
       updateData("Hazard Score")
       loadData(data)
 
+      if (hasMS2){
+      hazardInput.checked = false;
+      MS2Input.checked = true
+      document.getElementById('tripod-chart-MS2').innerHTML= ""
+      document.getElementById('tripod-title').innerHTML= ""
+      updateData("MS2 quotient score")
+      loadData(data)}
+
       metaInput.checked = true
+      hazardInput.checked = true
     }
     else {
       button.textContent = "Showing Top 5 metadata candidates. Click to show all";
@@ -446,6 +478,7 @@ function createTop5ToggleButton(){
       makeLargeGrid()
       metaInput.checked = true;
       hazardInput.checked = false;
+      if (hasMS2){MS2Input.checked = false;}
 
       document.getElementById('tripod-chart-meta').innerHTML= ""
       document.getElementById('tripod-title').innerHTML= ""
@@ -459,7 +492,16 @@ function createTop5ToggleButton(){
       updateData("Hazard Score")
       loadData(data)
 
+      if (hasMS2){
+      hazardInput.checked = false;
+      MS2Input.checked = true
+      document.getElementById('tripod-chart-MS2').innerHTML= ""
+      document.getElementById('tripod-title').innerHTML= ""
+      updateData("MS2 quotient score")
+      loadData(data)}
+
       metaInput.checked = true
+      hazardInput.checked = true
       }
     });
 }
@@ -489,6 +531,7 @@ function goToPosition(event, position){
 
   metaInput.checked = true;
   hazardInput.checked = false;
+  if (hasMS2){MS2Input.checked = false;}
 
   document.getElementById('tripod-chart-meta').innerHTML= ""
   document.getElementById('tripod-title').innerHTML= ""
@@ -501,8 +544,17 @@ function goToPosition(event, position){
   document.getElementById('tripod-title').innerHTML= ""
   updateData("Hazard Score")
   loadData(data)
+
+  if (hasMS2){
+  hazardInput.checked = false;
+  MS2Input.checked = true
+  document.getElementById('tripod-chart-MS2').innerHTML= ""
+  document.getElementById('tripod-title').innerHTML= ""
+  updateData("MS2 quotient score")
+  loadData(data)}
   
   metaInput.checked = true
+  hazardInput.checked = true
 
 }
 
@@ -611,15 +663,17 @@ function makeArrows(){
       button.addEventListener('click', function(event) {goToPosition(event, position="input")})
   }
   
+
 //Add the static X-axis to the visualization.
 var xMeta = null
 var xHazard = null
+var xMS2 = null
 function addXaxis(xMax, pre_space){
   //Create svg for x-axis
   const xAxisSvg = makeSvgElement(400, 20, 'tripod-xaxis', d3.select("#tripod-xaxis"));
   let x = d3.scaleLinear() 
     .domain([0, xMax])
-    .range([ 0, 420 ]);
+    .range([ 0, 360 ]);
 
   xlabel = xAxisSvg.append("g")
     .call(d3.axisBottom(x))
@@ -631,8 +685,17 @@ function addXaxis(xMax, pre_space){
 
 makeArrows()  
 createTop5ToggleButton() 
-xMeta = addXaxis(4, pre_space = 136)
-xHazard = addXaxis(12, pre_space = 336)
+
+if (hasMS2) {
+  xMS2 = addXaxis(1, pre_space = 136)
+  xMeta = addXaxis(4, pre_space = 274)
+  xHazard = addXaxis(12, pre_space = 410)
+}
+else {
+  xMeta = addXaxis(4, pre_space = 674)
+  xHazard = addXaxis(12, pre_space = 810)
+}
+
 
 // Keys to keep for cleaning data
 const keysToKeep = [
@@ -640,20 +703,18 @@ const keysToKeep = [
     "DTXCID_INDIVIDUAL_COMPONENT",
     "Mass", 
     "Retention Time",
-    "PATENT_COUNT_COLLAPSED",
-    "PATENT_COUNT_COLLAPSED_NORM",
-    "LITERATURE_COUNT_COLLAPSED",
-    "LITERATURE_COUNT_COLLAPSED_NORM",
-    "PUBMED_COUNT_COLLAPSED",
-    "PUBMED_COUNT_COLLAPSED_NORM",
     "SOURCE_COUNT_COLLAPSED",
+    "PATENT_COUNT_COLLAPSED",
+    "LITERATURE_COUNT_COLLAPSED",
+    "PUBMED_COUNT_COLLAPSED",
     "SOURCE_COUNT_COLLAPSED_NORM",
-    "STRUCTURE_TOTAL_NORM",
+    "PATENT_COUNT_COLLAPSED_NORM",
+    "LITERATURE_COUNT_COLLAPSED_NORM",
+    "PUBMED_COUNT_COLLAPSED_NORM",
+    "STRUCTURE_TOTAL_NORM", 
     "Hazard Score", 
     "Hazard Completeness Score",
-    // "MS2 quotient score", 
-    // "Median blanksub mean feature abundance",
-    // "Final Occurrence Percentage", 
+    "MS2 quotient score", 
     "Acute Mammalian Toxicity Oral_authority_mapped",
     "Acute Mammalian Toxicity Inhalation_authority_mapped",
     "Acute Mammalian Toxicity Dermal_authority_mapped",
@@ -698,18 +759,18 @@ const keysToKeep = [
 // Keys to keep for cleaning data further for sub-grouping on bar plot
 const subgroupKeys = [
     "DTXCID_INDIVIDUAL_COMPONENT",
-    "PATENT_COUNT_COLLAPSED",
-    "PATENT_COUNT_COLLAPSED_NORM",
-    "LITERATURE_COUNT_COLLAPSED",
-    "LITERATURE_COUNT_COLLAPSED_NORM",
-    "PUBMED_COUNT_COLLAPSED",
-    "PUBMED_COUNT_COLLAPSED_NORM",
     "SOURCE_COUNT_COLLAPSED",
+    "PATENT_COUNT_COLLAPSED",
+    "LITERATURE_COUNT_COLLAPSED",
+    "PUBMED_COUNT_COLLAPSED",
     "SOURCE_COUNT_COLLAPSED_NORM",
-    "STRUCTURE_TOTAL_NORM",
+    "PATENT_COUNT_COLLAPSED_NORM",
+    "LITERATURE_COUNT_COLLAPSED_NORM",
+    "PUBMED_COUNT_COLLAPSED_NORM",
+    "STRUCTURE_TOTAL_NORM", 
     "Hazard Score", 
     "Hazard Completeness Score",
-    // "MS2 quotient score", 
+    "MS2 quotient score", 
   ];
 
 //Instantiate variables
@@ -721,8 +782,12 @@ var numCandidatesRemoved = null
 var height = null
 var svgMeta = null
 var svgHazard = null
+var svgMS2 = null
 
+
+// const fieldList = ["meta", "hazard", "MS2"]
 const fieldList = ["meta", "hazard"]
+if (hasMS2) {fieldList.push("MS2")}
 
 //Updates sorts, and cleans the data displayed in the plots 
 function updateData (category){
@@ -732,8 +797,6 @@ function updateData (category){
   mass = Number(data[0]["Mass"]).toFixed(4)
   RT = Number(data[0]["Retention Time"]).toFixed(2)
 
-  var meta_bars = null
-  var hazard_bars = null
   unsorted_subGroupData = cleanData(data, subgroupKeys);
   totalCandidates = unsorted_subGroupData.length
   subGroupData = sortData(unsorted_subGroupData, category)
@@ -755,7 +818,7 @@ function updateData (category){
 //Keys to include in the metadata legend
 var keysToInclude = [ 
   "PUBMED_COUNT_COLLAPSED_NORM",
-  "LITERATURE_COUNT_COLLAPSED_NORM",
+  "LITERATURE_COUNT_COLLAPSED_NORM", 
   "PATENT_COUNT_COLLAPSED_NORM",
   "SOURCE_COUNT_COLLAPSED_NORM",
   ] 
@@ -763,7 +826,7 @@ var keysToInclude = [
 //Metadata fields to include in the metadata plot
 var showKeys = [ 
   "PUBMED_COUNT_COLLAPSED_NORM",
-  "LITERATURE_COUNT_COLLAPSED_NORM",
+  "LITERATURE_COUNT_COLLAPSED_NORM", 
   "PATENT_COUNT_COLLAPSED_NORM",
   "SOURCE_COUNT_COLLAPSED_NORM",
   ] 
@@ -773,6 +836,7 @@ var removedKeys = []
 
 var yMeta = null
 var yHazard = null
+var yMS2 = null
 
 
 //Create y axis for all three plots
@@ -827,6 +891,34 @@ function yAxisHazard(data){
   }
 
   ylabelHazard.selectAll("g")
+    .on("mouseover", mouseoverYlabel)
+    .on("mousemove", mousemoveYlabel)
+    .on("mouseleave", mouseleaveYlabel)
+    .on("click", ylabelClick)
+}
+function yAxisMS2(data){
+  height = subGroupData.length * 30;
+  let Ygroups = data.map(d => (d.DTXCID_INDIVIDUAL_COMPONENT))
+  yMS2 = d3.scaleBand() 
+    .domain(Ygroups)
+    .range([0, height])
+    .padding([0.2]);
+
+  ylabelMS2 = svgMS2.append("g")
+    .attr("transform", `translate(135, 20)`)
+    .call(d3.axisLeft(yMS2).tickSizeOuter(0))
+    .attr("id", "tripod-ylabel-MS2")
+
+  d3.select("#tripod-ylabel-MS2").selectAll("text").attr("id", function(d, i){return "ylabel-" + Ygroups[i] + "-MS2"})
+
+  // Extend the y-axis line if there are less than 23 candidates for the selected feature ID. 
+  if (Ygroups.length < 23) {
+    ylabelMS2.append('path')
+      .attr("stroke", "black")
+      .attr("d", "M0.5,0.5V1290.5")
+  }
+
+  ylabelMS2.selectAll("g")
     .on("mouseover", mouseoverYlabel)
     .on("mousemove", mousemoveYlabel)
     .on("mouseleave", mouseleaveYlabel)
@@ -989,6 +1081,7 @@ var barClickMS2Hazard = function(){
   })}
 }
 
+
 var imageY = null
 var imageDivY = null
 
@@ -1062,7 +1155,7 @@ function makeLegend(){
   legendsvg.attr('id', 'metadata-legendbox')
   var legend = legendsvg.append('g')
     .attr('class', 'metadata-legend')
-    .attr('transform', 'translate(-25, 65)')
+    .attr('transform', 'translate(105, 65)')
     .selectAll('rect')
     .data(legendData)
     .enter()
@@ -1102,6 +1195,11 @@ function reSortData(data, headers) {
     yAxisHazard(newData)
   }
 
+  if (hasMS2 && MS2Input.checked){
+    document.getElementById("tripod-ylabel-MS2").remove()
+    yAxisMS2(newData)
+  }
+
   return newData;
 }
 
@@ -1111,9 +1209,9 @@ var legendClick = function(event, d, i) {
 
     const allKeys = [ 
       "PUBMED_COUNT_COLLAPSED_NORM",
-      "LITERATURE_COUNT_COLLAPSED_NORM",
+      "LITERATURE_COUNT_COLLAPSED_NORM", 
       "PATENT_COUNT_COLLAPSED_NORM",
-      "SOURCE_COUNT_COLLAPSED_NORM",
+      "SOURCE_COUNT_COLLAPSED_NORM", 
     ]
 
     if (currentDecoration === "line-through") { //If the text is already lined out....
@@ -1121,6 +1219,7 @@ var legendClick = function(event, d, i) {
       document.getElementById("metadata-square" + currentIndex).style.fill = stackColors[currentIndex] //white-out the color square
       showKeys.push(allKeys[currentIndex]); //Add the selected metadata to the showKeys list
       removedKeys = removedKeys.filter(item => item !== allKeys[currentIndex]); //removed the key from the removed keys list
+
       showKeys.sort((a, b) => {return allKeys.indexOf(a) - allKeys.indexOf(b);})
       
       let newData = reSortData(subGroupData, showKeys); //re-sort the data and y-axis
@@ -1133,6 +1232,11 @@ var legendClick = function(event, d, i) {
       if (hazardInput.checked){
         hazard_bars.remove(); //remove all bars
         showBarsHazard(newData)
+      }
+    
+      if (hasMS2 && MS2Input.checked){
+        MS2_bars.remove()
+        showBarsMS2(newData)
       }
     }
     else {
@@ -1151,11 +1255,17 @@ var legendClick = function(event, d, i) {
         hazard_bars.remove(); //remove all bars
         showBarsHazard(newData)
       }
+    
+      if (hasMS2 && MS2Input.checked){
+        MS2_bars.remove()
+        showBarsMS2(newData)
+      }
     }
     
   }
 
-  legendText = ["PubMed Articles", "PubChem Articles", "PubChem Patents", "PubChem Sources"]
+// legendText = ["AMOS Fact Sheets","AMOS Methods","AMOS Spectra","PubChem Articles","PubChem Patents","Dashboard Water Lists", "PubMed Articles", "PubChem Sources" ]
+legendText = ["PubMed Articles", "PubChem Articles", "PubChem Patents", "PubChem Sources"]
 
   legend.select('g')
   .data(legendData)
@@ -1196,7 +1306,20 @@ function loadData(data){
     .style("position", "fixed")
     .attr("id", "tripod-tooltipbar");
 
-  var tooltipBarHazard = d3.select("#tripod-chart-hazard")
+    if (hasMS2){
+    var tooltipBarMS2 = d3.select("#tripod-chart-MS2")
+    .append("div")
+    .style("display", "none")
+    .attr("class", "tooltip")
+    .style("background-color", "white")
+    .style("border", "solid")
+    .style("border-width", "1px")
+    .style("border-radius", "5px")
+    .style("padding", "8px")
+    .style("position", "fixed")
+    .attr("id", "tripod-tooltipbar");}
+
+    var tooltipBarHazard = d3.select("#tripod-chart-hazard")
     .append("div")
     .style("display", "none")
     .attr("class", "tooltip")
@@ -1211,23 +1334,30 @@ function loadData(data){
   // Hover functions for Metadata bars
   var mouseoverBarMeta = function(d) {
     var categoryName = d3.select(this.parentNode).datum().key;
+    let wordsList = categoryName.split("_");
+
     var labelName = null
-    if (categoryName.includes("PATENT")){
-      labelName = "PubChem Patents"
-    }
-    else if (categoryName.includes("LITERATURE")){
+    if (categoryName.includes("LITERATURE")){
       labelName = "PubChem Articles"
+      let catName = wordsList[0];
+      var categoryValue = d.srcElement.__data__.data[catName + "_COUNT_COLLAPSED"];
+    }
+    else if (categoryName.includes("PATENT")){
+      labelName = "PubChem Patents"
+      let catName = wordsList[0];
+      var categoryValue = d.srcElement.__data__.data[catName + "_COUNT_COLLAPSED"];
     }
     else if (categoryName.includes("PUBMED")){
       labelName = "PubMed Articles"
+      let catName = wordsList[0];
+      var categoryValue = d.srcElement.__data__.data[catName + "_COUNT_COLLAPSED"];
     }
     else if (categoryName.includes("SOURCE")){
       labelName = "PubChem Sources"
+      let catName = wordsList[0];
+      var categoryValue = d.srcElement.__data__.data[catName + "_COUNT_COLLAPSED"];
     }
-    
-    let wordsList = categoryName.split("_");
-    let catName = wordsList[0];
-    var categoryValue = d.srcElement.__data__.data[catName + "_COUNT_COLLAPSED"];
+
 
     tooltipBarMeta
         .html(labelName + ": " + categoryValue)
@@ -1263,9 +1393,31 @@ function loadData(data){
     })}  
   }
 
+  // Hover functions for MS2 bars
+  var mouseoverBarMS2 = function(d) {
+    var MS2Score = d3.select(this)._groups[0][0]["__data__"]["MS2 quotient score"];
+    tooltipBarMS2
+      .html("MS2 Score: " + MS2Score)
+      .style("opacity", 1)
+
+    // Make the corresponding y-axis label red
+    fieldList.forEach(key =>{
+      let IdToHighlight = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["DTXCID_INDIVIDUAL_COMPONENT"]}-${key}`)
+      IdToHighlight.setAttribute("fill", "#FF13F0");
+      IdToHighlight.style.fontWeight = "bold";
+    })  
+
+  }
+  var mousemoveBarMS2 = function(event) {
+    tooltipBarMS2
+      .style("left", (event.pageX + 20) + "px")
+      .style("top", (event.pageY - window.pageYOffset + 10) + "px")
+      .style("display", "block")
+  }
   var mouseleaveBarMS2Hazard = function() {
-  tooltipBarHazard
-    .style("display", "none");
+    
+    if (hasMS2){tooltipBarMS2.style("display", "none");}
+    tooltipBarHazard.style("display", "none");  
 
   // Make the corresponding y-axis label black again
   if (clickedDTXCID != d3.select(this)._groups[0][0]["__data__"]["DTXCID_INDIVIDUAL_COMPONENT"])
@@ -1342,6 +1494,23 @@ showBarsHazard = function(data){
   .on("click", barClickMS2Hazard);
 
 }
+showBarsMS2 = function(data){
+  svgMS2.append("g");
+  MS2_bars = svgMS2.selectAll(".bar")
+  .data(data)
+  .enter().append("rect").attr("fill", "#93AEC5")
+  .attr("transform", `translate(137, 20)`)
+  .attr("class", "MS2-bar")
+  .attr("y", d => yMS2(d.DTXCID_INDIVIDUAL_COMPONENT))
+  .attr("x", 0)
+  .attr("width", d => xMS2(d["MS2 quotient score"]))
+  .attr("height", yMS2.bandwidth())
+  .on("mouseover", mouseoverBarMS2)
+  .on("mousemove", mousemoveBarMS2)
+  .on("mouseleave", mouseleaveBarMS2Hazard)
+  .on("click", barClickMS2Hazard);
+
+}
 
 if (metaInput.checked){
   svgMeta = makeSvgElement(width, height + 20, "tripod-vis", d3.select("#tripod-chart-meta"));
@@ -1355,12 +1524,17 @@ if (hazardInput.checked){
   showBarsHazard(subGroupData);
 }
 
+if (hasMS2 && MS2Input.checked){
+  svgMS2 = makeSvgElement(width, height + 20, "tripod-vis", d3.select("#tripod-chart-MS2"));
+  yAxisMS2(subGroupData);
+  showBarsMS2(subGroupData);
+}
 
 // Add the title
 function makeTitle(){
   const titlesvg = makeSvgElement(width, 20, 'tripod-title', d3.select("#tripod-title"));
   titlesvg.append("rect") 
-    .attr("width", 1200)
+    .attr("width", 1610)
     .attr("height", 50)
     .attr("rx", 10)
     .attr("x", -19)
@@ -1371,7 +1545,7 @@ function makeTitle(){
 
   // Sub-title
   titlesvg.append("rect") 
-    .attr("width", 600)
+    .attr("width", 537)
     .attr("height", 40)
     .attr("x", -19)
     .attr("y", 30)
@@ -1385,26 +1559,51 @@ function makeTitle(){
     .attr("text-anchor", "left")
     .style("font-size", "22px")
     .style("font-weight", "bold")
-    .text(`Metadata`);  
+    .text(`MS2`);  
 
+  if (hasMS2){
   titlesvg.append("text")  
-    .attr("x", 410)
+    .attr("x", 346)
     .attr("y", 55)
     .attr("text-anchor", "left")
     .style("font-size", "20px")
-    .text(`Select plot to sort`); 
+    .text(`Select plot to sort`); }
 
   titlesvg.append("rect") 
-    .attr("width", 600)
+    .attr("width", 536)
     .attr("height", 40)
-    .attr("x", 581)
+    .attr("x", 519)
     .attr("y", 30)
     .attr("fill", "#DBE4F0") //light blue grey
     .style("stroke", "#808080")
     .attr("z-index", -1)
 
   titlesvg.append("text")  
-    .attr("x", 600)
+    .attr("x", 535)
+    .attr("y", 60)
+    .attr("text-anchor", "left")
+    .style("font-size", "22px")
+    .style("font-weight", "bold")
+    .text(`Metadata`);  
+
+  titlesvg.append("text")  
+    .attr("x", 880)
+    .attr("y", 55)
+    .attr("text-anchor", "left")
+    .style("font-size", "20px")
+    .text(`Select plot to sort`); 
+
+  titlesvg.append("rect") 
+    .attr("width", 536)
+    .attr("height", 40)
+    .attr("x", 1055)
+    .attr("y", 30)
+    .attr("fill", "#DBE4F0") //light blue grey
+    .style("stroke", "#808080")
+    .attr("z-index", -1)
+
+  titlesvg.append("text")  
+    .attr("x", 1070)
     .attr("y", 60)
     .attr("text-anchor", "left")
     .style("font-size", "22px")
@@ -1412,7 +1611,7 @@ function makeTitle(){
     .text(`Hazard`);  
 
   titlesvg.append("text")  
-    .attr("x", 1010)
+    .attr("x", 1418)
     .attr("y", 55)
     .attr("text-anchor", "left")
     .style("font-size", "20px")
@@ -1427,7 +1626,7 @@ function makeTitle(){
     .text(`Feature ${selectedFeature}`);  
 
   titlesvg.append("text")  
-    .attr("x", 600)
+    .attr("x", 670)
     .attr("y", 19)
     .attr("text-anchor", "left")
     .style("font-size", "20px")
@@ -1435,7 +1634,7 @@ function makeTitle(){
     .text(`${totalCandidates}`);  
 
   titlesvg.append("text")  
-    .attr("x", 850)
+    .attr("x", 920)
     .attr("y", 19)
     .attr("text-anchor", "left")
     .style("font-size", "20px")
@@ -1443,14 +1642,14 @@ function makeTitle(){
     .text(` ${numCandidatesRemoved}`); 
 
   titlesvg.append("text") 
-    .attr("x", 450)
+    .attr("x", 520)
     .attr("y", 18)
     .attr("text-anchor", "left")
     .style("font-size", "20px")
     .text(`# total candidates:          # removed (no metadata): `)  
 
   titlesvg.append("text") 
-    .attr("x", 168)
+    .attr("x", 200)
     .attr("y", 18)
     .attr("text-anchor", "left")
     .style("font-size", "20px")
@@ -1471,8 +1670,8 @@ function makeLargeGrid(){
   var columnDefs = [
     {headerName: "", 
       children: [
-        {field: 'Feature ID', filter: 'agNumberColumnFilter', floatingFilter: true, width: 90, sortingOrder: ['desc', 'asc', null]},
-        {field: 'Structure', autoHeight: true, width: 100,
+        {field: 'Feature ID', filter: 'agNumberColumnFilter', floatingFilter: true, width: 150, sortingOrder: ['desc', 'asc', null]},
+        {field: 'Structure', autoHeight: true, width: 150,
         cellRenderer: params => {
           try {
             var image = document.createElement('img');
@@ -1490,7 +1689,7 @@ function makeLargeGrid(){
           }
         }
         },
-        {headerName: "DTXCID", field: 'DTXCID_INDIVIDUAL_COMPONENT', filter: 'agTextColumnFilter', floatingFilter: true, width: 150, sortingOrder: ['desc', 'asc', null],
+        {headerName: "DTXCID", field: 'DTXCID_INDIVIDUAL_COMPONENT', filter: 'agTextColumnFilter', floatingFilter: true, width: 150, sortingOrder: ['desc', 'asc', null], 
           cellRenderer: params => {
           return "<a href='" + comptoxURL + params.data.DTXCID_INDIVIDUAL_COMPONENT + "' target='_blank'>" + params.data.DTXCID_INDIVIDUAL_COMPONENT + "</a>"
           }
@@ -1500,20 +1699,24 @@ function makeLargeGrid(){
       openByDefault: true,
       children: [
         {columnGroupShow: "closed", headerName: "Metadata Score", field: 'STRUCTURE_TOTAL_NORM', floatingFilter: true, filter: 'agNumberColumnFilter', width: 200, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Metadata Score", field: 'STRUCTURE_TOTAL_NORM', floatingFilter: true, filter: 'agNumberColumnFilter', width: 160, sortingOrder: ['desc', 'asc', null],},
-        {columnGroupShow: "open", headerName: "PubMed Articles", field: 'PUBMED_COUNT_COLLAPSED', floatingFilter: true, filter: 'agNumberColumnFilter', width: 160, sortingOrder: ['desc', 'asc', null],},
-
-        {columnGroupShow: "open", headerName: "PubChem Articles", field: 'LITERATURE_COUNT_COLLAPSED', floatingFilter: true, filter: 'agNumberColumnFilter', width: 160, sortingOrder: ['desc', 'asc', null],},
-        {columnGroupShow: "open", headerName: "PubChem Patents", field: 'PATENT_COUNT_COLLAPSED', floatingFilter: true, filter: 'agNumberColumnFilter', width: 160, sortingOrder: ['desc', 'asc', null],},
-        {columnGroupShow: "open", headerName: "PubChem Sources", field: 'SOURCE_COUNT_COLLAPSED', floatingFilter: true, filter: 'agNumberColumnFilter', width: 160, sortingOrder: ['desc', 'asc', null],},
+        {columnGroupShow: "open", headerName: "Metadata Score", field: 'STRUCTURE_TOTAL_NORM', floatingFilter: true, filter: 'agNumberColumnFilter', width: 150, sortingOrder: ['desc', 'asc', null]},
+        {columnGroupShow: "open", headerName: "PubMed Articles", field: 'PUBMED_COUNT_COLLAPSED', floatingFilter: true, filter: 'agNumberColumnFilter', width: 150, sortingOrder: ['desc', 'asc', null]},
+        {columnGroupShow: "open", headerName: "PubChem Articles", field: 'LITERATURE_COUNT_COLLAPSED', floatingFilter: true, filter: 'agNumberColumnFilter', width: 150, sortingOrder: ['desc', 'asc', null]},
+        {columnGroupShow: "open", headerName: "PubChem Patents", field: 'PATENT_COUNT_COLLAPSED', floatingFilter: true, filter: 'agNumberColumnFilter', width: 150, sortingOrder: ['desc', 'asc', null]},
+        {columnGroupShow: "open", headerName: "PubChem Sources", field: 'SOURCE_COUNT_COLLAPSED', floatingFilter: true, filter: 'agNumberColumnFilter', width: 150, sortingOrder: ['desc', 'asc', null]},
       ]
     },   
+    {headerName: "MS2", children: [{headerName: 'MS2 Score', 
+      field: 'MS2 quotient score', floatingFilter: true, filter: 'agNumberColumnFilter', width: 150, sortingOrder: ['desc', 'asc', null], 
+      // cellRenderer: params => {params.value === "" ? "N/A" : params.value}, 
+      valueGetter: (params) => {return params.data?.["MS2 quotient score"] ?? 'N/A'}
+    }]},
     {headerName: "Hazard", 
       children: [
-        {columnGroupShow: "closed", headerName: "Hazard Score", field: 'Hazard Score', floatingFilter: true, filter: 'agNumberColumnFilter', width: 160, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "closed", headerName: "Hazard Completeness Score", field: 'Hazard Completeness Score', floatingFilter: true, filter: 'agNumberColumnFilter', width: 230, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Hazard Score", field: 'Hazard Score', floatingFilter: true, filter: 'agNumberColumnFilter', width: 160, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Hazard Completeness Score", field: 'Hazard Completeness Score', floatingFilter: true, filter: 'agNumberColumnFilter', width: 230, sortingOrder: ['desc', 'asc', null]},
+        {columnGroupShow: "closed", headerName: "Hazard Score", field: 'Hazard Score', floatingFilter: true, filter: 'agNumberColumnFilter', width: 150, sortingOrder: ['desc', 'asc', null]},
+        {columnGroupShow: "closed", headerName: "Hazard Completeness Score", field: 'Hazard Completeness Score', floatingFilter: true, filter: 'agNumberColumnFilter', width: 210, sortingOrder: ['desc', 'asc', null]},
+        {columnGroupShow: "open", headerName: "Hazard Score", field: 'Hazard Score', floatingFilter: true, filter: 'agNumberColumnFilter', width: 210, sortingOrder: ['desc', 'asc', null]},
+        {columnGroupShow: "open", headerName: "Hazard Completeness Score", field: 'Hazard Completeness Score', floatingFilter: true, filter: 'agNumberColumnFilter', width: 200, sortingOrder: ['desc', 'asc', null]},
         {columnGroupShow: "open", headerName: "Acute Aquatic Toxicity Authority", field: 'Acute Aquatic Toxicity_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
         {columnGroupShow: "open", headerName: "Acute Aquatic Toxicity Score", field: 'Acute Aquatic Toxicity_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
         {columnGroupShow: "open", headerName: "Acute Mammalian Toxicity Dermal Authority", field: 'Acute Mammalian Toxicity Dermal_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
@@ -1576,6 +1779,7 @@ function makeLargeGrid(){
 
         metaInput.checked = true;
         hazardInput.checked = false;
+        if (hasMS2){MS2Input.checked = false;}
 
         document.getElementById('tripod-chart-meta').innerHTML= ""
         document.getElementById('tripod-title').innerHTML= ""
@@ -1588,12 +1792,22 @@ function makeLargeGrid(){
         document.getElementById('tripod-title').innerHTML= ""
         updateData("Hazard Score")
         loadData(data)
+
+        if (hasMS2){
+        hazardInput.checked = false;
+        MS2Input.checked = true
+        document.getElementById('tripod-chart-MS2').innerHTML= ""
+        document.getElementById('tripod-title').innerHTML= ""
+        updateData("MS2 quotient score")
+        loadData(data)}
         
         document.getElementById("tripod-yAxisToolTip").remove()
         createYToolTip()
 
         metaInput.checked = true
+        hazardInput.checked = true
 
+        // highlight the selected DTXCID on the y-axis labels
         var DTXCIDname = event.data["DTXCID_INDIVIDUAL_COMPONENT"]
         previousClickedDTXCID = clickedDTXCID
         clickedDTXCID = DTXCIDname
@@ -1613,6 +1827,7 @@ function makeLargeGrid(){
             let IdToHighlight = document.getElementById(`ylabel-${DTXCIDname}-${key}`);
             IdToHighlight.setAttribute("fill", "red");
             IdToHighlight.style.fontWeight = "bold";
+          
             if (previousClickedDTXCID)  {
               try {
                 let IdToHighlight2 = document.getElementById(`ylabel-${previousClickedDTXCID}-${key}`);
@@ -1620,6 +1835,16 @@ function makeLargeGrid(){
                 IdToHighlight2.style.fontWeight = "normal";}
               catch{return}}
         })} 
+
+        // // When a row is clicked, the AG grid will filter to only show that feature. Perhaps add this later? Not sure if it would be useful. 
+        // window.gridAPI.setFilterModel({
+        //   "Feature ID": {
+        //     type: "equals", 
+        //     filter: event.data["Feature ID"]
+        //   }
+        // })
+        // window.gridAPI.onFilterChanged()
+
 
       }
     },
@@ -1639,6 +1864,7 @@ function makeLargeGrid(){
 
     if (metaInput.checked){document.getElementById('tripod-chart-meta').innerHTML= ""}
     if (hazardInput.checked){document.getElementById('tripod-chart-hazard').innerHTML= ""}
+    if (hasMS2 && MS2Input.checked){document.getElementById('tripod-chart-MS2').innerHTML= ""}
 
     document.getElementById("tripod-yAxisToolTip").remove()
     createYToolTip()
@@ -1646,7 +1872,7 @@ function makeLargeGrid(){
     document.getElementById('tripod-title').innerHTML= ""
     updateData("STRUCTURE_TOTAL_NORM")
     loadData(data)
-
+  
     // highlight the y-axis label after sorting. 
     if (clickedDTXCID){
       fieldList.forEach(key =>{
@@ -1667,13 +1893,16 @@ function makeLargeGrid(){
     dataFromGrid = sortData(dataset);
 
     let originallyCheckedMeta = metaInput.checked
+    if (hasMS2){let originallyCheckedMS2 = MS2Input.checked}
     let originallyCheckedHazard = hazardInput.checked
 
     metaInput.checked = true
+    if (hasMS2){MS2Input.checked = true}
     hazardInput.checked = true
 
     document.getElementById('tripod-chart-meta').innerHTML= ""
     document.getElementById('tripod-chart-hazard').innerHTML= ""
+    if (hasMS2){document.getElementById('tripod-chart-MS2').innerHTML= ""}
 
     document.getElementById("tripod-yAxisToolTip").remove()
     createYToolTip()
@@ -1683,10 +1912,12 @@ function makeLargeGrid(){
     loadData(data)
 
     metaInput.checked = originallyCheckedMeta
+    if (hasMS2){MS2Input.checked = originallyCheckedMS2}
     hazardInput.checked = originallyCheckedHazard
 
     // highlight the y-axis label after filtering. 
     if (clickedDTXCID){
+
       try{
         fieldList.forEach(key =>{
           let IdToHighlight = document.getElementById(`ylabel-${clickedDTXCID}-${key}`);
@@ -1694,9 +1925,9 @@ function makeLargeGrid(){
           IdToHighlight.style.fontWeight = "bold";
           })}
       catch(error){return}  
-  
-    }
+
   }
+}
 }
 
 updateData("STRUCTURE_TOTAL_NORM")
@@ -1733,10 +1964,19 @@ makeExportButton()
 loadData(data)
 
 metaInput.checked = false
+if (hasMS2){MS2Input.checked = false}
 document.getElementById('tripod-chart-hazard').innerHTML= ""
 document.getElementById('tripod-title').innerHTML= ""
 updateData("Hazard Score")
 loadData()
+
+if(hasMS2){
+hazardInput.checked = false
+MS2Input.checked = true
+document.getElementById('tripod-chart-MS2').innerHTML= ""
+document.getElementById('tripod-title').innerHTML= ""
+updateData("MS2 quotient score")
+loadData()}
 
 metaInput.checked = true
 hazardInput.checked = true
@@ -1744,6 +1984,7 @@ hazardInput.checked = true
 }
 
 // ======= CALL MAIN FUNCTION ==================================================================================================
-// const dataPath = "./data/WW2DW_Data_Analysis_file_5_adjusted.csv";
-const dataPath = "./data/WW2DW_Data_Analysis_file_5_adjusted.csv";
+const dataPath = "./data/data_with_MS2.csv";
+// const dataPath = "./data/data_without_MS2.csv";
 generatePlots(dataPath);
+
