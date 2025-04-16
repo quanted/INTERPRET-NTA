@@ -375,25 +375,6 @@ infoBox.append("text")
 const comptoxURL = "https://ccte-res-ncd.epa.gov/dashboard/dsstoxdb/results?search="
 const structureImageURL = "https://comptox.epa.gov/dashboard-api/ccdapp1/chemical-files/image/by-dtxcid/"
 
-// create checkboxes for selecting plots to load
-var metaInput = document.createElement("input")
-  metaInput.setAttribute('type', 'checkbox')
-  metaInput.setAttribute('id', 'input-meta')
-  document.getElementById("tripod-main-container").appendChild(metaInput)
-var hazardInput = document.createElement("input")
-  hazardInput.setAttribute('type', 'checkbox')
-  hazardInput.setAttribute('id', 'input-hazard')
-  document.getElementById("tripod-main-container").appendChild(hazardInput)
-var MS2Input = document.createElement("input")
-  MS2Input.setAttribute('type', 'checkbox')
-  MS2Input.setAttribute('id', 'input-MS2')
-  document.getElementById("tripod-main-container").appendChild(MS2Input)
-
-// Initially, all plots are selected to sort 
-metaInput.checked = true
-hazardInput.checked = true
-MS2Input.checked = true
-
 addHazardLegend()
 addInfoBox()
 
@@ -402,6 +383,41 @@ async function generatePlots(filePath) {
 
 // Import the input csv
 const fullData = await parseCSV(filePath)
+
+// Check if the dataset contains MS2 data
+const hasMS2 = Object.keys(fullData[0]).some(col => col.includes("MS2"))
+
+// create checkboxes for selecting plots to load
+var metaInput = document.createElement("input")
+  metaInput.setAttribute('type', 'checkbox')
+  metaInput.setAttribute('id', 'input-meta')
+  document.getElementById("tripod-main-container").appendChild(metaInput)
+metaInput.checked = true  
+
+var hazardInput = document.createElement("input")
+  hazardInput.setAttribute('type', 'checkbox')
+  hazardInput.setAttribute('id', 'input-hazard')
+  document.getElementById("tripod-main-container").appendChild(hazardInput)
+hazardInput.checked = true  
+
+if (hasMS2){  
+var MS2Input = document.createElement("input")
+  MS2Input.setAttribute('type', 'checkbox')
+  MS2Input.setAttribute('id', 'input-MS2')
+  document.getElementById("tripod-main-container").appendChild(MS2Input)
+MS2Input.checked = true
+}
+else{
+  const mySpan = document.createElement('span')
+  noMS2Text = document.createTextNode("No MS2 data found.")
+  mySpan.appendChild(noMS2Text)
+  document.getElementById("tripod-chart-MS2").appendChild(mySpan)
+  mySpan.style.position = "absolute"
+  mySpan.style.top = "200px"
+  mySpan.style.left = "190px"
+  mySpan.style.fontSize = '22px';
+}
+
 
 // Gets the dataset containing only the top 5 highest metadata rows. 
 const top5groups = getTop5Rows(fullData, 'Feature ID', 'STRUCTURE_TOTAL_NORM');
@@ -451,7 +467,7 @@ function createTop5ToggleButton(){
       makeLargeGrid()
       metaInput.checked = true;
       hazardInput.checked = false;
-      MS2Input.checked = false;
+      if (hasMS2){MS2Input.checked = false;}
 
       document.getElementById('tripod-chart-meta').innerHTML= ""
       document.getElementById('tripod-title').innerHTML= ""
@@ -465,12 +481,13 @@ function createTop5ToggleButton(){
       updateData("Hazard Score")
       loadData(data)
 
+      if (hasMS2){
       hazardInput.checked = false;
       MS2Input.checked = true
       document.getElementById('tripod-chart-MS2').innerHTML= ""
       document.getElementById('tripod-title').innerHTML= ""
       updateData("MS2 quotient score")
-      loadData(data)
+      loadData(data)}
 
       metaInput.checked = true
       hazardInput.checked = true
@@ -481,7 +498,7 @@ function createTop5ToggleButton(){
       makeLargeGrid()
       metaInput.checked = true;
       hazardInput.checked = false;
-      MS2Input.checked = false;
+      if (hasMS2){MS2Input.checked = false;}
 
       document.getElementById('tripod-chart-meta').innerHTML= ""
       document.getElementById('tripod-title').innerHTML= ""
@@ -495,12 +512,13 @@ function createTop5ToggleButton(){
       updateData("Hazard Score")
       loadData(data)
 
+      if (hasMS2){
       hazardInput.checked = false;
       MS2Input.checked = true
       document.getElementById('tripod-chart-MS2').innerHTML= ""
       document.getElementById('tripod-title').innerHTML= ""
       updateData("MS2 quotient score")
-      loadData(data)
+      loadData(data)}
 
       metaInput.checked = true
       hazardInput.checked = true
@@ -533,7 +551,7 @@ function goToPosition(event, position){
 
   metaInput.checked = true;
   hazardInput.checked = false;
-  MS2Input.checked = false;
+  if (hasMS2){MS2Input.checked = false;}
 
   document.getElementById('tripod-chart-meta').innerHTML= ""
   document.getElementById('tripod-title').innerHTML= ""
@@ -547,12 +565,13 @@ function goToPosition(event, position){
   updateData("Hazard Score")
   loadData(data)
 
+  if (hasMS2){
   hazardInput.checked = false;
   MS2Input.checked = true
   document.getElementById('tripod-chart-MS2').innerHTML= ""
   document.getElementById('tripod-title').innerHTML= ""
   updateData("MS2 quotient score")
-  loadData(data)
+  loadData(data)}
   
   metaInput.checked = true
   hazardInput.checked = true
@@ -668,6 +687,7 @@ function makeArrows(){
 //Add the static X-axis to the visualization.
 var xMeta = null
 var xHazard = null
+var xMS2 = null
 function addXaxis(xMax, pre_space){
   //Create svg for x-axis
   const xAxisSvg = makeSvgElement(400, 20, 'tripod-xaxis', d3.select("#tripod-xaxis"));
@@ -685,9 +705,17 @@ function addXaxis(xMax, pre_space){
 
 makeArrows()  
 createTop5ToggleButton() 
-xMeta = addXaxis(8, pre_space = 136)
-xMS2 = addXaxis(1, pre_space = 274)
-xHazard = addXaxis(12, pre_space = 410)
+
+if (hasMS2) {
+  xMS2 = addXaxis(1, pre_space = 136)
+  xMeta = addXaxis(8, pre_space = 274)
+  xHazard = addXaxis(12, pre_space = 410)
+}
+else {
+  xMeta = addXaxis(8, pre_space = 674)
+  xHazard = addXaxis(12, pre_space = 810)
+}
+
 
 // Keys to keep for cleaning data
 const keysToKeep = [
@@ -794,7 +822,10 @@ var svgMeta = null
 var svgHazard = null
 var svgMS2 = null
 
-const fieldList = ["meta", "hazard", "MS2"]
+
+// const fieldList = ["meta", "hazard", "MS2"]
+const fieldList = ["meta", "hazard"]
+if (hasMS2) {fieldList.push("MS2")}
 
 //Updates sorts, and cleans the data displayed in the plots 
 function updateData (category){
@@ -806,8 +837,6 @@ function updateData (category){
   abundance = Math.round(data[0]["Median blanksub mean feature abundance"])
   occ_percentage = Number(data[0]["Final Occurrence Percentage"])
 
-  var meta_bars = null
-  var hazard_bars = null
   unsorted_subGroupData = cleanData(data, subgroupKeys);
   totalCandidates = unsorted_subGroupData.length
   subGroupData = sortData(unsorted_subGroupData, category)
@@ -1067,7 +1096,7 @@ var barClickMeta = function(){
 
 // Define function for bar click on MS2 and hazard plot
 var barClickMS2Hazard = function(){
-  var DTXCIDname = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["DTXCID_INDIVIDUAL_COMPONENT"]}-MS2`).innerHTML
+  var DTXCIDname = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["DTXCID_INDIVIDUAL_COMPONENT"]}-hazard`).innerHTML
   previousClickedDTXCID = clickedDTXCID
   clickedDTXCID = DTXCIDname
   imageDiv.removeChild(image)
@@ -1214,7 +1243,7 @@ function reSortData(data, headers) {
     yAxisHazard(newData)
   }
 
-  if (MS2Input.checked){
+  if (hasMS2 && MS2Input.checked){
     document.getElementById("tripod-ylabel-MS2").remove()
     yAxisMS2(newData)
   }
@@ -1257,7 +1286,7 @@ var legendClick = function(event, d, i) {
         showBarsHazard(newData)
       }
     
-      if (MS2Input.checked){
+      if (hasMS2 && MS2Input.checked){
         MS2_bars.remove()
         showBarsMS2(newData)
       }
@@ -1279,7 +1308,7 @@ var legendClick = function(event, d, i) {
         showBarsHazard(newData)
       }
     
-      if (MS2Input.checked){
+      if (hasMS2 && MS2Input.checked){
         MS2_bars.remove()
         showBarsMS2(newData)
       }
@@ -1287,8 +1316,7 @@ var legendClick = function(event, d, i) {
     
   }
 
-// legendText = ["AMOS Fact Sheets","AMOS Methods","AMOS Spectra","PubChem Articles","PubChem Patents","Dashboard Water Lists", "PubMed Articles", "PubChem Sources" ]
-legendText = ["AMOS Fact Sheets","AMOS Methods","AMOS Spectra","PubMed Articles", "PubChem Articles","PubChem Patents","PubChem Sources", "Dashboard Water Lists"]
+  legendText = ["AMOS Fact Sheets","AMOS Methods","AMOS Spectra","PubMed Articles", "PubChem Articles","PubChem Patents","PubChem Sources", "Dashboard Water Lists"]
 
   legend.select('g')
   .data(legendData)
@@ -1329,6 +1357,7 @@ function loadData(data){
     .style("position", "fixed")
     .attr("id", "tripod-tooltipbar");
 
+    if (hasMS2){
     var tooltipBarMS2 = d3.select("#tripod-chart-MS2")
     .append("div")
     .style("display", "none")
@@ -1339,7 +1368,7 @@ function loadData(data){
     .style("border-radius", "5px")
     .style("padding", "8px")
     .style("position", "fixed")
-    .attr("id", "tripod-tooltipbar");
+    .attr("id", "tripod-tooltipbar");}
 
     var tooltipBarHazard = d3.select("#tripod-chart-hazard")
     .append("div")
@@ -1457,10 +1486,9 @@ function loadData(data){
       .style("display", "block")
   }
   var mouseleaveBarMS2Hazard = function() {
-  tooltipBarMS2
-    .style("display", "none");
-    tooltipBarHazard
-    .style("display", "none");  
+    
+    if (hasMS2){tooltipBarMS2.style("display", "none");}
+    tooltipBarHazard.style("display", "none");  
 
   // Make the corresponding y-axis label black again
   if (clickedDTXCID != d3.select(this)._groups[0][0]["__data__"]["DTXCID_INDIVIDUAL_COMPONENT"])
@@ -1567,7 +1595,7 @@ if (hazardInput.checked){
   showBarsHazard(subGroupData);
 }
 
-if (MS2Input.checked){
+if (hasMS2 && MS2Input.checked){
   svgMS2 = makeSvgElement(width, height + 20, "tripod-vis", d3.select("#tripod-chart-MS2"));
   yAxisMS2(subGroupData);
   showBarsMS2(subGroupData);
@@ -1602,14 +1630,15 @@ function makeTitle(){
     .attr("text-anchor", "left")
     .style("font-size", "22px")
     .style("font-weight", "bold")
-    .text(`Metadata`);  
+    .text(`MS2`);  
 
+  if (hasMS2){
   titlesvg.append("text")  
     .attr("x", 346)
     .attr("y", 55)
     .attr("text-anchor", "left")
     .style("font-size", "20px")
-    .text(`Select plot to sort`); 
+    .text(`Select plot to sort`); }
 
   titlesvg.append("rect") 
     .attr("width", 536)
@@ -1626,7 +1655,7 @@ function makeTitle(){
     .attr("text-anchor", "left")
     .style("font-size", "22px")
     .style("font-weight", "bold")
-    .text(`MS2`);  
+    .text(`Metadata`);  
 
   titlesvg.append("text")  
     .attr("x", 880)
@@ -1695,7 +1724,7 @@ function makeTitle(){
     .attr("y", 18)
     .attr("text-anchor", "left")
     .style("font-size", "20px")
-    .text(`Mass: ${mass}    RT: ${RT}          Median Abundance: ${abundance}    Occurrence: ${occ_percentage}%`)  
+    .text(`Mass: ${mass}    RT: ${RT}          Median Abundance: ${abundance}    Occurrence: ${occ_percentage}%`) 
 
 }
 makeTitle()    
@@ -1737,22 +1766,26 @@ function makeLargeGrid(){
           }
         },
       ]},
-    {headerName: "Metadata", 
-      openByDefault: true,
-      children: [
-        {columnGroupShow: "closed", headerName: "Metadata Score", field: 'STRUCTURE_TOTAL_NORM', floatingFilter: true, filter: 'agNumberColumnFilter', width: 200, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Metadata Score", field: 'STRUCTURE_TOTAL_NORM', floatingFilter: true, filter: 'agNumberColumnFilter', width: 140, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "AMOS Fact Sheets", field: 'Structure_AMOS fact sheets count', floatingFilter: true, filter: 'agNumberColumnFilter', width: 150, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "AMOS Methods", field: 'Structure_AMOS methods count', floatingFilter: true, filter: 'agNumberColumnFilter', width: 130, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "AMOS Spectra", field: 'Structure_AMOS spectra count', floatingFilter: true, filter: 'agNumberColumnFilter', width: 130, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "PubMed Articles", field: 'PUBMED_COUNT_COLLAPSED', floatingFilter: true, filter: 'agNumberColumnFilter', width: 150, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "PubChem Articles", field: 'LITERATURE_COUNT_COLLAPSED', floatingFilter: true, filter: 'agNumberColumnFilter', width: 150, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "PubChem Patents", field: 'PATENT_COUNT_COLLAPSED', floatingFilter: true, filter: 'agNumberColumnFilter', width: 150, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "PubChem Sources", field: 'SOURCE_COUNT_COLLAPSED', floatingFilter: true, filter: 'agNumberColumnFilter', width: 150, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Dashboard Water Lists", field: 'Structure_Presence in water lists count', floatingFilter: true, filter: 'agNumberColumnFilter', width: 175, sortingOrder: ['desc', 'asc', null]},
-      ]
-    },   
-    {headerName: "MS2", children: [{headerName: 'MS2 Score', field: 'MS2 quotient score', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]}]},
+      {headerName: "Metadata", 
+        openByDefault: true,
+        children: [
+          {columnGroupShow: "closed", headerName: "Metadata Score", field: 'STRUCTURE_TOTAL_NORM', floatingFilter: true, filter: 'agNumberColumnFilter', width: 200, sortingOrder: ['desc', 'asc', null]},
+          {columnGroupShow: "open", headerName: "Metadata Score", field: 'STRUCTURE_TOTAL_NORM', floatingFilter: true, filter: 'agNumberColumnFilter', width: 140, sortingOrder: ['desc', 'asc', null]},
+          {columnGroupShow: "open", headerName: "AMOS Fact Sheets", field: 'Structure_AMOS fact sheets count', floatingFilter: true, filter: 'agNumberColumnFilter', width: 150, sortingOrder: ['desc', 'asc', null]},
+          {columnGroupShow: "open", headerName: "AMOS Methods", field: 'Structure_AMOS methods count', floatingFilter: true, filter: 'agNumberColumnFilter', width: 130, sortingOrder: ['desc', 'asc', null]},
+          {columnGroupShow: "open", headerName: "AMOS Spectra", field: 'Structure_AMOS spectra count', floatingFilter: true, filter: 'agNumberColumnFilter', width: 130, sortingOrder: ['desc', 'asc', null]},
+          {columnGroupShow: "open", headerName: "PubMed Articles", field: 'PUBMED_COUNT_COLLAPSED', floatingFilter: true, filter: 'agNumberColumnFilter', width: 150, sortingOrder: ['desc', 'asc', null]},
+          {columnGroupShow: "open", headerName: "PubChem Articles", field: 'LITERATURE_COUNT_COLLAPSED', floatingFilter: true, filter: 'agNumberColumnFilter', width: 150, sortingOrder: ['desc', 'asc', null]},
+          {columnGroupShow: "open", headerName: "PubChem Patents", field: 'PATENT_COUNT_COLLAPSED', floatingFilter: true, filter: 'agNumberColumnFilter', width: 150, sortingOrder: ['desc', 'asc', null]},
+          {columnGroupShow: "open", headerName: "PubChem Sources", field: 'SOURCE_COUNT_COLLAPSED', floatingFilter: true, filter: 'agNumberColumnFilter', width: 150, sortingOrder: ['desc', 'asc', null]},
+          {columnGroupShow: "open", headerName: "Dashboard Water Lists", field: 'Structure_Presence in water lists count', floatingFilter: true, filter: 'agNumberColumnFilter', width: 175, sortingOrder: ['desc', 'asc', null]},
+        ]
+      },    
+    {headerName: "MS2", children: [{headerName: 'MS2 Score', 
+      field: 'MS2 quotient score', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], 
+      // cellRenderer: params => {params.value === "" ? "N/A" : params.value}, 
+      valueGetter: (params) => {return params.data?.["MS2 quotient score"] ?? 'N/A'}
+    }]},
     {headerName: "Hazard", 
       children: [
         {columnGroupShow: "closed", headerName: "Hazard Score", field: 'Hazard Score', floatingFilter: true, filter: 'agNumberColumnFilter', width: 140, sortingOrder: ['desc', 'asc', null]},
@@ -1821,7 +1854,7 @@ function makeLargeGrid(){
 
         metaInput.checked = true;
         hazardInput.checked = false;
-        MS2Input.checked = false;
+        if (hasMS2){MS2Input.checked = false;}
 
         document.getElementById('tripod-chart-meta').innerHTML= ""
         document.getElementById('tripod-title').innerHTML= ""
@@ -1835,12 +1868,13 @@ function makeLargeGrid(){
         updateData("Hazard Score")
         loadData(data)
 
+        if (hasMS2){
         hazardInput.checked = false;
         MS2Input.checked = true
         document.getElementById('tripod-chart-MS2').innerHTML= ""
         document.getElementById('tripod-title').innerHTML= ""
         updateData("MS2 quotient score")
-        loadData(data)
+        loadData(data)}
         
         document.getElementById("tripod-yAxisToolTip").remove()
         createYToolTip()
@@ -1905,7 +1939,7 @@ function makeLargeGrid(){
 
     if (metaInput.checked){document.getElementById('tripod-chart-meta').innerHTML= ""}
     if (hazardInput.checked){document.getElementById('tripod-chart-hazard').innerHTML= ""}
-    if (MS2Input.checked){document.getElementById('tripod-chart-MS2').innerHTML= ""}
+    if (hasMS2 && MS2Input.checked){document.getElementById('tripod-chart-MS2').innerHTML= ""}
 
     document.getElementById("tripod-yAxisToolTip").remove()
     createYToolTip()
@@ -1934,16 +1968,16 @@ function makeLargeGrid(){
     dataFromGrid = sortData(dataset);
 
     let originallyCheckedMeta = metaInput.checked
-    let originallyCheckedMS2 = MS2Input.checked
+    if (hasMS2){let originallyCheckedMS2 = MS2Input.checked}
     let originallyCheckedHazard = hazardInput.checked
 
     metaInput.checked = true
-    MS2Input.checked = true
+    if (hasMS2){MS2Input.checked = true}
     hazardInput.checked = true
 
     document.getElementById('tripod-chart-meta').innerHTML= ""
     document.getElementById('tripod-chart-hazard').innerHTML= ""
-    document.getElementById('tripod-chart-MS2').innerHTML= ""
+    if (hasMS2){document.getElementById('tripod-chart-MS2').innerHTML= ""}
 
     document.getElementById("tripod-yAxisToolTip").remove()
     createYToolTip()
@@ -1953,7 +1987,7 @@ function makeLargeGrid(){
     loadData(data)
 
     metaInput.checked = originallyCheckedMeta
-    MS2Input.checked = originallyCheckedMS2
+    if (hasMS2){MS2Input.checked = originallyCheckedMS2}
     hazardInput.checked = originallyCheckedHazard
 
     // highlight the y-axis label after filtering. 
@@ -2002,23 +2036,22 @@ function makeExportButton(){
 }  
 makeExportButton()
 
-
-
 loadData(data)
 
 metaInput.checked = false
-MS2Input.checked = false
+if (hasMS2){MS2Input.checked = false}
 document.getElementById('tripod-chart-hazard').innerHTML= ""
 document.getElementById('tripod-title').innerHTML= ""
 updateData("Hazard Score")
 loadData()
 
+if(hasMS2){
 hazardInput.checked = false
 MS2Input.checked = true
 document.getElementById('tripod-chart-MS2').innerHTML= ""
 document.getElementById('tripod-title').innerHTML= ""
 updateData("MS2 quotient score")
-loadData()
+loadData()}
 
 metaInput.checked = true
 hazardInput.checked = true
@@ -2026,6 +2059,7 @@ hazardInput.checked = true
 }
 
 // ======= CALL MAIN FUNCTION ==================================================================================================
-const dataPath = "./data/WW2DW_Data_Analysis_file_5.csv";
+// const dataPath = "./data/WW2DW_Data_Analysis_file_5_with_MS2.csv";
+const dataPath = "./data/WW2DW_Data_Analysis_file_5_without_MS2.csv";
 generatePlots(dataPath);
 

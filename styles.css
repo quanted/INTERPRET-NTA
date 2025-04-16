@@ -83,7 +83,7 @@
   cursor : pointer;
 }
 
-#tripod-chart-meta {
+#tripod-chart-MS2 {
     position: absolute; 
 }
 
@@ -92,7 +92,7 @@
   left: 1074px;
 }
 
-#tripod-chart-MS2 {
+#tripod-chart-meta {
   position: absolute;
   left: 537px;
 }
@@ -182,7 +182,7 @@
   cursor: pointer;
 }
 
-#input-meta{
+#input-MS2{
   position: absolute;
   left: 512px;
   top: 55px;
@@ -198,7 +198,7 @@
   z-index: 10;
 }
 
-#input-MS2{
+#input-meta{
   position: absolute;
   left: 1047px;
   top: 55px;
