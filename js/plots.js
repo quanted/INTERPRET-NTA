@@ -905,9 +905,13 @@ function yAxisMeta(data){
 
   // Extend the y-axis line if there are less than 23 candidates for the selected feature ID. 
   if (Ygroups.length < 23) {
+    ylabelMeta.select('path')
+    .attr("stroke", "white")
+
     ylabelMeta.append('path')
       .attr("stroke", "black")
       .attr("d", "M0.5,0.5V1290.5")
+      .attr("fill-opacity", "100%")
   }
 
   ylabelMeta.selectAll("g")
@@ -933,6 +937,10 @@ function yAxisHazard(data){
 
   // Extend the y-axis line if there are less than 23 candidates for the selected feature ID. 
   if (Ygroups.length < 23) {
+
+    ylabelHazard.select('path')
+    .attr("stroke", "white")
+
     ylabelHazard.append('path')
       .attr("stroke", "black")
       .attr("d", "M0.5,0.5V1290.5")
@@ -961,6 +969,9 @@ function yAxisMS2(data){
 
   // Extend the y-axis line if there are less than 23 candidates for the selected feature ID. 
   if (Ygroups.length < 23) {
+    ylabelMS2.select('path')
+    .attr("stroke", "white")
+
     ylabelMS2.append('path')
       .attr("stroke", "black")
       .attr("d", "M0.5,0.5V1290.5")
