@@ -276,6 +276,8 @@ function addHazardLegend(){
 }
 
 // Adds Information Box and Settings Container text 
+var structure_label_span = null
+var structure_label = null
 function addInfoBox() {
 // Add a border around the visualization options
 var settingsBorder = makeSvgElement(465, 420, "settings-border", d3.select("#tripod-settings-container"));
@@ -326,6 +328,15 @@ infoBox.append("rect")
   .attr("fill", "transparent")
   .style("stroke", "#a7b2c2")
   .attr("z-index", -1)
+
+  structure_label_span = document.createElement('span')
+    structure_label_span.style.position = "absolute"
+    structure_label_span.style.top = "592px"
+    structure_label_span.style.left = "20px"
+  structure_label = document.createTextNode(' ')
+    // structure_label.nodeValue = "try this"
+    structure_label_span.appendChild(structure_label)
+  document.getElementById("tripod-settings-container").appendChild(structure_label_span)
   
 }
 
@@ -963,7 +974,11 @@ var clickedDTXCID = null
 
 // Define function for y-label click 
 var ylabelClick = function(event){
+  
+
   var DTXCIDname = d3.select(this)['_groups'][0][0].querySelector('text').innerHTML
+  structure_label.nodeValue = DTXCIDname
+
   previousClickedDTXCID = clickedDTXCID
   clickedDTXCID = DTXCIDname
   imageDiv.removeChild(image)
@@ -999,6 +1014,7 @@ var ylabelClick = function(event){
 // Define function for bar click on metadata plot
 var barClickMeta = function(){
   var DTXCIDname = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["data"]["DTXCID_INDIVIDUAL_COMPONENT"]}-meta`).innerHTML
+  structure_label.nodeValue = DTXCIDname
   previousClickedDTXCID = clickedDTXCID
   clickedDTXCID = DTXCIDname
   imageDiv.removeChild(image)
@@ -1034,6 +1050,7 @@ var barClickMeta = function(){
 // Define function for bar click on MS2 and hazard plot
 var barClickMS2Hazard = function(){
   var DTXCIDname = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["DTXCID_INDIVIDUAL_COMPONENT"]}-hazard`).innerHTML
+  structure_label.nodeValue = DTXCIDname
   previousClickedDTXCID = clickedDTXCID
   clickedDTXCID = DTXCIDname
   imageDiv.removeChild(image)
