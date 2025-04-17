@@ -296,6 +296,7 @@ function addHazardLegend(){
 // Adds Information Box and Settings Container text 
 var structure_label_span = null
 var structure_label = null
+var more_features_as_text = ""
 function addInfoBox() {
 // Add a border around the visualization options
 var settingsBorder = makeSvgElement(465, 420, "settings-border", d3.select("#tripod-settings-container"));
@@ -349,11 +350,23 @@ infoBox.append("rect")
 
 structure_label_span = document.createElement('span')
   structure_label_span.style.position = "absolute"
-  structure_label_span.style.top = "592px"
-  structure_label_span.style.left = "20px"
-structure_label = document.createTextNode(' ')
+  structure_label_span.style.top = "455px"
+  structure_label_span.style.left = "21px"
+  structure_label = document.createTextNode(' ')
   structure_label_span.appendChild(structure_label)
   document.getElementById("tripod-settings-container").appendChild(structure_label_span)
+
+more_features_span = document.createElement('span')
+  more_features_span.style.position = "absolute"
+  more_features_span.style.zIndex = 1
+  more_features_span.style.top = "620px"
+  more_features_span.style.left = "21px"
+  more_features_span.style.maxWidth = "160px"
+  more_features_span.style.maxHeight = "160px"
+  more_features_span.style.overflowY = "auto"
+  more_features = document.createTextNode("")
+  more_features_span.appendChild(more_features)
+document.getElementById("tripod-settings-container").appendChild(more_features_span)
   
 }
 
@@ -1026,6 +1039,12 @@ var clickedDTXCID = null
 var ylabelClick = function(event){
   var DTXCIDname = d3.select(this)['_groups'][0][0].querySelector('text').innerHTML
   structure_label.nodeValue = DTXCIDname
+
+  //Get the other features that this DTXCID is a candidate for 
+  const featureArray = fullData.filter(d => d.DTXCID_INDIVIDUAL_COMPONENT === DTXCIDname).map(d => d["Feature ID"])
+  more_features_as_text = featureArray.join(", ")
+  more_features.nodeValue = `Candidate for feature(s): ${more_features_as_text}`
+
   previousClickedDTXCID = clickedDTXCID
   clickedDTXCID = DTXCIDname
   imageDiv.removeChild(image)
@@ -1062,6 +1081,12 @@ var ylabelClick = function(event){
 var barClickMeta = function(){
   var DTXCIDname = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["data"]["DTXCID_INDIVIDUAL_COMPONENT"]}-meta`).innerHTML
   structure_label.nodeValue = DTXCIDname
+
+  //Get the other features that this DTXCID is a candidate for 
+  const featureArray = fullData.filter(d => d.DTXCID_INDIVIDUAL_COMPONENT === DTXCIDname).map(d => d["Feature ID"])
+  more_features_as_text = featureArray.join(", ")
+  more_features.nodeValue = `Candidate for feature(s): ${more_features_as_text}`
+
   previousClickedDTXCID = clickedDTXCID
   clickedDTXCID = DTXCIDname
   imageDiv.removeChild(image)
@@ -1098,6 +1123,12 @@ var barClickMeta = function(){
 var barClickMS2Hazard = function(){
   var DTXCIDname = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["DTXCID_INDIVIDUAL_COMPONENT"]}-hazard`).innerHTML
   structure_label.nodeValue = DTXCIDname
+
+  //Get the other features that this DTXCID is a candidate for 
+  const featureArray = fullData.filter(d => d.DTXCID_INDIVIDUAL_COMPONENT === DTXCIDname).map(d => d["Feature ID"])
+  more_features_as_text = featureArray.join(", ")
+  more_features.nodeValue = `Candidate for feature(s): ${more_features_as_text}`
+
   previousClickedDTXCID = clickedDTXCID
   clickedDTXCID = DTXCIDname
   imageDiv.removeChild(image)
@@ -1945,6 +1976,13 @@ function makeLargeGrid(){
 
         // highlight the selected DTXCID on the y-axis labels
         var DTXCIDname = event.data["DTXCID_INDIVIDUAL_COMPONENT"]
+        structure_label.nodeValue = DTXCIDname
+
+        //Get the other features that this DTXCID is a candidate for 
+        const featureArray = fullData.filter(d => d.DTXCID_INDIVIDUAL_COMPONENT === DTXCIDname).map(d => d["Feature ID"])
+        more_features_as_text = featureArray.join(", ")
+        more_features.nodeValue = `Candidate for feature(s): ${more_features_as_text}`
+
         previousClickedDTXCID = clickedDTXCID
         clickedDTXCID = DTXCIDname
         imageDiv.removeChild(image)
