@@ -13,7 +13,7 @@
 <body class = "body">
   <div id = "tripod-main-container">
     <div class="tripod-title" id="tripod-title"></div>
-    <div id="tripod-chart-container" style="padding-right: 40px;">
+    <div id="tripod-chart-container">
       <div class="tripod-chart" id="tripod-chart-MS2"  ></div>
       <div class="tripod-chart" id="tripod-chart-meta"  ></div>
       <div class="tripod-chart" id="tripod-chart-hazard"  ></div>
@@ -26,9 +26,11 @@
   <div id = "tripod-settings-container">
     <div class="metadata-legend" id="metadata-legend" style="width: 350px;"></div>
     <div class="tripod-infobox" id="tripod-infobox" style="width: 465px; height: 304px;"></div>
+    <button id="screenshot-btn">Take Screenshot</button>
   </div>
 
   <div class="ag-theme-balham" id="tripod-grid"></div>
+  
   
 
 </body>
@@ -36,5 +38,7 @@
 <script src="./js/xlsx.core.min.js"></script>
 <script src="./js/d3.v7.min.js"></script>
 <script src="https://unpkg.com/ag-grid-community/dist/ag-grid-community.min.js"></script>
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.min.js"></script>
 <script src="./js/plots.js"></script>
 </html>
