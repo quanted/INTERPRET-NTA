@@ -27,17 +27,12 @@
 
 #tripod-StructureToolTip{
   position: absolute;
-  top: 40px;
+  top: 50px;
   left: 20px;
   border: solid;
   border-width : 1px;
   border-radius: 8px;
   padding: 2px;
-}
-
-#tripod-StructureToolTip:hover{
-  cursor : pointer;
-  border-width : 3px;
 }
 
 .tripod-arrow-first{
@@ -182,14 +177,6 @@
   top: 240px;
 }
 
-#tripod-outlink{
-  position: absolute;
-  left: -135px;
-  top: -209px;
-  transform: scale(0.06);
-  cursor: pointer;
-}
-
 #input-MS2{
   position: absolute;
   left: 512px;
@@ -216,8 +203,8 @@
 
 #screenshot-btn{
   position: absolute;
-  top: 500px;
-  left: 250px;
+  top: 750px;
+  left: 335px;
   z-index: 1;
 }
 

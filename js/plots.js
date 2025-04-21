@@ -297,6 +297,12 @@ function addHazardLegend(){
 var structure_label_span = null
 var structure_label = null
 var more_features_as_text = ""
+var outlinksvgGroup = null
+var structureToolTip = null
+var imageDiv = null
+var image = null
+var outlinksvg = null
+
 function addInfoBox() {
 // Add a border around the visualization options
 var settingsBorder = makeSvgElement(465, 420, "settings-border", d3.select("#tripod-settings-container"));
@@ -350,23 +356,73 @@ infoBox.append("rect")
 
 structure_label_span = document.createElement('span')
   structure_label_span.style.position = "absolute"
-  structure_label_span.style.top = "455px"
-  structure_label_span.style.left = "21px"
+  structure_label_span.style.top = "460px"
+  structure_label_span.style.left = "22px"
+  structure_label_span.style.fontSize = "18px"
   structure_label = document.createTextNode(' ')
   structure_label_span.appendChild(structure_label)
   document.getElementById("tripod-settings-container").appendChild(structure_label_span)
 
 more_features_span = document.createElement('span')
   more_features_span.style.position = "absolute"
+  more_features_span.style.fontSize = "18px"
   more_features_span.style.zIndex = 1
-  more_features_span.style.top = "620px"
-  more_features_span.style.left = "21px"
-  more_features_span.style.maxWidth = "160px"
+  more_features_span.style.top = "550px"
+  more_features_span.style.left = "255px"
+  more_features_span.style.maxWidth = "180px"
   more_features_span.style.maxHeight = "160px"
   more_features_span.style.overflowY = "auto"
   more_features = document.createTextNode("")
   more_features_span.appendChild(more_features)
 document.getElementById("tripod-settings-container").appendChild(more_features_span)
+
+  // Create the clickable InfoBox structure image tooltip
+  structureToolTip = d3.select(`#tripod-infobox`)
+  .append("div")
+  .attr("id", `tripod-StructureToolTip`)
+  imageDiv = document.getElementById("tripod-StructureToolTip")
+  imageDiv.style.height = "200px"
+  imageDiv.style.width = "200px"
+  
+  image = document.createElement('div')
+  // image.style.zIndex = "-1"
+  image.style.width = "200px"
+  image.style.height = "208px"
+  imageDiv.appendChild(image)
+  const textNode = document.createTextNode("Click on a a DTXCID to display the structure image")  
+  image.appendChild(textNode)
+  
+  image.style.display = 'flex';
+  image.style.justifyContent = 'center'; // Horizontal centering
+  image.style.alignItems = 'center'; // Vertical centering
+  
+outlinkDiv = document.createElement('div')
+outlinkDiv.setAttribute("id", "tripod-outlinkDiv")
+outlinkDiv.style.position = "absolute"
+outlinkDiv.style.height = "20px"
+outlinkDiv.style.width = "20px"
+outlinkDiv.style.zIndex = 1
+document.getElementById('tripod-infobox').appendChild(outlinkDiv)
+
+outlinksvg = makeSvgElement(30, 30, 'tripod-outlink-svg', d3.select("#tripod-outlinkDiv"));
+  outlinksvgGroup = outlinksvg.append("g")
+    .attr("id", "tripod-outlink")
+  outlinksvgGroup.append('rect')
+    .attr("height", "500px")
+    .attr("width", "500px")
+    .attr("fill", "white")
+    .attr("opacity", "10%")   
+  outlinksvgGroup.append('polygon')
+    .attr("fill", "#BFBFBF")
+    .attr("id", "tripod-outlink-color")
+    .attr("points", "400 464 48 464 48 104 240 104 240 72 16 72 16 496 432 496 432 272 400 272 400 464")
+  outlinksvgGroup.append('polygon')
+    .attr("fill", "#BFBFBF")
+    .attr("id", "tripod-outlink-color")
+    .attr("points", "304 16 304 48 441.373 48 188.687 300.687 211.313 323.313 464 70.627 464 208 496 208 496 16 304 16")  
+   
+  outlinksvgGroup.attr("transform", "translate(190, -252) scale(0.06)")
+
 
 }
 
@@ -983,7 +1039,11 @@ function yAxisMS2(data){
     .on("click", ylabelClick)
 }
 
-function goToHyperlink(){window.open(comptoxURL + clickedDTXCID)}
+function goToHyperlink(){
+  if (clickedDTXCID != null){
+  outlinksvg.selectAll('polygon').attr("fill", "#800080");
+  imageDiv.style.borderColor = "#800080";
+  window.open(comptoxURL + clickedDTXCID)}}
 
 tooltipYlabel = null
 // Create the y-axis structure image tooltip
@@ -1003,30 +1063,16 @@ function createYToolTip(){
   }
   createYToolTip()
 
-// Create the clickable InfoBox structure image tooltip
-var structureToolTip = d3.select(`#tripod-infobox`)
-  .append("div")
-  .attr("id", `tripod-StructureToolTip`)
-var imageDiv = document.getElementById("tripod-StructureToolTip")
-  imageDiv.addEventListener('click', goToHyperlink)
-var image = document.createElement('div')
-  image.style.width = "120px"
-  image.style.height = "128px"
-  imageDiv.appendChild(image)
-  const textNode = document.createTextNode("Click on a a DTXCID to display the structure image")  
-  image.appendChild(textNode)
 
-const outlink = document.createElement('img');
-  outlink.src = 'outlink.svg';
-  outlink.id = 'tripod-outlink'
-  document.getElementById("tripod-infobox").appendChild(outlink);  
-  outlink.addEventListener('click', goToHyperlink)
+  imageDiv.addEventListener('click', goToHyperlink)
+  document.getElementById('tripod-outlink').addEventListener('click', goToHyperlink);
+
 
 // Function to get the structure image for the InfoBox tooltip
 function getImage(name){
   image = document.createElement('img');
   image.src = structureImageURL + name
-  image.style = "width:120px;height:120px;padding-top:2px;padding-bottom:2px;";
+  image.style = "width:144px;height:144px;padding:28px;";
   image.alt = `Structure image for ${name}`
   return image
 }
@@ -1050,6 +1096,14 @@ var ylabelClick = function(event){
   imageDiv.removeChild(image)
   imageDiv.appendChild(getImage(DTXCIDname))
 
+  outlinksvgGroup.attr("cursor", "pointer")
+  outlinkDiv.addEventListener('mouseover', function(){imageDiv.style.borderWidth = "3px"})
+  outlinkDiv.addEventListener('mouseout', function(){imageDiv.style.borderWidth = "1px"})
+  imageDiv.addEventListener("mouseover", function(){
+    imageDiv.style.borderWidth = "3px", 
+    imageDiv.style.cursor = "pointer"})
+  imageDiv.addEventListener("mouseout", function(){imageDiv.style.borderWidth = "1px"})
+
   if (previousClickedDTXCID == clickedDTXCID){
     fieldList.forEach(key =>{
       let IdToHighlight = document.getElementById(`ylabel-${DTXCIDname}-${key}`);
@@ -1061,6 +1115,8 @@ var ylabelClick = function(event){
     return}
 
   else {
+    outlinksvg.selectAll('polygon').attr("fill", "#0000FF");
+    imageDiv.style.borderColor = "#0000FF"
     fieldList.forEach(key =>{
       let IdToHighlight = document.getElementById(`ylabel-${DTXCIDname}-${key}`);
       IdToHighlight.setAttribute("fill", "red");
@@ -1092,6 +1148,14 @@ var barClickMeta = function(){
   imageDiv.removeChild(image)
   imageDiv.appendChild(getImage(DTXCIDname))
 
+  outlinksvgGroup.attr("cursor", "pointer")
+  outlinkDiv.addEventListener('mouseover', function(){imageDiv.style.borderWidth = "3px"})
+outlinkDiv.addEventListener('mouseout', function(){imageDiv.style.borderWidth = "1px"})
+  imageDiv.addEventListener("mouseover", function(){
+    imageDiv.style.borderWidth = "3px", 
+    imageDiv.style.cursor = "pointer"})
+  imageDiv.addEventListener("mouseout", function(){imageDiv.style.borderWidth = "1px"})
+
   if (previousClickedDTXCID == clickedDTXCID){
     fieldList.forEach(key =>{
       let IdToHighlight = document.getElementById(`ylabel-${DTXCIDname}-${key}`);
@@ -1103,6 +1167,8 @@ var barClickMeta = function(){
     return}
 
   else {
+    outlinksvg.selectAll('polygon').attr("fill", "#0000FF");
+    imageDiv.style.borderColor = "#0000FF"
     fieldList.forEach(key =>{
       let IdToHighlight = document.getElementById(`ylabel-${DTXCIDname}-${key}`);
       IdToHighlight.setAttribute("fill", "red");
@@ -1134,6 +1200,14 @@ var barClickMS2Hazard = function(){
   imageDiv.removeChild(image)
   imageDiv.appendChild(getImage(DTXCIDname))
 
+  outlinksvgGroup.attr("cursor", "pointer")
+  outlinkDiv.addEventListener('mouseover', function(){imageDiv.style.borderWidth = "3px"})
+outlinkDiv.addEventListener('mouseout', function(){imageDiv.style.borderWidth = "1px"})
+  imageDiv.addEventListener("mouseover", function(){
+    imageDiv.style.borderWidth = "3px", 
+    imageDiv.style.cursor = "pointer"})
+  imageDiv.addEventListener("mouseout", function(){imageDiv.style.borderWidth = "1px"})
+
   if (previousClickedDTXCID == clickedDTXCID){
     fieldList.forEach(key =>{
     let IdToHighlight = document.getElementById(`ylabel-${DTXCIDname}-${key}`);
@@ -1145,6 +1219,8 @@ var barClickMS2Hazard = function(){
     return}
 
   else {
+    outlinksvg.selectAll('polygon').attr("fill", "#0000FF");
+    imageDiv.style.borderColor = "#0000FF"
     fieldList.forEach(key =>{
       let IdToHighlight = document.getElementById(`ylabel-${DTXCIDname}-${key}`);
       IdToHighlight.setAttribute("fill", "red");
