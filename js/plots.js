@@ -2,7 +2,6 @@
 
 // Returns the contents of the input CSV. Values in the last column have a "\r" added to the end, so make sure the last column is not needed for the vis
 async function parseCSV(filePath) {
-  
   // fetch the file
   const response = await fetch(filePath);
   const csvText = await response.text();
@@ -32,6 +31,7 @@ function isElementVisibleInScrollContainer(element, scrollContainer) {
   const elementRect = element.getBoundingClientRect();
   const containerRect = scrollContainer.getBoundingClientRect();
   return (elementRect.top >= containerRect.top && elementRect.bottom <= containerRect.bottom)
+  
 }
 
 // Removes rows with no metadata from dataset, and sorts dataset by category
@@ -42,7 +42,7 @@ function sortData(data, category = null) {
     else{return []}
 
   const headers_norm = [] //contains normalized headers (not including total norm)
-  headers.forEach((key) => {if (key.includes("NORM") && !key.includes("TOTAL")) {headers_norm.push(key);}});
+  headers.forEach((key) => {if ((key.includes("NORM") || key.includes("norm")) && !key.includes("TOTAL")) {headers_norm.push(key);}});
 
   let itemToRemove = []
   for (let i = 0; i < data.length; i++) { 
@@ -249,7 +249,6 @@ function getTop5Rows(arr, categoryField, valueField) {
 
 //Creates the white-to-red gradient for the Hazard Completeness Score legend
 function addHazardLegend(){
-
   const svgNS = "http://www.w3.org/2000/svg";
 
   const gradientSVG = document.createElementNS(svgNS, "svg");
@@ -291,6 +290,7 @@ function addHazardLegend(){
 
   gradientSVG.appendChild(gradRect)
 
+  
 }
 
 // Adds Information Box and Settings Container text 
@@ -367,7 +367,7 @@ more_features_span = document.createElement('span')
   more_features = document.createTextNode("")
   more_features_span.appendChild(more_features)
 document.getElementById("tripod-settings-container").appendChild(more_features_span)
-  
+
 }
 
 // Static URL links
@@ -1370,8 +1370,105 @@ var legendClick = function(event, d, i) {
   .on("click", legendClick);
 }
 
-function loadData(data){
+function makeTitleStatic(){
+  const titlesvg = makeSvgElement(500, 20, 'tripod-title', d3.select("#tripod-title-static"));
+  titlesvg.append("rect") 
+    .attr("width", 1610)
+    .attr("height", 50)
+    .attr("rx", 10)
+    .attr("x", -19)
+    .attr("y", -10)
+    .attr("fill", "#DBE4F0") //light blue grey
+    .style("stroke", "#808080")
+    .attr("z-index", -1)
 
+  // Sub-title
+  titlesvg.append("rect") 
+    .attr("width", 537)
+    .attr("height", 40)
+    .attr("x", -19)
+    .attr("y", 30)
+    .attr("fill", "#DBE4F0") //light blue grey
+    .style("stroke", "#808080")
+    .attr("z-index", -1)
+
+  titlesvg.append("text")  
+    .attr("x", 0)
+    .attr("y", 60)
+    .attr("text-anchor", "left")
+    .style("font-size", "22px")
+    .style("font-weight", "bold")
+    .text(`MS2`);  
+
+  if (hasMS2){
+  titlesvg.append("text")  
+    .attr("x", 346)
+    .attr("y", 55)
+    .attr("text-anchor", "left")
+    .style("font-size", "20px")
+    .text(`Select plot to sort`); }
+
+  titlesvg.append("rect") 
+    .attr("width", 536)
+    .attr("height", 40)
+    .attr("x", 519)
+    .attr("y", 30)
+    .attr("fill", "#DBE4F0") //light blue grey
+    .style("stroke", "#808080")
+    .attr("z-index", -1)
+
+  titlesvg.append("text")  
+    .attr("x", 535)
+    .attr("y", 60)
+    .attr("text-anchor", "left")
+    .style("font-size", "22px")
+    .style("font-weight", "bold")
+    .text(`Metadata`);  
+
+  titlesvg.append("text")  
+    .attr("x", 880)
+    .attr("y", 55)
+    .attr("text-anchor", "left")
+    .style("font-size", "20px")
+    .text(`Select plot to sort`); 
+
+  titlesvg.append("rect") 
+    .attr("width", 536)
+    .attr("height", 40)
+    .attr("x", 1055)
+    .attr("y", 30)
+    .attr("fill", "#DBE4F0") //light blue grey
+    .style("stroke", "#808080")
+    .attr("z-index", -1)
+
+  titlesvg.append("text")  
+    .attr("x", 1070)
+    .attr("y", 60)
+    .attr("text-anchor", "left")
+    .style("font-size", "22px")
+    .style("font-weight", "bold")
+    .text(`Hazard`);  
+
+  titlesvg.append("text")  
+    .attr("x", 1418)
+    .attr("y", 55)
+    .attr("text-anchor", "left")
+    .style("font-size", "20px")
+    .text(`Select plot to sort`); 
+
+  titlesvg.append("text") 
+    .attr("x", 850)
+    .attr("y", 18)
+    .attr("text-anchor", "left")
+    .style("font-size", "20px")
+    .text(`# total candidates:          # removed (no metadata): `)  
+
+}
+makeTitleStatic()
+
+
+
+function loadData(data){
 // create svg for visualization
   const width = 500;
   height = subGroupData.length * 30;
@@ -1518,7 +1615,6 @@ function loadData(data){
       .style("display", "block")
   }
   var mouseleaveBarMS2Hazard = function() {
-    
     if (hasMS2){tooltipBarMS2.style("display", "none");}
     tooltipBarHazard.style("display", "none");  
 
@@ -1633,92 +1729,9 @@ if (hasMS2 && MS2Input.checked){
   showBarsMS2(subGroupData);
 }
 
-// Add the title
+//Add the title
 function makeTitle(){
   const titlesvg = makeSvgElement(width, 20, 'tripod-title', d3.select("#tripod-title"));
-  titlesvg.append("rect") 
-    .attr("width", 1610)
-    .attr("height", 50)
-    .attr("rx", 10)
-    .attr("x", -19)
-    .attr("y", -10)
-    .attr("fill", "#DBE4F0") //light blue grey
-    .style("stroke", "#808080")
-    .attr("z-index", -1)
-
-  // Sub-title
-  titlesvg.append("rect") 
-    .attr("width", 537)
-    .attr("height", 40)
-    .attr("x", -19)
-    .attr("y", 30)
-    .attr("fill", "#DBE4F0") //light blue grey
-    .style("stroke", "#808080")
-    .attr("z-index", -1)
-
-  titlesvg.append("text")  
-    .attr("x", 0)
-    .attr("y", 60)
-    .attr("text-anchor", "left")
-    .style("font-size", "22px")
-    .style("font-weight", "bold")
-    .text(`MS2`);  
-
-  if (hasMS2){
-  titlesvg.append("text")  
-    .attr("x", 346)
-    .attr("y", 55)
-    .attr("text-anchor", "left")
-    .style("font-size", "20px")
-    .text(`Select plot to sort`); }
-
-  titlesvg.append("rect") 
-    .attr("width", 536)
-    .attr("height", 40)
-    .attr("x", 519)
-    .attr("y", 30)
-    .attr("fill", "#DBE4F0") //light blue grey
-    .style("stroke", "#808080")
-    .attr("z-index", -1)
-
-  titlesvg.append("text")  
-    .attr("x", 535)
-    .attr("y", 60)
-    .attr("text-anchor", "left")
-    .style("font-size", "22px")
-    .style("font-weight", "bold")
-    .text(`Metadata`);  
-
-  titlesvg.append("text")  
-    .attr("x", 880)
-    .attr("y", 55)
-    .attr("text-anchor", "left")
-    .style("font-size", "20px")
-    .text(`Select plot to sort`); 
-
-  titlesvg.append("rect") 
-    .attr("width", 536)
-    .attr("height", 40)
-    .attr("x", 1055)
-    .attr("y", 30)
-    .attr("fill", "#DBE4F0") //light blue grey
-    .style("stroke", "#808080")
-    .attr("z-index", -1)
-
-  titlesvg.append("text")  
-    .attr("x", 1070)
-    .attr("y", 60)
-    .attr("text-anchor", "left")
-    .style("font-size", "22px")
-    .style("font-weight", "bold")
-    .text(`Hazard`);  
-
-  titlesvg.append("text")  
-    .attr("x", 1418)
-    .attr("y", 55)
-    .attr("text-anchor", "left")
-    .style("font-size", "20px")
-    .text(`Select plot to sort`); 
 
   titlesvg.append("text")  
     .attr("x", 0)
@@ -1745,55 +1758,50 @@ function makeTitle(){
     .text(` ${numCandidatesRemoved}`); 
 
   titlesvg.append("text") 
-    .attr("x", 850)
-    .attr("y", 18)
-    .attr("text-anchor", "left")
-    .style("font-size", "20px")
-    .text(`# total candidates:          # removed (no metadata): `)  
-
-  titlesvg.append("text") 
     .attr("x", 138)
     .attr("y", 18)
     .attr("text-anchor", "left")
     .style("font-size", "20px")
     .text(`Mass: ${mass}    RT: ${RT}          Median Abundance: ${abundance}    Occurrence: ${occ_percentage}%`) 
+}
 
-  function createInfoTooltip(){
-    tooltipInfo = d3.select("#tripod-title")
-      .append("div")
-      .style("display", "none")
-      .attr("class", "tooltip")
-      .style("background-color", "white")
-      .style("border", "solid")
-      .style("border-width", "1px")
-      .style("border-radius", "5px")
-      .style("padding", "8px")
-      .style("position", "fixed")
-      .style("max-width", "200px")
-      .attr("id", "tripod-InfoTooltip"); 
-    }
-  createInfoTooltip()
+makeTitle()    
+}
 
-const infosvg = makeSvgElement(64, 20, 'tripod-info', d3.select("#tripod-title"));  
-  backgroundCircle = infosvg.append('circle')
-  backgroundCircle.attr("r", "11")
-  backgroundCircle.attr("cx", "144")
-  backgroundCircle.attr("cy", "50")
-  backgroundCircle.attr('fill', '#DBE4F0')
-  backgroundCircle.on("mouseover", infoCircleMouseover)
-  backgroundCircle.on("mousemove", infoCircleMousemove)
-  backgroundCircle.on("mouseout", infoCircleMouseout)
+function createInfoTooltip(){
+  tooltipInfo = d3.select("#tripod-i")
+    .append("div")
+    .style("display", "none")
+    .attr("class", "tooltip")
+    .style("background-color", "white")
+    .style("border", "solid")
+    .style("border-width", "1px")
+    .style("border-radius", "5px")
+    .style("padding", "8px")
+    .style("position", "fixed")
+    .style("max-width", "200px")
+    .attr("id", "tripod-InfoTooltip"); 
 
-  infoCircle = infosvg.append('path')
-  infoCircle.attr("d", "M960 0c530.193 0 960 429.807 960 960s-429.807 960-960 960S0 1490.193 0 960 429.807 0 960 0Zm0 101.053c-474.384 0-858.947 384.563-858.947 858.947S485.616 1818.947 960 1818.947 1818.947 1434.384 1818.947 960 1434.384 101.053 960 101.053Zm-42.074 626.795c-85.075 39.632-157.432 107.975-229.844 207.898-10.327 14.249-10.744 22.907-.135 30.565 7.458 5.384 11.792 3.662 22.656-7.928 1.453-1.562 1.453-1.562 2.94-3.174 9.391-10.17 16.956-18.8 33.115-37.565 53.392-62.005 79.472-87.526 120.003-110.867 35.075-20.198 65.9 9.485 60.03 47.471-1.647 10.664-4.483 18.534-11.791 35.432-2.907 6.722-4.133 9.646-5.496 13.23-13.173 34.63-24.269 63.518-47.519 123.85l-1.112 2.886c-7.03 18.242-7.03 18.242-14.053 36.48-30.45 79.138-48.927 127.666-67.991 178.988l-1.118 3.008a10180.575 10180.575 0 0 0-10.189 27.469c-21.844 59.238-34.337 97.729-43.838 138.668-1.484 6.37-1.484 6.37-2.988 12.845-5.353 23.158-8.218 38.081-9.82 53.42-2.77 26.522-.543 48.24 7.792 66.493 9.432 20.655 29.697 35.43 52.819 38.786 38.518 5.592 75.683 5.194 107.515-2.048 17.914-4.073 35.638-9.405 53.03-15.942 50.352-18.932 98.861-48.472 145.846-87.52 41.11-34.26 80.008-76 120.788-127.872 3.555-4.492 3.555-4.492 7.098-8.976 12.318-15.707 18.352-25.908 20.605-36.683 2.45-11.698-7.439-23.554-15.343-19.587-3.907 1.96-7.993 6.018-14.22 13.872-4.454 5.715-6.875 8.77-9.298 11.514-9.671 10.95-19.883 22.157-30.947 33.998-18.241 19.513-36.775 38.608-63.656 65.789-13.69 13.844-30.908 25.947-49.42 35.046-29.63 14.559-56.358-3.792-53.148-36.635 2.118-21.681 7.37-44.096 15.224-65.767 17.156-47.367 31.183-85.659 62.216-170.048 13.459-36.6 19.27-52.41 26.528-72.201 21.518-58.652 38.696-105.868 55.04-151.425 20.19-56.275 31.596-98.224 36.877-141.543 3.987-32.673-5.103-63.922-25.834-85.405-22.986-23.816-55.68-34.787-96.399-34.305-45.053.535-97.607 15.256-145.963 37.783Zm308.381-388.422c-80.963-31.5-178.114 22.616-194.382 108.33-11.795 62.124 11.412 115.76 58.78 138.225 93.898 44.531 206.587-26.823 206.592-130.826.005-57.855-24.705-97.718-70.99-115.729Z")
-  infoCircle.attr("viewBox", "0 0 1920 1920")
-  infoCircle.attr("width", "64px")
-  infoCircle.attr("height", "64px")
-  infoCircle.attr('transform', 'translate(133, 37.5) scale(0.012) ')
-  infoCircle.on("mouseover", infoCircleMouseover)
-  infoCircle.on("mousemove", infoCircleMousemove)
-  infoCircle.on("mouseout", infoCircleMouseout)
-
+  const infosvg = makeSvgElement(64, 20, 'tripod-info', d3.select("#tripod-i"));  
+    backgroundCircle = infosvg.append('circle')
+    backgroundCircle.attr("r", "11")
+    backgroundCircle.attr("cx", "144")
+    backgroundCircle.attr("cy", "50")
+    backgroundCircle.attr('fill', '#DBE4F0')
+    backgroundCircle.on("mouseover", infoCircleMouseover)
+    backgroundCircle.on("mousemove", infoCircleMousemove)
+    backgroundCircle.on("mouseout", infoCircleMouseout)
+  
+    infoCircle = infosvg.append('path')
+    infoCircle.attr("d", "M960 0c530.193 0 960 429.807 960 960s-429.807 960-960 960S0 1490.193 0 960 429.807 0 960 0Zm0 101.053c-474.384 0-858.947 384.563-858.947 858.947S485.616 1818.947 960 1818.947 1818.947 1434.384 1818.947 960 1434.384 101.053 960 101.053Zm-42.074 626.795c-85.075 39.632-157.432 107.975-229.844 207.898-10.327 14.249-10.744 22.907-.135 30.565 7.458 5.384 11.792 3.662 22.656-7.928 1.453-1.562 1.453-1.562 2.94-3.174 9.391-10.17 16.956-18.8 33.115-37.565 53.392-62.005 79.472-87.526 120.003-110.867 35.075-20.198 65.9 9.485 60.03 47.471-1.647 10.664-4.483 18.534-11.791 35.432-2.907 6.722-4.133 9.646-5.496 13.23-13.173 34.63-24.269 63.518-47.519 123.85l-1.112 2.886c-7.03 18.242-7.03 18.242-14.053 36.48-30.45 79.138-48.927 127.666-67.991 178.988l-1.118 3.008a10180.575 10180.575 0 0 0-10.189 27.469c-21.844 59.238-34.337 97.729-43.838 138.668-1.484 6.37-1.484 6.37-2.988 12.845-5.353 23.158-8.218 38.081-9.82 53.42-2.77 26.522-.543 48.24 7.792 66.493 9.432 20.655 29.697 35.43 52.819 38.786 38.518 5.592 75.683 5.194 107.515-2.048 17.914-4.073 35.638-9.405 53.03-15.942 50.352-18.932 98.861-48.472 145.846-87.52 41.11-34.26 80.008-76 120.788-127.872 3.555-4.492 3.555-4.492 7.098-8.976 12.318-15.707 18.352-25.908 20.605-36.683 2.45-11.698-7.439-23.554-15.343-19.587-3.907 1.96-7.993 6.018-14.22 13.872-4.454 5.715-6.875 8.77-9.298 11.514-9.671 10.95-19.883 22.157-30.947 33.998-18.241 19.513-36.775 38.608-63.656 65.789-13.69 13.844-30.908 25.947-49.42 35.046-29.63 14.559-56.358-3.792-53.148-36.635 2.118-21.681 7.37-44.096 15.224-65.767 17.156-47.367 31.183-85.659 62.216-170.048 13.459-36.6 19.27-52.41 26.528-72.201 21.518-58.652 38.696-105.868 55.04-151.425 20.19-56.275 31.596-98.224 36.877-141.543 3.987-32.673-5.103-63.922-25.834-85.405-22.986-23.816-55.68-34.787-96.399-34.305-45.053.535-97.607 15.256-145.963 37.783Zm308.381-388.422c-80.963-31.5-178.114 22.616-194.382 108.33-11.795 62.124 11.412 115.76 58.78 138.225 93.898 44.531 206.587-26.823 206.592-130.826.005-57.855-24.705-97.718-70.99-115.729Z")
+    infoCircle.attr("viewBox", "0 0 1920 1920")
+    infoCircle.attr("width", "64px")
+    infoCircle.attr("height", "64px")
+    infoCircle.attr('transform', 'translate(133, 37.5) scale(0.012) ')
+    infoCircle.on("mouseover", infoCircleMouseover)
+    infoCircle.on("mousemove", infoCircleMousemove)
+    infoCircle.on("mouseout", infoCircleMouseout)
+  
   function infoCircleMouseover()  {
     backgroundCircle.attr('fill', '#3d4e634d')
     tooltipInfo = d3.select("#tripod-InfoTooltip")
@@ -1801,7 +1809,7 @@ const infosvg = makeSvgElement(64, 20, 'tripod-info', d3.select("#tripod-title")
       .html("Each metadata bar segment is normalized to a value between 0 and 1 based on the highest value among all DTXCIDs for a given feature, with a minimum bar width of 0.05.")
       .style("opacity", 1)
     }
-
+  
   function infoCircleMousemove(event)  {
     tooltipInfo = d3.select("#tripod-InfoTooltip")
     tooltipInfo
@@ -1809,19 +1817,14 @@ const infosvg = makeSvgElement(64, 20, 'tripod-info', d3.select("#tripod-title")
       .style("top", (event.pageY - window.pageYOffset + 10) + "px")
       .style("display", "block")
     }  
-
+  
   function infoCircleMouseout()  {
     backgroundCircle.attr('fill', '#DBE4F0')
     tooltipInfo = d3.select("#tripod-InfoTooltip")
-    tooltipInfo
-      .style("display", "none")
+    tooltipInfo.style("display", "none")
       }
-
-
-}
-
-makeTitle()    
-}
+  }
+createInfoTooltip()
 
 function makeLargeGrid(){
   var gridData = null
@@ -2104,11 +2107,11 @@ function makeLargeGrid(){
 }
 }
 
+hazardInput.checked = false
+if (hasMS2){MS2Input.checked = false}
 updateData("STRUCTURE_TOTAL_NORM")
 makeLegend()
-
 makeLargeGrid()
-
 function makeExportButton(){
   const exportButton = makeSvgElement(30, 30, 'tripod-export-button', d3.select("#tripod-grid"));
       exportButton.attr('id', "tripod-export-button")
@@ -2138,7 +2141,7 @@ makeExportButton()
 loadData(data)
 
 metaInput.checked = false
-if (hasMS2){MS2Input.checked = false}
+hazardInput.checked = true
 document.getElementById('tripod-chart-hazard').innerHTML= ""
 document.getElementById('tripod-title').innerHTML= ""
 updateData("Hazard Score")
