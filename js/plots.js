@@ -2051,7 +2051,14 @@ function makeExportButton(){
 
       exportButton.attr("onmouseover", "document.getElementById('export-button-rect').setAttribute('fill', '#3d4e634d')")
       exportButton.attr("onmouseout", "document.getElementById('export-button-rect').setAttribute('fill', '#DBE4F0')")
-      document.getElementById('tripod-export-button').addEventListener('click', function(event) {window.gridAPI.exportDataAsCsv({fileName:"candidate_ranking_grid_data.csv", skipColumnGroupHeaders:"true"})});
+
+      document.getElementById('tripod-export-button').addEventListener('click', function(event) {
+        const allVisibleColumns = window.gridAPI.getAllDisplayedColumns()
+        console.log(allVisibleColumns);
+        const columnsToExport = allVisibleColumns
+          .filter(col => col.getColId() !== 'Structure')
+          .map(col => col.getColId());
+        window.gridAPI.exportDataAsCsv({fileName:"candidate_ranking_grid_data.csv", skipColumnGroupHeaders:"true", columnKeys: columnsToExport})});
 }  
 makeExportButton()
 
