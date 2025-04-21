@@ -221,6 +221,23 @@
   z-index: 1;
 }
 
+#tripod-i{
+  z-index: 2;
+  position:absolute;
+  top: 16px;
+  left: 520px;
+}
+
+#tripod-title-static{
+  position:absolute;
+  top: 15px;
+  left: 20px;
+}
+
+#tripod-title-static text{
+  white-space: pre;
+}
+
 /* ag grid styles --------------------------------------------------------------------*/
 #tripod-grid {
     height: 800px;

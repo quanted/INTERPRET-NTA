@@ -1317,6 +1317,91 @@ legendText = ["PubMed Articles", "PubChem Articles", "PubChem Patents", "PubChem
   .on("click", legendClick);
 }
 
+function makeTitleStatic(){
+  const titlesvg = makeSvgElement(500, 20, 'tripod-title', d3.select("#tripod-title-static"));
+  titlesvg.append("rect") 
+    .attr("width", 1610)
+    .attr("height", 50)
+    .attr("rx", 10)
+    .attr("x", -19)
+    .attr("y", -10)
+    .attr("fill", "#DBE4F0") //light blue grey
+    .style("stroke", "#808080")
+    .attr("z-index", -1)
+  // Sub-title
+  titlesvg.append("rect") 
+    .attr("width", 537)
+    .attr("height", 40)
+    .attr("x", -19)
+    .attr("y", 30)
+    .attr("fill", "#DBE4F0") //light blue grey
+    .style("stroke", "#808080")
+    .attr("z-index", -1)
+  titlesvg.append("text")  
+    .attr("x", 0)
+    .attr("y", 60)
+    .attr("text-anchor", "left")
+    .style("font-size", "22px")
+    .style("font-weight", "bold")
+    .text(`MS2`);  
+  if (hasMS2){
+  titlesvg.append("text")  
+    .attr("x", 346)
+    .attr("y", 55)
+    .attr("text-anchor", "left")
+    .style("font-size", "20px")
+    .text(`Select plot to sort`); }
+  titlesvg.append("rect") 
+    .attr("width", 536)
+    .attr("height", 40)
+    .attr("x", 519)
+    .attr("y", 30)
+    .attr("fill", "#DBE4F0") //light blue grey
+    .style("stroke", "#808080")
+    .attr("z-index", -1)
+  titlesvg.append("text")  
+    .attr("x", 535)
+    .attr("y", 60)
+    .attr("text-anchor", "left")
+    .style("font-size", "22px")
+    .style("font-weight", "bold")
+    .text(`Metadata`);  
+  titlesvg.append("text")  
+    .attr("x", 880)
+    .attr("y", 55)
+    .attr("text-anchor", "left")
+    .style("font-size", "20px")
+    .text(`Select plot to sort`); 
+  titlesvg.append("rect") 
+    .attr("width", 536)
+    .attr("height", 40)
+    .attr("x", 1055)
+    .attr("y", 30)
+    .attr("fill", "#DBE4F0") //light blue grey
+    .style("stroke", "#808080")
+    .attr("z-index", -1)
+  titlesvg.append("text")  
+    .attr("x", 1070)
+    .attr("y", 60)
+    .attr("text-anchor", "left")
+    .style("font-size", "22px")
+    .style("font-weight", "bold")
+    .text(`Hazard`);  
+  titlesvg.append("text")  
+    .attr("x", 1418)
+    .attr("y", 55)
+    .attr("text-anchor", "left")
+    .style("font-size", "20px")
+    .text(`Select plot to sort`); 
+  titlesvg.append("text") 
+    .attr("x", 520)
+    .attr("y", 18)
+    .attr("text-anchor", "left")
+    .style("font-size", "20px")
+    .text(`# total candidates:          # removed (no metadata): `)   
+}
+makeTitleStatic()
+
 function loadData(data){
 
 // create svg for visualization
@@ -1563,90 +1648,6 @@ if (hasMS2 && MS2Input.checked){
 // Add the title
 function makeTitle(){
   const titlesvg = makeSvgElement(width, 20, 'tripod-title', d3.select("#tripod-title"));
-  titlesvg.append("rect") 
-    .attr("width", 1610)
-    .attr("height", 50)
-    .attr("rx", 10)
-    .attr("x", -19)
-    .attr("y", -10)
-    .attr("fill", "#DBE4F0") //light blue grey
-    .style("stroke", "#808080")
-    .attr("z-index", -1)
-
-  // Sub-title
-  titlesvg.append("rect") 
-    .attr("width", 537)
-    .attr("height", 40)
-    .attr("x", -19)
-    .attr("y", 30)
-    .attr("fill", "#DBE4F0") //light blue grey
-    .style("stroke", "#808080")
-    .attr("z-index", -1)
-
-  titlesvg.append("text")  
-    .attr("x", 0)
-    .attr("y", 60)
-    .attr("text-anchor", "left")
-    .style("font-size", "22px")
-    .style("font-weight", "bold")
-    .text(`MS2`);  
-
-  if (hasMS2){
-  titlesvg.append("text")  
-    .attr("x", 346)
-    .attr("y", 55)
-    .attr("text-anchor", "left")
-    .style("font-size", "20px")
-    .text(`Select plot to sort`); }
-
-  titlesvg.append("rect") 
-    .attr("width", 536)
-    .attr("height", 40)
-    .attr("x", 519)
-    .attr("y", 30)
-    .attr("fill", "#DBE4F0") //light blue grey
-    .style("stroke", "#808080")
-    .attr("z-index", -1)
-
-  titlesvg.append("text")  
-    .attr("x", 535)
-    .attr("y", 60)
-    .attr("text-anchor", "left")
-    .style("font-size", "22px")
-    .style("font-weight", "bold")
-    .text(`Metadata`);  
-
-  titlesvg.append("text")  
-    .attr("x", 880)
-    .attr("y", 55)
-    .attr("text-anchor", "left")
-    .style("font-size", "20px")
-    .text(`Select plot to sort`); 
-
-  titlesvg.append("rect") 
-    .attr("width", 536)
-    .attr("height", 40)
-    .attr("x", 1055)
-    .attr("y", 30)
-    .attr("fill", "#DBE4F0") //light blue grey
-    .style("stroke", "#808080")
-    .attr("z-index", -1)
-
-  titlesvg.append("text")  
-    .attr("x", 1070)
-    .attr("y", 60)
-    .attr("text-anchor", "left")
-    .style("font-size", "22px")
-    .style("font-weight", "bold")
-    .text(`Hazard`);  
-
-  titlesvg.append("text")  
-    .attr("x", 1418)
-    .attr("y", 55)
-    .attr("text-anchor", "left")
-    .style("font-size", "20px")
-    .text(`Select plot to sort`); 
-
   titlesvg.append("text")  
     .attr("x", 0)
     .attr("y", 18)
@@ -1672,36 +1673,31 @@ function makeTitle(){
     .text(` ${numCandidatesRemoved}`); 
 
   titlesvg.append("text") 
-    .attr("x", 520)
-    .attr("y", 18)
-    .attr("text-anchor", "left")
-    .style("font-size", "20px")
-    .text(`# total candidates:          # removed (no metadata): `)  
-
-  titlesvg.append("text") 
     .attr("x", 200)
     .attr("y", 18)
     .attr("text-anchor", "left")
     .style("font-size", "20px")
     .text(`Mass: ${mass}    RT: ${RT}`)  
 
-  function createInfoTooltip(){
-    tooltipInfo = d3.select("#tripod-title")
-      .append("div")
-      .style("display", "none")
-      .attr("class", "tooltip")
-      .style("background-color", "white")
-      .style("border", "solid")
-      .style("border-width", "1px")
-      .style("border-radius", "5px")
-      .style("padding", "8px")
-      .style("position", "fixed")
-      .style("max-width", "200px")
-      .attr("id", "tripod-InfoTooltip"); 
-    }
-  createInfoTooltip()
-  
-  const infosvg = makeSvgElement(64, 20, 'tripod-info', d3.select("#tripod-title"));  
+}
+makeTitle()    
+}
+
+function createInfoTooltip(){
+  tooltipInfo = d3.select("#tripod-i")
+    .append("div")
+    .style("display", "none")
+    .attr("class", "tooltip")
+    .style("background-color", "white")
+    .style("border", "solid")
+    .style("border-width", "1px")
+    .style("border-radius", "5px")
+    .style("padding", "8px")
+    .style("position", "fixed")
+    .style("max-width", "200px")
+    .attr("id", "tripod-InfoTooltip"); 
+
+  const infosvg = makeSvgElement(64, 20, 'tripod-info', d3.select("#tripod-i"));  
     backgroundCircle = infosvg.append('circle')
     backgroundCircle.attr("r", "11")
     backgroundCircle.attr("cx", "144")
@@ -1720,7 +1716,7 @@ function makeTitle(){
     infoCircle.on("mouseover", infoCircleMouseover)
     infoCircle.on("mousemove", infoCircleMousemove)
     infoCircle.on("mouseout", infoCircleMouseout)
-  
+   
   function infoCircleMouseover()  {
     backgroundCircle.attr('fill', '#3d4e634d')
     tooltipInfo = d3.select("#tripod-InfoTooltip")
@@ -1728,7 +1724,7 @@ function makeTitle(){
       .html("Each metadata bar segment is normalized to a value between 0 and 1 based on the highest value among all DTXCIDs for a given feature, with a minimum bar width of 0.05.")
       .style("opacity", 1)
     }
-  
+   
   function infoCircleMousemove(event)  {
     tooltipInfo = d3.select("#tripod-InfoTooltip")
     tooltipInfo
@@ -1736,17 +1732,17 @@ function makeTitle(){
       .style("top", (event.pageY - window.pageYOffset + 10) + "px")
       .style("display", "block")
     }  
-  
+   
   function infoCircleMouseout()  {
     backgroundCircle.attr('fill', '#DBE4F0')
     tooltipInfo = d3.select("#tripod-InfoTooltip")
     tooltipInfo
       .style("display", "none")
       }  
+  }
+createInfoTooltip()
 
-}
-makeTitle()    
-}
+
 
 function makeLargeGrid(){
   var gridData = null
@@ -2026,6 +2022,8 @@ function makeLargeGrid(){
 }
 }
 
+hazardInput.checked = false
+ if (hasMS2){MS2Input.checked = false}
 updateData("STRUCTURE_TOTAL_NORM")
 makeLegend()
 
@@ -2060,7 +2058,7 @@ makeExportButton()
 loadData(data)
 
 metaInput.checked = false
-if (hasMS2){MS2Input.checked = false}
+hazardInput.checked = true
 document.getElementById('tripod-chart-hazard').innerHTML= ""
 document.getElementById('tripod-title').innerHTML= ""
 updateData("Hazard Score")
