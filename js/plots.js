@@ -385,11 +385,11 @@ document.getElementById("tripod-settings-container").appendChild(more_features_s
   imageDiv.style.width = "200px"
   
   image = document.createElement('div')
-  // image.style.zIndex = "-1"
-  image.style.width = "200px"
+  image.style.width = "190px"
   image.style.height = "208px"
   imageDiv.appendChild(image)
-  const textNode = document.createTextNode("Click on a a DTXCID to display the structure image")  
+  image.style.paddingLeft = "10px"
+  const textNode = document.createTextNode("Click on a DTXCID to display the structure image")  
   image.appendChild(textNode)
   
   image.style.display = 'flex';
@@ -630,6 +630,15 @@ function goToPosition(event, position){
   
   metaInput.checked = true
   hazardInput.checked = true
+
+  if (clickedDTXCID != null){
+    try{
+      fieldList.forEach(key =>{
+        let IdToHighlight = document.getElementById(`ylabel-${clickedDTXCID}-${key}`);
+        IdToHighlight.setAttribute("fill", "red");
+        IdToHighlight.style.fontWeight = "bold";})}
+    catch(error){return}
+  }
 
 }
 
@@ -2098,6 +2107,15 @@ function makeLargeGrid(){
         // })
         // window.gridAPI.onFilterChanged()
 
+        if (clickedDTXCID != null){
+          try{
+            fieldList.forEach(key =>{
+              let IdToHighlight = document.getElementById(`ylabel-${clickedDTXCID}-${key}`);
+              IdToHighlight.setAttribute("fill", "red");
+              IdToHighlight.style.fontWeight = "bold";})}
+          catch(error){return}
+        }
+
 
       }
     },
@@ -2255,6 +2273,7 @@ screenshotButton.addEventListener('click', () => {
 }
 
 // ======= CALL MAIN FUNCTION ==================================================================================================
+// const dataPath = "./data/short_test.csv";
 const dataPath = "./data/WW2DW_Data_Analysis_file_5_with_MS2.csv";
 // const dataPath = "./data/WW2DW_Data_Analysis_file_5_without_MS2.csv";
 generatePlots(dataPath);
