@@ -336,10 +336,10 @@ infoBox.append("rect")
   .attr("z-index", -1)
 
   structure_label_span = document.createElement('span')
-    structure_label_span.style.position = "absolute"
-    structure_label_span.style.top = "460px"
-    structure_label_span.style.left = "22px"
-    structure_label_span.style.fontSize = "18px"
+  structure_label_span.style.position = "absolute"
+  structure_label_span.style.top = "460px"
+  structure_label_span.style.left = "22px"
+  structure_label_span.style.fontSize = "18px"
   structure_label = document.createTextNode(' ')
   structure_label_span.appendChild(structure_label)
   document.getElementById("tripod-settings-container").appendChild(structure_label_span)
@@ -362,19 +362,21 @@ structureToolTip = d3.select(`#tripod-infobox`)
  .append("div")
  .attr("id", `tripod-StructureToolTip`)
 imageDiv = document.getElementById("tripod-StructureToolTip")
- imageDiv.style.height = "200px"
- imageDiv.style.width = "200px"
+imageDiv.style.height = "200px"
+imageDiv.style.width = "200px"
  
- image = document.createElement('div')
-  image.style.width = "200px"
-  image.style.height = "208px"
- imageDiv.appendChild(image)
-  const textNode = document.createTextNode("Click on a a DTXCID to display the structure image")  
-  image.appendChild(textNode)
+image = document.createElement('div')
+image.style.width = "190px"
+image.style.height = "208px"
+imageDiv.appendChild(image)
+image.style.paddingLeft = "10px"
+image.style.paddingRight = "10px"
+const textNode = document.createTextNode("Click on a DTXCID to display the structure image")  
+image.appendChild(textNode)
  
-  image.style.display = 'flex';
-  image.style.justifyContent = 'center'; // Horizontal centering
-  image.style.alignItems = 'center'; // Vertical centering
+image.style.display = 'flex';
+image.style.justifyContent = 'center'; // Horizontal centering
+image.style.alignItems = 'center'; // Vertical centering
  
 outlinkDiv = document.createElement('div')
 outlinkDiv.setAttribute("id", "tripod-outlinkDiv")
@@ -607,6 +609,15 @@ function goToPosition(event, position){
   
   metaInput.checked = true
   hazardInput.checked = true
+
+  if (clickedDTXCID != null){
+    try{
+      fieldList.forEach(key =>{
+        let IdToHighlight = document.getElementById(`ylabel-${clickedDTXCID}-${key}`);
+        IdToHighlight.setAttribute("fill", "red");
+        IdToHighlight.style.fontWeight = "bold";})}
+    catch(error){return}
+  }
 
 }
 
@@ -2008,6 +2019,15 @@ function makeLargeGrid(){
         // })
         // window.gridAPI.onFilterChanged()
 
+        if (clickedDTXCID != null){
+          try{
+            fieldList.forEach(key =>{
+              let IdToHighlight = document.getElementById(`ylabel-${clickedDTXCID}-${key}`);
+              IdToHighlight.setAttribute("fill", "red");
+              IdToHighlight.style.fontWeight = "bold";})}
+          catch(error){return}
+        }
+
 
       }
     },
@@ -2167,6 +2187,7 @@ screenshotButton.addEventListener('click', () => {
 }
 
 // ======= CALL MAIN FUNCTION ==================================================================================================
+// const dataPath = "./data/short_test.csv";
 // const dataPath = "./data/data_with_MS2.csv";
 const dataPath = "./data/data_without_MS2.csv";
 generatePlots(dataPath);
