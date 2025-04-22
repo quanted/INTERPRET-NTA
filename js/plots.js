@@ -557,6 +557,19 @@ function createTop5ToggleButton(){
       metaInput.checked = true
       hazardInput.checked = true
       }
+
+      if (clickedDTXCID){
+
+        try{
+          fieldList.forEach(key =>{
+            let IdToHighlight = document.getElementById(`ylabel-${clickedDTXCID}-${key}`);
+            IdToHighlight.setAttribute("fill", "red");
+            IdToHighlight.style.fontWeight = "bold";
+            })}
+        catch(error){return}  
+  
+    }
+    
     });
 }
 
