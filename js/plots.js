@@ -1373,6 +1373,15 @@ var legendClick = function(event, d, i) {
         showBarsMS2(newData)
       }
     }
+
+    if (clickedDTXCID != null){
+      try{
+        fieldList.forEach(key =>{
+          let IdToHighlight = document.getElementById(`ylabel-${clickedDTXCID}-${key}`);
+          IdToHighlight.setAttribute("fill", "red");
+          IdToHighlight.style.fontWeight = "bold";})}
+      catch(error){return}
+    }
     
   }
 
@@ -2075,8 +2084,9 @@ function makeLargeGrid(){
     })
     dataFromGrid = sortData(dataset);
 
+    var originallyCheckedMS2 = null
     let originallyCheckedMeta = metaInput.checked
-    if (hasMS2){let originallyCheckedMS2 = MS2Input.checked}
+    if (hasMS2){originallyCheckedMS2 = MS2Input.checked}
     let originallyCheckedHazard = hazardInput.checked
 
     metaInput.checked = true
@@ -2188,7 +2198,7 @@ screenshotButton.addEventListener('click', () => {
 
 // ======= CALL MAIN FUNCTION ==================================================================================================
 // const dataPath = "./data/short_test.csv";
-// const dataPath = "./data/data_with_MS2.csv";
-const dataPath = "./data/data_without_MS2.csv";
+const dataPath = "./data/data_with_MS2.csv";
+// const dataPath = "./data/data_without_MS2.csv";
 generatePlots(dataPath);
 
