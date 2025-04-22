@@ -1603,6 +1603,6 @@ async function mainRunSequence(xlsxPath, seqPath) {
   // });
 }
 
-const xlsxPath = "../data/results.xlsx";
-const seqCsvPath = "../data/sequence.csv";
+const xlsxPath = "./data/results.xlsx";
+const seqCsvPath = "./data/sequence.csv";
 mainRunSequence(xlsxPath, seqCsvPath);
