@@ -1431,6 +1431,15 @@ var legendClick = function(event, d, i) {
       }
     }
     
+    if (clickedDTXCID != null){
+      try{
+        fieldList.forEach(key =>{
+          let IdToHighlight = document.getElementById(`ylabel-${clickedDTXCID}-${key}`);
+          IdToHighlight.setAttribute("fill", "red");
+          IdToHighlight.style.fontWeight = "bold";})}
+      catch(error){return}
+    }
+
   }
 
   legendText = ["AMOS Fact Sheets","AMOS Methods","AMOS Spectra","PubMed Articles", "PubChem Articles","PubChem Patents","PubChem Sources", "Dashboard Water Lists"]
@@ -2163,8 +2172,9 @@ function makeLargeGrid(){
     })
     dataFromGrid = sortData(dataset);
 
+    var originallyCheckedMS2 = null
     let originallyCheckedMeta = metaInput.checked
-    if (hasMS2){let originallyCheckedMS2 = MS2Input.checked}
+    if (hasMS2){originallyCheckedMS2 = MS2Input.checked}
     let originallyCheckedHazard = hazardInput.checked
 
     metaInput.checked = true
