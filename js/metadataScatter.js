@@ -786,5 +786,5 @@ async function metadataScatterMain(csvPath) {
   updatePagination();
 }
 
-const csvPath = "../data/WW2DW_data_analysis_file-2025_03_25.csv";
+const csvPath = "./data/WW2DW_data_analysis_file-2025_03_25.csv";
 metadataScatterMain(csvPath);
