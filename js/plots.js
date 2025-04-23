@@ -499,6 +499,7 @@ function createTop5ToggleButton(){
       button.textContent = "Click to show top 5 metadata candidates only"
       showingTop5 = false
       makeLargeGrid()
+      makeExportButton()
       metaInput.checked = true;
       hazardInput.checked = false;
       if (hasMS2){MS2Input.checked = false;}
@@ -530,6 +531,7 @@ function createTop5ToggleButton(){
       button.textContent = "Showing Top 5 metadata candidates. Click to show all";
       showingTop5 = true
       makeLargeGrid()
+      makeExportButton()
       metaInput.checked = true;
       hazardInput.checked = false;
       if (hasMS2){MS2Input.checked = false;}
