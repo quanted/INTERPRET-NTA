@@ -750,16 +750,13 @@ function makeArrows(){
       featureInput.setAttribute('max', `${uniqueFeatureList[uniqueFeatureList.length -1]}`)
       featureInput.setAttribute('placeholder', 'Feature ID')
       featureInput.setAttribute('list', 'featureOptions')
-      document.getElementById("tripod-main-container").appendChild(featureInput)
+      document.getElementById("tripod-shuttle-buttons").appendChild(featureInput)
 
     let button = document.createElement('button')
-      button.textContent = "Go";
-      button.style.width = '30px';
-      button.style.height = '30px';
-      button.id = 'feature-input-button';
-      button.style.cursor = 'pointer';
-      document.getElementById('tripod-main-container').appendChild(button);
-      button.addEventListener('click', function(event) {goToPosition(event, position="input")})
+    button.textContent = "Go";
+    button.id = 'feature-input-button';
+    document.getElementById('tripod-shuttle-buttons').appendChild(button);
+    button.addEventListener('click', function(event) {goToPosition(event, position="input")})
   }
   
 
@@ -1297,10 +1294,10 @@ var mouseoverYlabel = function(d) {
   })  
 }
 var mouseleaveYlabel = function() {
+  imageDivY.removeChild(imageY)
+
   tooltipYlabel
     .style("display", "none");
-
-  imageDivY.removeChild(imageY)
 
   var DTXCIDname = d3.select(this)['_groups'][0][0].querySelector('text').innerHTML
 
@@ -1971,7 +1968,11 @@ function makeLargeGrid(){
           }
         },
       ]},
-      {headerName: "Metadata", 
+          {headerName: "MS2", children: [{headerName: 'MS2 Score', 
+      field: 'MS2 quotient score', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], 
+      valueGetter: (params) => {return params.data?.["MS2 quotient score"] ?? 'N/A'}
+    }]},
+    {headerName: "Metadata", 
         openByDefault: true,
         children: [
           {columnGroupShow: "closed", headerName: "Metadata Score", field: 'STRUCTURE_TOTAL_NORM', floatingFilter: true, filter: 'agNumberColumnFilter', width: 200, sortingOrder: ['desc', 'asc', null]},
@@ -1986,10 +1987,6 @@ function makeLargeGrid(){
           {columnGroupShow: "open", headerName: "Dashboard Water Lists", field: 'Structure_Presence in water lists count', floatingFilter: true, filter: 'agNumberColumnFilter', width: 175, sortingOrder: ['desc', 'asc', null]},
         ]
       },    
-    {headerName: "MS2", children: [{headerName: 'MS2 Score', 
-      field: 'MS2 quotient score', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], 
-      valueGetter: (params) => {return params.data?.["MS2 quotient score"] ?? 'N/A'}
-    }]},
     {headerName: "Hazard", 
       children: [
         {columnGroupShow: "closed", headerName: "Hazard Score", field: 'Hazard Score', floatingFilter: true, filter: 'agNumberColumnFilter', width: 140, sortingOrder: ['desc', 'asc', null]},

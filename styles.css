@@ -35,6 +35,29 @@
   padding: 2px;
 }
 
+#tripod-shuttle-buttons{
+  position: absolute;
+  left: 1406px;
+  top: 12px; 
+  height: 28px;
+  width: 120px;
+}
+
+#input-feature{
+  width: 81px;
+  height: 82%;
+}
+
+#feature-input-button{
+  height: 100%;
+  width: 30px;
+  font-weight: bold;
+  cursor : pointer;
+  z-index: 1;
+  padding-left: 1px;
+  padding-right: 1px;
+}
+
 .tripod-arrow-first{
   position: absolute;
   left: 1326px;
@@ -47,24 +70,6 @@
   position: absolute;
   left: 1366px;
   top: 9px;
-  cursor : pointer;
-  z-index: 1;
-}
-
-#input-feature{
-  position: absolute;
-  left: 1406px;
-  top: 10px;
-  width: 81px;
-  height: 26px;
-  z-index: 1;
-}
-
-#feature-input-button{
-  position: absolute;
-  left: 1492px;
-  top: 10px;
-  font-weight: bold;
   cursor : pointer;
   z-index: 1;
 }
