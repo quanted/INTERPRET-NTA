@@ -1208,6 +1208,11 @@ outlinkDiv.addEventListener('mouseout', function(){imageDiv.style.borderWidth = 
 
 // Define function for bar click on MS2 and hazard plot
 var barClickMS2Hazard = function(){
+  // If a hazard bar is being clicked, open the empty cheminformatics hazard module page. 
+  // In the future, we want this to open the hazard table of the clicked-on DTXCID
+  // if (this.className["baseVal"] == "hazard-bar") {window.open("https://hazard.sciencedataexperts.com/#/hazard")}
+  if (this.className["baseVal"] == "hazard-bar") {window.open("https://hazard.sciencedataexperts.com/#/hazard/report")}
+
   var DTXCIDname = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["DTXCID_INDIVIDUAL_COMPONENT"]}-hazard`).innerHTML
   structure_label.nodeValue = DTXCIDname
 
@@ -1223,10 +1228,10 @@ var barClickMS2Hazard = function(){
 
   outlinksvgGroup.attr("cursor", "pointer")
   outlinkDiv.addEventListener('mouseover', function(){imageDiv.style.borderWidth = "3px"})
-outlinkDiv.addEventListener('mouseout', function(){imageDiv.style.borderWidth = "1px"})
+  outlinkDiv.addEventListener('mouseout', function(){imageDiv.style.borderWidth = "1px"})
   imageDiv.addEventListener("mouseover", function(){
     imageDiv.style.borderWidth = "3px", 
-    imageDiv.style.cursor = "pointer"})
+  imageDiv.style.cursor = "pointer"})
   imageDiv.addEventListener("mouseout", function(){imageDiv.style.borderWidth = "1px"})
 
   if (previousClickedDTXCID == clickedDTXCID){
