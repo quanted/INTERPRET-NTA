@@ -1208,13 +1208,15 @@ outlinkDiv.addEventListener('mouseout', function(){imageDiv.style.borderWidth = 
 
 // Define function for bar click on MS2 and hazard plot
 var barClickMS2Hazard = function(){
-  // If a hazard bar is being clicked, open the empty cheminformatics hazard module page. 
-  // In the future, we want this to open the hazard table of the clicked-on DTXCID
-  // if (this.className["baseVal"] == "hazard-bar") {window.open("https://hazard.sciencedataexperts.com/#/hazard")}
-  if (this.className["baseVal"] == "hazard-bar") {window.open("https://hazard.sciencedataexperts.com/#/hazard/report")}
-
   var DTXCIDname = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["DTXCID_INDIVIDUAL_COMPONENT"]}-hazard`).innerHTML
   structure_label.nodeValue = DTXCIDname
+
+  // If a hazard bar is being clicked, open the empty cheminformatics hazard module page. 
+  // In the future, we want this to open the hazard table of the clicked-on DTXCID
+    if (this.className["baseVal"] == "hazard-bar") {window.open("https://hazard.sciencedataexperts.com/#/hazard/report")}
+    else if (this.className["baseVal"] == "MS2-bar") {
+      const popup = window.open(`mirror_plots.html?dtxcid=${DTXCIDname}`, "PopupWindow", "width=400,height=300");
+  }
 
   //Get the other features that this DTXCID is a candidate for 
   const featureArray = fullData.filter(d => d.DTXCID_INDIVIDUAL_COMPONENT === DTXCIDname).map(d => d["Feature ID"])
@@ -2300,8 +2302,8 @@ screenshotButton.addEventListener('click', () => {
 }
 
 // ======= CALL MAIN FUNCTION ==================================================================================================
-// const dataPath = "./data/short_test.csv";
-const dataPath = "./data/WW2DW_Data_Analysis_file_5_with_MS2.csv";
+const dataPath = "./data/short_test.csv";
+// const dataPath = "./data/WW2DW_Data_Analysis_file_5_with_MS2.csv";
 // const dataPath = "./data/WW2DW_Data_Analysis_file_5_without_MS2.csv";
 generatePlots(dataPath);
 
