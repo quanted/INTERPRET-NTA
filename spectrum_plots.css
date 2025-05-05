@@ -1,0 +1,72 @@
+:root {
+  --ms-plot-primary-color: #52B4FA;
+  --ms-plot-secondary-color: #AD4B05;
+  --ms-plot-match-color: #0064ff;
+  --ms-plot-below-threshold-color: #CCCCCC;
+  --ms-plot-peak-line-width: 2;
+  --nmr-plot-color: red;
+}
+
+/***** OVERALL PLOT STYLING *****/
+
+.graph-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.info-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 18px
+}
+
+.spectrum-display-container {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  height: 100%
+}
+
+/***** PLOT ELEMENT STYLING ****/
+
+.mouseover-highlight-circle {
+  fill: var(--ms-plot-primary-color);
+  stroke: var(--ms-plot-primary-color);
+}
+
+.mouseover-highlight-circle-secondary {
+  fill: var(--ms-plot-secondary-color);
+  stroke: var(--ms-plot-secondary-color);
+}
+
+.mouseover-highlight-circle-match {
+  fill: var(--ms-plot-match-color);
+  stroke: var(--ms-plot-match-color);
+}
+
+.mouseover-highlight-circle-below-threshold {
+  fill: var(--ms-plot-below-threshold-color);
+  stroke: var(--ms-plot-below-threshold-color);
+}
+
+.ms-peak-line {
+  stroke: var(--ms-plot-primary-color); 
+  stroke-width: var(--ms-plot-peak-line-width);
+}
+
+.ms-peak-line-match {
+  stroke: var(--ms-plot-match-color);
+  stroke-width: var(--ms-plot-peak-line-width);
+}
+
+.ms-peak-line-secondary {
+  stroke: var(--ms-plot-secondary-color); 
+  stroke-width: var(--ms-plot-peak-line-width);
+}
+
+.ms-peak-line-below-threshold {
+  stroke: var(--ms-plot-below-threshold-color); 
+  stroke-width: var(--ms-plot-peak-line-width);
+}

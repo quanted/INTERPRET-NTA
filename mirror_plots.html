@@ -1,13 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <link rel="stylesheet" href="./styles.css">
-
-  <title>Mirror Plot</title>
-</head>
-<body></body>
-<script src="./js/mirror_plots.js"></script>
+  <head>
+    <title>Mirror Plots</title>
+    <link rel="stylesheet" href="spectrum_plots.css">
+  </head>
+  <body>
+    <div class="graph-container">
+      <h5>Mass Spectrum Comparison</h5>
+      <svg width="600" height="450" id="msplot"></svg>
+      <button id="zoomReset">Reset Zoom</button>
+    </div>
+    <script src="./js/mirror_plots.js"></script>
+    <script src="./js/d3.v7.min.js"></script>
+  </body>
 </html>

@@ -1215,7 +1215,7 @@ var barClickMS2Hazard = function(){
   // In the future, we want this to open the hazard table of the clicked-on DTXCID
     if (this.className["baseVal"] == "hazard-bar") {window.open("https://hazard.sciencedataexperts.com/#/hazard/report")}
     else if (this.className["baseVal"] == "MS2-bar") {
-      const popup = window.open(`mirror_plots.html?dtxcid=${DTXCIDname}`, "PopupWindow", "width=400,height=300");
+      const popup = window.open(`mirror_plots.html?dtxcid=${DTXCIDname}&feature=${selectedFeature}`, "PopupWindow", "width=700,height=600");
   }
 
   //Get the other features that this DTXCID is a candidate for 
