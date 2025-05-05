@@ -286,10 +286,12 @@ var image = null
 var outlinksvg = null
 function addInfoBox() {
 // Add a border around the visualization options
-var settingsBorder = makeSvgElement(465, 420, "settings-border", d3.select("#tripod-settings-container"));
+// var settingsBorder = makeSvgElement(465, 420, "settings-border", d3.select("#tripod-settings-container"));
+var settingsBorder = makeSvgElement(355, 420, "settings-border", d3.select("#tripod-settings-container"));
 
 settingsBorder.append("rect")
-  .attr("width", 465)
+  // .attr("width", 465)
+  .attr("width", 355)
   .attr("height", 420)
   .attr("rx", 10)
   .attr("x", 1)
@@ -301,32 +303,35 @@ settingsBorder.append("text")
   .text("Hazard Completeness Score")  
   .attr("font-size", 22)
   .attr("font-weight", "bold")
-  .attr("x", 110)
+  // .attr("x", 110)
+  .attr("x", 45)
   .attr("y", 230)
 
 settingsBorder.append("text")
   .text("Metadata Legend")  
   .attr("font-size", 22)
   .attr("font-weight", "bold")
-  .attr("x", 156)
+  .attr("x", 91)
   .attr("y", 45)
 
 settingsBorder.append("text")
   .text("0.0")  
   .attr("font-size", 18)
-  .attr("x", 90)
+  .attr("x", 30)
   .attr("y", 284) 
 
 settingsBorder.append("text")
   .text("1.0")  
   .attr("font-size", 18)
-  .attr("x", 358)
+  .attr("x", 304)
   .attr("y", 284)     
 
-infoBox = makeSvgElement(465, 304, "infobox", d3.select("#tripod-infobox"))
+// infoBox = makeSvgElement(465, 304, "infobox", d3.select("#tripod-infobox"))
+infoBox = makeSvgElement(355, 304, "infobox", d3.select("#tripod-infobox"))
 
 infoBox.append("rect")
-  .attr("width", 465)
+  // .attr("width", 465)
+  .attr("width", 355)
   .attr("height", 347)
   .attr("rx", 10)
   .attr("x", 0)
@@ -349,8 +354,8 @@ more_features_span = document.createElement('span')
   more_features_span.style.fontSize = "18px"
   more_features_span.style.zIndex = 1
   more_features_span.style.top = "550px"
-  more_features_span.style.left = "255px"
-  more_features_span.style.maxWidth = "180px"
+  more_features_span.style.left = "230px"
+  more_features_span.style.maxWidth = "120px"
   more_features_span.style.maxHeight = "160px"
   more_features_span.style.overflowY = "auto"
 more_features = document.createTextNode("")
@@ -362,12 +367,12 @@ structureToolTip = d3.select(`#tripod-infobox`)
  .append("div")
  .attr("id", `tripod-StructureToolTip`)
 imageDiv = document.getElementById("tripod-StructureToolTip")
-imageDiv.style.height = "200px"
-imageDiv.style.width = "200px"
+imageDiv.style.height = "190px"
+imageDiv.style.width = "190px"
  
 image = document.createElement('div')
-image.style.width = "190px"
-image.style.height = "208px"
+image.style.width = "180px"
+image.style.height = "188px"
 imageDiv.appendChild(image)
 image.style.paddingLeft = "10px"
 image.style.paddingRight = "10px"
@@ -403,7 +408,7 @@ outlinksvg = makeSvgElement(30, 30, 'tripod-outlink-svg', d3.select("#tripod-out
    .attr("id", "tripod-outlink-color")
    .attr("points", "304 16 304 48 441.373 48 188.687 300.687 211.313 323.313 464 70.627 464 208 496 208 496 16 304 16")  
   
- outlinksvgGroup.attr("transform", "translate(190, -252) scale(0.06)")
+ outlinksvgGroup.attr("transform", "translate(180, -252) scale(0.06)")
 
 }
 
@@ -450,7 +455,7 @@ else{
   document.getElementById("tripod-chart-MS2").appendChild(mySpan)
   mySpan.style.position = "absolute"
   mySpan.style.top = "200px"
-  mySpan.style.left = "190px"
+  mySpan.style.left = "130px"
   mySpan.style.fontSize = '22px';
 }
 
@@ -745,10 +750,10 @@ var xHazard = null
 var xMS2 = null
 function addXaxis(xMax, pre_space){
   //Create svg for x-axis
-  const xAxisSvg = makeSvgElement(400, 20, 'tripod-xaxis', d3.select("#tripod-xaxis"));
+  const xAxisSvg = makeSvgElement(300, 20, 'tripod-xaxis', d3.select("#tripod-xaxis"));
   let x = d3.scaleLinear() 
     .domain([0, xMax])
-    .range([ 0, 360 ]);
+    .range([ 0, 275 ]);
 
   xlabel = xAxisSvg.append("g")
     .call(d3.axisBottom(x))
@@ -763,12 +768,14 @@ createTop5ToggleButton()
 
 if (hasMS2) {
   xMS2 = addXaxis(1, pre_space = 136)
-  xMeta = addXaxis(4, pre_space = 274)
-  xHazard = addXaxis(12, pre_space = 410)
+  xMeta = addXaxis(4, pre_space = 259)
+  xHazard = addXaxis(12, pre_space = 384)
 }
 else {
-  xMeta = addXaxis(4, pre_space = 674)
-  xHazard = addXaxis(12, pre_space = 810)
+  // xMeta = addXaxis(4, pre_space = 674)
+  // xHazard = addXaxis(12, pre_space = 810)
+  xMeta = addXaxis(4, pre_space = 559)
+  xHazard = addXaxis(12, pre_space = 684)
 }
 
 
@@ -1040,7 +1047,7 @@ function createYToolTip(){
 function getImage(name){
   image = document.createElement('img');
   image.src = structureImageURL + name
-  image.style = "width:144px;height:144px;padding:28px;";
+  image.style = "width:135px;height:135px;padding:28px;";
   image.alt = `Structure image for ${name}`
   return image
 }
@@ -1279,7 +1286,7 @@ function makeLegend(){
   legendsvg.attr('id', 'metadata-legendbox')
   var legend = legendsvg.append('g')
     .attr('class', 'metadata-legend')
-    .attr('transform', 'translate(105, 65)')
+    .attr('transform', 'translate(40, 65)')
     .selectAll('rect')
     .data(legendData)
     .enter()
@@ -1421,9 +1428,9 @@ legendText = ["PubMed Articles", "PubChem Articles", "PubChem Patents", "PubChem
 }
 
 function makeTitleStatic(){
-  const titlesvg = makeSvgElement(500, 20, 'tripod-title', d3.select("#tripod-title-static"));
+  const titlesvg = makeSvgElement(395, 20, 'tripod-title', d3.select("#tripod-title-static"));
   titlesvg.append("rect") 
-    .attr("width", 1610)
+    .attr("width", 1271)
     .attr("height", 50)
     .attr("rx", 10)
     .attr("x", -19)
@@ -1433,7 +1440,7 @@ function makeTitleStatic(){
     .attr("z-index", -1)
   // Sub-title
   titlesvg.append("rect") 
-    .attr("width", 537)
+    .attr("width", 424)
     .attr("height", 40)
     .attr("x", -19)
     .attr("y", 30)
@@ -1441,7 +1448,7 @@ function makeTitleStatic(){
     .style("stroke", "#808080")
     .attr("z-index", -1)
   titlesvg.append("text")  
-    .attr("x", 0)
+    .attr("x", -2)
     .attr("y", 60)
     .attr("text-anchor", "left")
     .style("font-size", "22px")
@@ -1449,55 +1456,56 @@ function makeTitleStatic(){
     .text(`MS2`);  
   if (hasMS2){
   titlesvg.append("text")  
-    .attr("x", 346)
+    .attr("x", 233)
     .attr("y", 55)
     .attr("text-anchor", "left")
     .style("font-size", "20px")
     .text(`Select plot to sort`); }
   titlesvg.append("rect") 
-    .attr("width", 536)
+    .attr("width", 424)
     .attr("height", 40)
-    .attr("x", 519)
+    // .attr("x", 519)
+    .attr("x", 405)
     .attr("y", 30)
     .attr("fill", "#DBE4F0") //light blue grey
     .style("stroke", "#808080")
     .attr("z-index", -1)
   titlesvg.append("text")  
-    .attr("x", 535)
+    .attr("x", 420)
     .attr("y", 60)
     .attr("text-anchor", "left")
     .style("font-size", "22px")
     .style("font-weight", "bold")
     .text(`Metadata`);  
   titlesvg.append("text")  
-    .attr("x", 880)
+    .attr("x", 654)
     .attr("y", 55)
     .attr("text-anchor", "left")
     .style("font-size", "20px")
     .text(`Select plot to sort`); 
   titlesvg.append("rect") 
-    .attr("width", 536)
+    .attr("width", 424)
     .attr("height", 40)
-    .attr("x", 1055)
+    .attr("x", 828)
     .attr("y", 30)
     .attr("fill", "#DBE4F0") //light blue grey
     .style("stroke", "#808080")
     .attr("z-index", -1)
   titlesvg.append("text")  
-    .attr("x", 1070)
+    .attr("x", 842)
     .attr("y", 60)
     .attr("text-anchor", "left")
     .style("font-size", "22px")
     .style("font-weight", "bold")
     .text(`Hazard`);  
   titlesvg.append("text")  
-    .attr("x", 1418)
+    .attr("x", 1079)
     .attr("y", 55)
     .attr("text-anchor", "left")
     .style("font-size", "20px")
     .text(`Select plot to sort`); 
   titlesvg.append("text") 
-    .attr("x", 520)
+    .attr("x", 430)
     .attr("y", 18)
     .attr("text-anchor", "left")
     .style("font-size", "20px")
@@ -1508,7 +1516,7 @@ makeTitleStatic()
 function loadData(data){
 
 // create svg for visualization
-  const width = 500;
+  const width = 395;
   height = subGroupData.length * 30;
 
 // Create a tooltip for the stacked bars -----------------------------------------------------------------
@@ -1760,7 +1768,7 @@ function makeTitle(){
     .text(`Feature ${selectedFeature}`);  
 
   titlesvg.append("text")  
-    .attr("x", 670)
+    .attr("x", 580)
     .attr("y", 19)
     .attr("text-anchor", "left")
     .style("font-size", "20px")
@@ -1768,7 +1776,7 @@ function makeTitle(){
     .text(`${totalCandidates}`);  
 
   titlesvg.append("text")  
-    .attr("x", 920)
+    .attr("x", 830)
     .attr("y", 19)
     .attr("text-anchor", "left")
     .style("font-size", "20px")
@@ -1776,7 +1784,7 @@ function makeTitle(){
     .text(` ${numCandidatesRemoved}`); 
 
   titlesvg.append("text") 
-    .attr("x", 200)
+    .attr("x", 160)
     .attr("y", 18)
     .attr("text-anchor", "left")
     .style("font-size", "20px")
@@ -1803,7 +1811,7 @@ function createInfoTooltip(){
   const infosvg = makeSvgElement(64, 20, 'tripod-info', d3.select("#tripod-i"));  
     backgroundCircle = infosvg.append('circle')
     backgroundCircle.attr("r", "11")
-    backgroundCircle.attr("cx", "144")
+    backgroundCircle.attr("cx", "32")
     backgroundCircle.attr("cy", "50")
     backgroundCircle.attr('fill', '#DBE4F0')
     backgroundCircle.on("mouseover", infoCircleMouseover)
@@ -1815,7 +1823,7 @@ function createInfoTooltip(){
     infoCircle.attr("viewBox", "0 0 1920 1920")
     infoCircle.attr("width", "64px")
     infoCircle.attr("height", "64px")
-    infoCircle.attr('transform', 'translate(133, 37.5) scale(0.012) ')
+    infoCircle.attr('transform', 'translate(20, 37.5) scale(0.012) ')
     infoCircle.on("mouseover", infoCircleMouseover)
     infoCircle.on("mousemove", infoCircleMousemove)
     infoCircle.on("mouseout", infoCircleMouseout)
@@ -1858,7 +1866,7 @@ function makeLargeGrid(){
   var columnDefs = [
     {headerName: "", 
       children: [
-        {field: 'Feature ID', filter: 'agNumberColumnFilter', floatingFilter: true, width: 150, sortingOrder: ['desc', 'asc', null]},
+        {field: 'Feature ID', filter: 'agNumberColumnFilter', floatingFilter: true, width: 100, sortingOrder: ['desc', 'asc', null]},
         {field: 'Structure', autoHeight: true, width: 150,
         cellRenderer: params => {
           try {
@@ -1901,7 +1909,7 @@ function makeLargeGrid(){
     },   
     {headerName: "Hazard", 
       children: [
-        {columnGroupShow: "closed", headerName: "Hazard Score", field: 'Hazard Score', floatingFilter: true, filter: 'agNumberColumnFilter', width: 150, sortingOrder: ['desc', 'asc', null]},
+        {columnGroupShow: "closed", headerName: "Hazard Score", field: 'Hazard Score', floatingFilter: true, filter: 'agNumberColumnFilter', width: 120, sortingOrder: ['desc', 'asc', null]},
         {columnGroupShow: "closed", headerName: "Hazard Completeness Score", field: 'Hazard Completeness Score', floatingFilter: true, filter: 'agNumberColumnFilter', width: 210, sortingOrder: ['desc', 'asc', null]},
         {columnGroupShow: "open", headerName: "Hazard Score", field: 'Hazard Score', floatingFilter: true, filter: 'agNumberColumnFilter', width: 210, sortingOrder: ['desc', 'asc', null]},
         {columnGroupShow: "open", headerName: "Hazard Completeness Score", field: 'Hazard Completeness Score', floatingFilter: true, filter: 'agNumberColumnFilter', width: 200, sortingOrder: ['desc', 'asc', null]},

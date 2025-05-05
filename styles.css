@@ -2,15 +2,17 @@
 
 #tripod-settings-container {
     height: 600px;
-    width: 500px; 
+    /* width: 500px;  */
+    width: 395px; 
     position: absolute;
-    left: 1630px;
+    left: 1290px;
     top: 6px;
 }
 
 #tripod-main-container {
     height: 820px;
-    width: 1620px; 
+    /* width: 1620px;  */
+    width: 1279px; 
     position: relative;
     left: 8px;
     top: 0px;
@@ -19,7 +21,8 @@
 
 .tripod-chart {
   height: 700px;
-  width: 536px;
+  /* width: 536px; */
+  width: 423px;
   top: 85px;
   overflow-y: auto;
   border: 1px solid #ccc;
@@ -37,7 +40,8 @@
 
 #tripod-shuttle-buttons{
   position: absolute;
-  left: 1406px;
+  /* left: 1406px; */
+  left: 1006px;
   top: 12px; 
   height: 28px;
   width: 120px;
@@ -60,7 +64,7 @@
 
 .tripod-arrow-first{
   position: absolute;
-  left: 1326px;
+  left: 926px;
   top: 9px;
   cursor: pointer;
   z-index: 1;
@@ -68,7 +72,7 @@
 
 .tripod-arrow-left{
   position: absolute;
-  left: 1366px;
+  left: 966px;
   top: 9px;
   cursor : pointer;
   z-index: 1;
@@ -76,7 +80,7 @@
 
 .tripod-arrow-right{
   position: absolute;
-  left: 1530px;
+  left: 1130px;
   top: 9px;
   cursor : pointer;
   z-index: 1;
@@ -84,7 +88,7 @@
 
 .tripod-arrow-last{
   position: absolute;
-  left: 1570px;
+  left: 1170px;
   top: 9px;
   cursor : pointer;
   z-index: 1;
@@ -96,17 +100,18 @@
 
 #tripod-chart-hazard {
   position: absolute;
-  left: 1074px;
+  left: 848px;
 }
 
 #tripod-chart-meta {
   position: absolute;
-  left: 537px;
+  left: 423px;
 }
 
 #tripod-xaxis {
     height: 30px;
-    width: 1310px; 
+    /* width: 1310px;  */
+    width: 1034px; 
     position: absolute;
     z-index:1;
     top: 787px;
@@ -143,7 +148,8 @@
 #tripod-chart-container {
     position: relative;
     height: 800px;
-    width: 1620px;
+    /* width: 1620px; */
+    width: 1279px;
 }
 
 #tripod-ylabel-meta {font-size: 14px;}
@@ -154,7 +160,7 @@
 
 #tripod-Top5ToggleButton {
   position: absolute;
-  left: 140px;
+  left: 85px;
   top: 340px;
   z-index: 1;
   background-color: #DBE4F0;
@@ -167,7 +173,7 @@
 #tripod-export-button{
   position: absolute;
   top: 6px;
-  left: 2050px;
+  left: 1600px;
   cursor : pointer;
   z-index: 1;
 }
@@ -178,13 +184,14 @@
 
 #tripod-gradient-rect{
   position: absolute;
-  left: 80px;
-  top: 240px;
+  left: 20px;
+  top: 234px;
 }
 
 #input-MS2{
   position: absolute;
-  left: 512px;
+  /* left: 512px; */
+  left: 399px;
   top: 55px;
   transform: scale(1.2);
   z-index: 10;
@@ -192,7 +199,7 @@
 
 #input-hazard{
   position: absolute;
-  left: 1584px;
+  left: 1245px;
   top: 55px;
   transform: scale(1.2);
   z-index: 10;
@@ -200,7 +207,7 @@
 
 #input-meta{
   position: absolute;
-  left: 1047px;
+  left: 822px;
   top: 55px;
   transform: scale(1.2);
   z-index: 10;
@@ -209,7 +216,7 @@
 #screenshot-btn{
   position: absolute;
   top: 750px;
-  left: 335px;
+  left: 230px;
   z-index: 1;
 }
 
@@ -233,7 +240,8 @@
 /* ag grid styles --------------------------------------------------------------------*/
 #tripod-grid {
     height: 800px;
-    width: 2090px; 
+    /* width: 2090px;  */
+    width: 1640px; 
     position: absolute;
     left: 8px;
     top: 820px;
