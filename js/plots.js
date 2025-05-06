@@ -1213,7 +1213,7 @@ var barClickMS2Hazard = function(){
 
   // If a hazard bar is being clicked, open the empty cheminformatics hazard module page. 
   // In the future, we want this to open the hazard table of the clicked-on DTXCID
-    if (this.className["baseVal"] == "hazard-bar") {window.open("https://hazard.sciencedataexperts.com/#/hazard/report")}
+    if (this.className["baseVal"] == "hazard-bar") {window.open("https://ccte-cced-cheminformatics.epa.gov/#/")}
     else if (this.className["baseVal"] == "MS2-bar") {
       const popup = window.open(`mirror_plots.html?dtxcid=${DTXCIDname}&feature=${selectedFeature}`, "PopupWindow", "width=700,height=600");
   }
