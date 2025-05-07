@@ -1,9 +1,3 @@
-// This data will be gotten from the DTXCID
-// spectrum 1 should be the experimental data of the feature
-const spec1=[[10,40], [13,100],[45,30]]
-// soectrum 2 should be the CFMID spectrum of the candidate DTXCID
-const spec2=[[10,40], [16,100],[45,30]]
-
 // Flags peaks in the two spectra that are within a specified mass range of each other, for the purpose of coloring them later.
 function flagSpectra(spectrum1, spectrum2, mass_window=0, window_type="da", peak_threshold=0) {
     var new_spectrum1 = spectrum1.map(peak =>[peak[0], peak[1], false])
@@ -38,7 +32,7 @@ function flagSpectra(spectrum1, spectrum2, mass_window=0, window_type="da", peak
     return [new_spectrum1, new_spectrum2]
   }
 
-  function createDualMassSpectrumPlot(DTXCID, feature){
+  function createDualMassSpectrumPlot(DTXCID, feature, inputSpec, CFMIDSpec){
     console.log('hi')
     var svg = d3.select("#msplot")
     var width = svg.attr("width")
@@ -48,9 +42,9 @@ function flagSpectra(spectrum1, spectrum2, mass_window=0, window_type="da", peak
     const peak_threshold = this.peak_threshold
 
     // const [spectrum1, spectrum2] = this.flagSpectra(this.spectrum1, this.spectrum2, this.window_size, this.window_type, peak_threshold)
-    const [spectrum1, spectrum2] = this.flagSpectra(spec1, spec2, this.window_size, this.window_type, peak_threshold)
-        const spectrum1_name = `Feature ${feature}`
-        const spectrum2_name = DTXCID
+    const [spectrum1, spectrum2] = this.flagSpectra(inputSpec, CFMIDSpec, this.window_size, this.window_type, peak_threshold)
+        const spectrum1_name = DTXCID
+        const spectrum2_name = `Feature ${feature}`
 
     // clear the plot (for when new data is supplied to this component)
     svg.selectAll("*").remove();
@@ -240,7 +234,9 @@ function getQueryParam(key){
 document.addEventListener("DOMContentLoaded", () => {
     const DTXCID = getQueryParam("dtxcid")
     const feature = getQueryParam("feature")
-    createDualMassSpectrumPlot(DTXCID, feature)
+    const inputSpec = JSON.parse(getQueryParam("inputSpec"))
+    const CFMIDSpec = JSON.parse(getQueryParam("CFMIDSpec"))
+    createDualMassSpectrumPlot(DTXCID, feature, inputSpec, CFMIDSpec)
 
     if (DTXCID){
         document.body.insertAdjacentHTML("beforeend", `<p>WARNING: YOU ARE SEEING FAKE DATA. MIRROR PLOTS ARE STILL UNDER DEVELOPMENT. </p>`)

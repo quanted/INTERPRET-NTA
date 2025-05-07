@@ -1,29 +1,48 @@
 // ======= UTILITY FUNCTIONS ====================================================================================================
 
 // Returns the contents of the input CSV. Values in the last column have a "\r" added to the end, so make sure the last column is not needed for the vis
+// async function parseCSV(filePath) {
+//   // fetch the file
+//   const response = await fetch(filePath);
+//   const csvText = await response.text();
+  
+//   // parse the file
+//   const lines = csvText.split('\n');
+//   const headers = lines[0].split(',');
+//   var result = [];
+
+//   // remove the '\r' from the last column of the csv
+//   // headers[headers.length - 1] = headers[headers.length - 1].replace(/\r/g, "");
+
+//   for (let i = 1; i < lines.length; i++) {
+//     const values = lines[i].split(',');
+//     const obj = {};
+//     for (let j = 0; j < headers.length; j++) {obj[headers[j]] = values[j];}
+//     result.push(obj);
+//   }
+
+//   // Remove rows with no feature ID
+//   const cleaned_result = result.filter(feature => feature['Feature ID'] != "")
+//   console.log(cleaned_result)
+//   return cleaned_result;
+// }
+
 async function parseCSV(filePath) {
   // fetch the file
   const response = await fetch(filePath);
   const csvText = await response.text();
   
-  // parse the file
-  const lines = csvText.split('\n');
-  const headers = lines[0].split(',');
-  var result = [];
-
-  // remove the '\r' from the last column of the csv
-  // headers[headers.length - 1] = headers[headers.length - 1].replace(/\r/g, "");
-
-  for (let i = 1; i < lines.length; i++) {
-    const values = lines[i].split(',');
-    const obj = {};
-    for (let j = 0; j < headers.length; j++) {obj[headers[j]] = values[j];}
-    result.push(obj);
-  }
-
-  // Remove rows with no feature ID
-  const cleaned_result = result.filter(feature => feature['Feature ID'] != "")
-  return cleaned_result;
+  return new Promise((resolve) => {
+    Papa.parse(csvText, {
+      header: true, 
+      skipEmptyLines: true,
+      complete: function(results) {
+        const cleaned = results.data.filter(row => row['Feature ID'] != "");
+        console.log(cleaned)
+        resolve(cleaned);
+      }
+    })
+  })
 }
 
 // Returns a boolean indicating whether or not the element is visible within the scrollable ancestor container
@@ -861,6 +880,8 @@ const keysToKeep = [
     "Persistence_score_mapped",
     "Bioaccumulation_score_mapped",
     "Exposure_score_mapped",
+    "energy0", 
+    "feature_spectrum"
   ];
 // Keys to keep for cleaning data further for sub-grouping on bar plot
 const subgroupKeys = [
@@ -885,6 +906,8 @@ const subgroupKeys = [
     "Hazard Score", 
     "Hazard Completeness Score",
     "MS2 quotient score", 
+    "energy0", 
+    "feature_spectrum"
   ];
 
 //Instantiate variables
@@ -1206,6 +1229,8 @@ outlinkDiv.addEventListener('mouseout', function(){imageDiv.style.borderWidth = 
   })}
 }
 
+
+
 // Define function for bar click on MS2 and hazard plot
 var barClickMS2Hazard = function(){
   var DTXCIDname = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["DTXCID_INDIVIDUAL_COMPONENT"]}-hazard`).innerHTML
@@ -1215,7 +1240,12 @@ var barClickMS2Hazard = function(){
   // In the future, we want this to open the hazard table of the clicked-on DTXCID
     if (this.className["baseVal"] == "hazard-bar") {window.open("https://ccte-cced-cheminformatics.epa.gov/#/")}
     else if (this.className["baseVal"] == "MS2-bar") {
-      const popup = window.open(`mirror_plots.html?dtxcid=${DTXCIDname}&feature=${selectedFeature}`, "PopupWindow", "width=700,height=600");
+      // spectrum 1 should be the experimental data of the feature
+      const inputSpec=d3.select(this)._groups[0][0]["__data__"]["energy0"]
+      // spectrum 2 should be the CFMID spectrum of the candidate DTXCID
+      const CFMIDSpec=d3.select(this)._groups[0][0]["__data__"]["feature_spectrum"]
+
+      window.open(`mirror_plots.html?dtxcid=${DTXCIDname}&feature=${selectedFeature}&inputSpec=${inputSpec}&CFMIDSpec=${CFMIDSpec}`, "PopupWindow", "width=700,height=600");
   }
 
   //Get the other features that this DTXCID is a candidate for 
@@ -2302,8 +2332,8 @@ screenshotButton.addEventListener('click', () => {
 }
 
 // ======= CALL MAIN FUNCTION ==================================================================================================
-// const dataPath = "./data/short_test.csv";
-const dataPath = "./data/WW2DW_Data_Analysis_file_5_with_MS2.csv";
+const dataPath = "./data/short_test.csv";
+// const dataPath = "./data/WW2DW_Data_Analysis_file_5_with_MS2.csv";
 // const dataPath = "./data/WW2DW_Data_Analysis_file_5_without_MS2.csv";
 generatePlots(dataPath);
 
