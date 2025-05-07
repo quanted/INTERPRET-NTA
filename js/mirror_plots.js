@@ -42,9 +42,9 @@ function flagSpectra(spectrum1, spectrum2, mass_window=0, window_type="da", peak
     const peak_threshold = this.peak_threshold
 
     // const [spectrum1, spectrum2] = this.flagSpectra(this.spectrum1, this.spectrum2, this.window_size, this.window_type, peak_threshold)
-    const [spectrum1, spectrum2] = this.flagSpectra(inputSpec, CFMIDSpec, this.window_size, this.window_type, peak_threshold)
-        const spectrum1_name = DTXCID
-        const spectrum2_name = `Feature ${feature}`
+    const [spectrum1, spectrum2] = this.flagSpectra(CFMIDSpec, inputSpec, this.window_size, this.window_type, peak_threshold)
+        const spectrum1_name = `Feature ${feature}`
+        const spectrum2_name = DTXCID
 
     // clear the plot (for when new data is supplied to this component)
     svg.selectAll("*").remove();
