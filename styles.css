@@ -127,7 +127,6 @@
 
 #tripod-infobox {
   position: absolute;
-  top: 435px;
   z-index:1;
 }
 
@@ -161,7 +160,7 @@
 #tripod-Top5ToggleButton {
   position: absolute;
   left: 85px;
-  top: 340px;
+  /* top: 340px; */
   z-index: 1;
   background-color: #DBE4F0;
 }
@@ -182,10 +181,16 @@
   z-index: 10;
 }
 
-#tripod-gradient-rect{
+#tripod-gradient-rect-hazard{
   position: absolute;
   left: 20px;
   top: 234px;
+}
+
+#tripod-gradient-rect-MS2{
+  position: absolute;
+  left: 20px;
+  top: 335px;
 }
 
 #input-MS2{
