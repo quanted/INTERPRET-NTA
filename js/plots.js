@@ -147,6 +147,7 @@ function cleanData(data, keysToKeep) {
     "Exposure_score_mapped",
     "Hazard Score",
     "Hazard Completeness Score",
+    "Amenability",
   ];
 
   let filteredData = [];
@@ -154,8 +155,10 @@ function cleanData(data, keysToKeep) {
     let filteredRow = {};
     Object.entries(row).forEach(([key, value]) => {
       if (keysToKeep.includes(key)) {
-        // converts numerical data into a Number data type
         if (key == "Feature ID"){value = Number(value);}
+        else if (key == "Amenability"){
+          if (value === ""){value = 9999}
+          else {value = Number(value)}}
         else if (keysToNum.includes(key)) {value = Number(Number(value).toPrecision(3));} //Rounds all numerical columns to 3 sig figs
         filteredRow[key] = value;
       }
@@ -261,6 +264,7 @@ function getTop5Rows(arr, categoryField, valueField) {
     "Exposure_score_mapped",
     "Hazard Score",
     "Hazard Completeness Score",
+    "Amenability"
   ];
 
   return cleanData(data = result, keysToKeep = usefulKeys)
@@ -271,7 +275,7 @@ function addHazardLegend(){
   const svgNS = "http://www.w3.org/2000/svg";
 
   const gradientSVG = document.createElementNS(svgNS, "svg");
-  gradientSVG.setAttribute("id", "tripod-gradient-rect");
+  gradientSVG.setAttribute("id", "tripod-gradient-rect-hazard");
   gradientSVG.setAttribute("width", "300");
   gradientSVG.setAttribute("height", "50");
 
@@ -312,6 +316,52 @@ function addHazardLegend(){
   
 }
 
+function addMS2Legend(){
+
+  const svgNS = "http://www.w3.org/2000/svg";
+
+  const gradientSVG = document.createElementNS(svgNS, "svg");
+  gradientSVG.setAttribute("id", "tripod-gradient-rect-MS2");
+  gradientSVG.setAttribute("width", "300");
+  gradientSVG.setAttribute("height", "50");
+
+  document.getElementById("tripod-settings-container").appendChild(gradientSVG)
+  
+  const defs = document.createElementNS(svgNS, 'defs');
+
+  const linearGradient = document.createElementNS(svgNS, "linearGradient");
+  linearGradient.setAttribute("id", "tripod-Gradient2");
+  linearGradient.setAttribute("x1", "0%");
+  linearGradient.setAttribute("y1", "0%");
+  linearGradient.setAttribute("x2", "100%");
+  linearGradient.setAttribute("y2", "0%");
+
+  const stop1 = document.createElementNS(svgNS, "stop");
+  stop1.setAttribute("offset", "0%");
+  stop1.setAttribute("stop-color", "white");
+  linearGradient.appendChild(stop1);
+
+  const stop2 = document.createElementNS(svgNS, "stop");
+  stop2.setAttribute("offset", "100%");
+  stop2.setAttribute("stop-color", "blue");
+  linearGradient.appendChild(stop2);
+
+  defs.appendChild(linearGradient);
+  gradientSVG.appendChild(defs)
+
+  const gradRect = document.createElementNS(svgNS, "rect");
+  gradRect.setAttribute("id", "tripod-rect1")
+  gradRect.setAttribute("x", "10")
+  gradRect.setAttribute("y", "10")
+  gradRect.setAttribute("width", "300")
+  gradRect.setAttribute("height", "20")
+  gradRect.setAttribute("fill", 'url(#tripod-Gradient2)')
+
+  gradientSVG.appendChild(gradRect)
+
+}
+
+
 // Adds Information Box and Settings Container text 
 var structure_label_span = null
 var structure_label = null
@@ -322,135 +372,13 @@ var imageDiv = null
 var image = null
 var outlinksvg = null
 
-function addInfoBox() {
-// Add a border around the visualization options
-var settingsBorder = makeSvgElement(465, 420, "settings-border", d3.select("#tripod-settings-container"));
 
-settingsBorder.append("rect")
-  .attr("width", 465)
-  .attr("height", 420)
-  .attr("rx", 10)
-  .attr("x", 1)
-  .attr("fill", "transparent")
-  .style("stroke", "#a7b2c2")
-  .attr("z-index", -1);
-
-settingsBorder.append("text")
-  .text("Hazard Completeness Score")  
-  .attr("font-size", 22)
-  .attr("font-weight", "bold")
-  .attr("x", 110)
-  .attr("y", 230)
-
-settingsBorder.append("text")
-  .text("Metadata Legend")  
-  .attr("font-size", 22)
-  .attr("font-weight", "bold")
-  .attr("x", 156)
-  .attr("y", 45)
-
-settingsBorder.append("text")
-  .text("0.0")  
-  .attr("font-size", 18)
-  .attr("x", 90)
-  .attr("y", 284) 
-
-settingsBorder.append("text")
-  .text("1.0")  
-  .attr("font-size", 18)
-  .attr("x", 358)
-  .attr("y", 284)   
-
-infoBox = makeSvgElement(465, 304, "infobox", d3.select("#tripod-infobox"))
-
-infoBox.append("rect")
-  .attr("width", 465)
-  .attr("height", 347)
-  .attr("rx", 10)
-  .attr("x", 0)
-  .attr("y", 0)
-  .attr("fill", "transparent")
-  .style("stroke", "#a7b2c2")
-  .attr("z-index", -1)
-
-structure_label_span = document.createElement('span')
-  structure_label_span.style.position = "absolute"
-  structure_label_span.style.top = "460px"
-  structure_label_span.style.left = "22px"
-  structure_label_span.style.fontSize = "18px"
-  structure_label = document.createTextNode(' ')
-  structure_label_span.appendChild(structure_label)
-  document.getElementById("tripod-settings-container").appendChild(structure_label_span)
-
-more_features_span = document.createElement('span')
-  more_features_span.style.position = "absolute"
-  more_features_span.style.fontSize = "18px"
-  more_features_span.style.zIndex = 1
-  more_features_span.style.top = "550px"
-  more_features_span.style.left = "255px"
-  more_features_span.style.maxWidth = "180px"
-  more_features_span.style.maxHeight = "160px"
-  more_features_span.style.overflowY = "auto"
-  more_features = document.createTextNode("")
-  more_features_span.appendChild(more_features)
-document.getElementById("tripod-settings-container").appendChild(more_features_span)
-
-  // Create the clickable InfoBox structure image tooltip
-  structureToolTip = d3.select(`#tripod-infobox`)
-  .append("div")
-  .attr("id", `tripod-StructureToolTip`)
-  imageDiv = document.getElementById("tripod-StructureToolTip")
-  imageDiv.style.height = "200px"
-  imageDiv.style.width = "200px"
-  
-  image = document.createElement('div')
-  image.style.width = "190px"
-  image.style.height = "208px"
-  imageDiv.appendChild(image)
-  image.style.paddingLeft = "10px"
-  const textNode = document.createTextNode("Click on a DTXCID to display the structure image")  
-  image.appendChild(textNode)
-  
-  image.style.display = 'flex';
-  image.style.justifyContent = 'center'; // Horizontal centering
-  image.style.alignItems = 'center'; // Vertical centering
-  
-outlinkDiv = document.createElement('div')
-outlinkDiv.setAttribute("id", "tripod-outlinkDiv")
-outlinkDiv.style.position = "absolute"
-outlinkDiv.style.height = "20px"
-outlinkDiv.style.width = "20px"
-outlinkDiv.style.zIndex = 1
-document.getElementById('tripod-infobox').appendChild(outlinkDiv)
-
-outlinksvg = makeSvgElement(30, 30, 'tripod-outlink-svg', d3.select("#tripod-outlinkDiv"));
-  outlinksvgGroup = outlinksvg.append("g")
-    .attr("id", "tripod-outlink")
-  outlinksvgGroup.append('rect')
-    .attr("height", "500px")
-    .attr("width", "500px")
-    .attr("fill", "white")
-    .attr("opacity", "10%")   
-  outlinksvgGroup.append('polygon')
-    .attr("fill", "#BFBFBF")
-    .attr("id", "tripod-outlink-color")
-    .attr("points", "400 464 48 464 48 104 240 104 240 72 16 72 16 496 432 496 432 272 400 272 400 464")
-  outlinksvgGroup.append('polygon')
-    .attr("fill", "#BFBFBF")
-    .attr("id", "tripod-outlink-color")
-    .attr("points", "304 16 304 48 441.373 48 188.687 300.687 211.313 323.313 464 70.627 464 208 496 208 496 16 304 16")  
-   
-  outlinksvgGroup.attr("transform", "translate(190, -252) scale(0.06)")
-
-
-}
 
 // Static URL links
 const comptoxURL = "https://ccte-res-ncd.epa.gov/dashboard/dsstoxdb/results?search="
 const structureImageURL = "https://comptox.epa.gov/dashboard-api/ccdapp1/chemical-files/image/by-dtxcid/"
 
 addHazardLegend()
-addInfoBox()
 
 // ======= MAIN FUNCTION =======================================================================================================
 async function generatePlots(filePath) {
@@ -460,6 +388,174 @@ const fullData = await parseCSV(filePath)
 
 // Check if the dataset contains MS2 data
 const hasMS2 = Object.keys(fullData[0]).some(col => col.includes("MS2"))
+
+var hasAmenability = false
+if (hasMS2){hasAmenability = Object.keys(fullData[0]).some(col => col.includes("Amenability"))}
+if (hasAmenability){
+  addMS2Legend()
+  infoboxHeight = 300
+  infoboxTop = "482px"
+  spanTop = "510px"
+  settingsHeight = 470
+  buttonTop = "415px"
+}
+else{
+  infoboxHeight = 347
+  infoboxTop = "435px"
+  spanTop = "460px"
+  settingsHeight = 420
+  buttonTop = "340px"
+}
+
+function addInfoBox() {
+  // Add a border around the visualization options
+  var settingsBorder = makeSvgElement(465, 420, "settings-border", d3.select("#tripod-settings-container"));
+  
+  settingsBorder.append("rect")
+    .attr("width", 465)
+    .attr("height", settingsHeight)
+    .attr("rx", 10)
+    .attr("x", 1)
+    .attr("fill", "transparent")
+    .style("stroke", "#a7b2c2")
+    .attr("z-index", -1);
+  
+  settingsBorder.append("text")
+    .text("Hazard Completeness Score")  
+    .attr("font-size", 22)
+    .attr("font-weight", "bold")
+    .attr("x", 110)
+    .attr("y", 230)
+
+    if (hasAmenability){  
+      settingsBorder.append("text")
+        .text("MS2 Amenability Score")  
+        .attr("font-size", 22)
+        .attr("font-weight", "bold")
+        // .attr("x", 110)
+        .attr("x", 125)
+        .attr("y", 335)  
+    
+      settingsBorder.append("text")
+        .text("0.0")  
+        .attr("font-size", 18)
+        .attr("x", 90)
+        .attr("y", 385) 
+      
+      settingsBorder.append("text")
+        .text("1.0")  
+        .attr("font-size", 18)
+        .attr("x", 358)
+        .attr("y", 385) 
+    
+      }  
+  
+  settingsBorder.append("text")
+    .text("Metadata Legend")  
+    .attr("font-size", 22)
+    .attr("font-weight", "bold")
+    .attr("x", 156)
+    .attr("y", 45)
+  
+  settingsBorder.append("text")
+    .text("0.0")  
+    .attr("font-size", 18)
+    .attr("x", 90)
+    .attr("y", 284) 
+  
+  settingsBorder.append("text")
+    .text("1.0")  
+    .attr("font-size", 18)
+    .attr("x", 358)
+    .attr("y", 284)   
+  
+  infoBox = makeSvgElement(465, 304, "infobox", d3.select("#tripod-infobox"))
+  
+  infoBox.append("rect")
+    .attr("width", 465)
+    .attr("height", infoboxHeight)
+    .attr("rx", 10)
+    .attr("x", 0)
+    .attr("y", 0)
+    .attr("fill", "transparent")
+    .style("stroke", "#a7b2c2")
+    .attr("z-index", -1)
+
+    document.getElementById("tripod-infobox").style.top = infoboxTop 
+  
+  structure_label_span = document.createElement('span')
+    structure_label_span.style.position = "absolute"
+    structure_label_span.style.top = spanTop
+    structure_label_span.style.left = "22px"
+    structure_label_span.style.fontSize = "18px"
+    structure_label = document.createTextNode(' ')
+    structure_label_span.appendChild(structure_label)
+    document.getElementById("tripod-settings-container").appendChild(structure_label_span)
+  
+  more_features_span = document.createElement('span')
+    more_features_span.style.position = "absolute"
+    more_features_span.style.fontSize = "18px"
+    more_features_span.style.zIndex = 1
+    more_features_span.style.top = "550px"
+    more_features_span.style.left = "255px"
+    more_features_span.style.maxWidth = "180px"
+    more_features_span.style.maxHeight = "160px"
+    more_features_span.style.overflowY = "auto"
+    more_features = document.createTextNode("")
+    more_features_span.appendChild(more_features)
+  document.getElementById("tripod-settings-container").appendChild(more_features_span)
+  
+    // Create the clickable InfoBox structure image tooltip
+    structureToolTip = d3.select(`#tripod-infobox`)
+    .append("div")
+    .attr("id", `tripod-StructureToolTip`)
+    imageDiv = document.getElementById("tripod-StructureToolTip")
+    imageDiv.style.height = "200px"
+    imageDiv.style.width = "200px"
+    
+    image = document.createElement('div')
+    image.style.width = "190px"
+    image.style.height = "208px"
+    imageDiv.appendChild(image)
+    image.style.paddingLeft = "10px"
+    const textNode = document.createTextNode("Click on a DTXCID to display the structure image")  
+    image.appendChild(textNode)
+    
+    image.style.display = 'flex';
+    image.style.justifyContent = 'center'; // Horizontal centering
+    image.style.alignItems = 'center'; // Vertical centering
+    
+  outlinkDiv = document.createElement('div')
+  outlinkDiv.setAttribute("id", "tripod-outlinkDiv")
+  outlinkDiv.style.position = "absolute"
+  outlinkDiv.style.height = "20px"
+  outlinkDiv.style.width = "20px"
+  outlinkDiv.style.zIndex = 1
+  document.getElementById('tripod-infobox').appendChild(outlinkDiv)
+  
+  outlinksvg = makeSvgElement(30, 30, 'tripod-outlink-svg', d3.select("#tripod-outlinkDiv"));
+    outlinksvgGroup = outlinksvg.append("g")
+      .attr("id", "tripod-outlink")
+    outlinksvgGroup.append('rect')
+      .attr("height", "500px")
+      .attr("width", "500px")
+      .attr("fill", "white")
+      .attr("opacity", "10%")   
+    outlinksvgGroup.append('polygon')
+      .attr("fill", "#BFBFBF")
+      .attr("id", "tripod-outlink-color")
+      .attr("points", "400 464 48 464 48 104 240 104 240 72 16 72 16 496 432 496 432 272 400 272 400 464")
+    outlinksvgGroup.append('polygon')
+      .attr("fill", "#BFBFBF")
+      .attr("id", "tripod-outlink-color")
+      .attr("points", "304 16 304 48 441.373 48 188.687 300.687 211.313 323.313 464 70.627 464 208 496 208 496 16 304 16")  
+     
+    outlinksvgGroup.attr("transform", "translate(190, -252) scale(0.06)")
+  
+  
+  }
+
+  addInfoBox()
 
 // create checkboxes for selecting plots to load
 var metaInput = document.createElement("input")
@@ -531,6 +627,8 @@ function createTop5ToggleButton(){
     button.style.cursor = 'pointer';
     document.getElementById('tripod-settings-container').appendChild(button);
   
+    button.style.top = buttonTop
+
   button.addEventListener('click', function() {
     gridUpdated = false
     document.getElementById('tripod-grid').innerHTML= ""
@@ -837,6 +935,7 @@ const keysToKeep = [
     "STRUCTURE_TOTAL_NORM", 
     "Hazard Score", 
     "Hazard Completeness Score",
+    "Amenability",
     "MS2 quotient score", 
     "Median blanksub mean feature abundance",
     "Final Occurrence Percentage", 
@@ -905,6 +1004,7 @@ const subgroupKeys = [
     "STRUCTURE_TOTAL_NORM", 
     "Hazard Score", 
     "Hazard Completeness Score",
+    "Amenability",
     "MS2 quotient score", 
     "energy0", 
     "feature_spectrum"
@@ -1238,7 +1338,7 @@ var barClickMS2Hazard = function(){
 
   // If a hazard bar is being clicked, open the empty cheminformatics hazard module page. 
   // In the future, we want this to open the hazard table of the clicked-on DTXCID
-    if (this.className["baseVal"] == "hazard-bar") {window.open("https://ccte-cced-cheminformatics.epa.gov/#/")}
+  if (this.className["baseVal"] == "hazard-bar") {window.open(`https://hazard-dev.sciencedataexperts.com/#/hazard/report/${DTXCIDname}`)}
     else if (this.className["baseVal"] == "MS2-bar") {
       // spectrum 1 should be the experimental data of the feature
       const inputSpec=d3.select(this)._groups[0][0]["__data__"]["energy0"]
@@ -1738,10 +1838,21 @@ function loadData(data){
 
   // Hover functions for MS2 bars
   var mouseoverBarMS2 = function(d) {
+    
+    if (! hasAmenability){
     var MS2Score = d3.select(this)._groups[0][0]["__data__"]["MS2 quotient score"];
     tooltipBarMS2
       .html("MS2 Score: " + MS2Score)
+      .style("opacity", 1)}
+
+    else {
+      var MS2Score = d3.select(this)._groups[0][0]["__data__"]["MS2 quotient score"];
+      var amenabilityScore = d3.select(this)._groups[0][0]["__data__"]["Amenability"];
+      if (amenabilityScore == 9999){amenabilityScore = "No Data"}
+    tooltipBarMS2
+      .html("MS2 Score: " + MS2Score + "<br>" + "Amenability Score: " + amenabilityScore)
       .style("opacity", 1)
+    }  
 
     // Make the corresponding y-axis label red
     fieldList.forEach(key =>{
@@ -1840,7 +1951,26 @@ showBarsMS2 = function(data){
   svgMS2.append("g");
   MS2_bars = svgMS2.selectAll(".bar")
   .data(data)
-  .enter().append("rect").attr("fill", "#93AEC5")
+  .enter().append("rect").attr("fill", d => {
+    if (hasAmenability){
+      if (d["Amenability"] == 9999){
+        return "white"
+      }
+      else{
+        return "blue"
+      }}
+    else {return "#93AEC5"}  
+
+  })
+  .attr("stroke", d => {
+    if (d["Amenability"] == 9999){
+      return "red"
+    }
+    else if (d["Amenability"] == 0){
+      return "#DBE4F0"
+    }
+  })
+  .attr("fill-opacity", d => d["Amenability"])
   .attr("transform", `translate(137, 20)`)
   .attr("class", "MS2-bar")
   .attr("y", d => yMS2(d.DTXCID_INDIVIDUAL_COMPONENT))
@@ -2008,7 +2138,14 @@ function makeLargeGrid(){
           {headerName: "MS2", children: [{headerName: 'MS2 Score', 
       field: 'MS2 quotient score', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], 
       valueGetter: (params) => {return params.data?.["MS2 quotient score"] ?? 'N/A'}
-    }]},
+    }, 
+    {headerName: 'Amenability Score', 
+      field: 'Amenability', floatingFilter: true, filter: 'agNumberColumnFilter', width: 120, sortingOrder: ['desc', 'asc', null], 
+      // cellRenderer: params => {params.value === "" ? "N/A" : params.value}, 
+      valueGetter: (params) => {return params.data?.["Amenability"] ?? 'N/A'}
+    }
+  
+  ]},
     {headerName: "Metadata", 
         openByDefault: true,
         children: [
@@ -2332,8 +2469,8 @@ screenshotButton.addEventListener('click', () => {
 }
 
 // ======= CALL MAIN FUNCTION ==================================================================================================
-const dataPath = "./data/short_test.csv";
-// const dataPath = "./data/WW2DW_Data_Analysis_file_5_with_MS2.csv";
+// const dataPath = "./data/short_test.csv";
+const dataPath = "./data/WW2DW_Data_Analysis_file_5_with_MS2.csv";
 // const dataPath = "./data/WW2DW_Data_Analysis_file_5_without_MS2.csv";
 generatePlots(dataPath);
 
