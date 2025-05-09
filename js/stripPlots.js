@@ -572,7 +572,6 @@ async function stripPlotsMain(inputXlsxPath) {
 }
 
 const inputXlsxPath = "./data/qNTA_Surrogate_Detection_Statistics_File_WW2DW.xlsx";
-// const inputXlsxPath = "./data/test_qnta_outputs_NTA_WebApp_qNTA.xlsx";
 stripPlotsMain(inputXlsxPath);
 
 
