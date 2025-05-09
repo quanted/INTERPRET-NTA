@@ -34,6 +34,17 @@ var tStatisticValues = {
   }
 };
 
+function getDisabledData(pointData) {
+  const disabledData = [];
+  pointData.forEach(row => {
+    if (!row["Enabled"]) {
+      disabledData.push([row["Chemical Name"], row["Feature ID"], row["Sample Name"]]);
+    }
+  });
+
+  return disabledData;
+}
+
 // setup a data structure for generating 1x1, 2x2, 3x3 and 4x4 plots
 var resolutionData = {
   "gridID": "svg-grid-container",
@@ -129,7 +140,12 @@ async function readInterpretOutputXLSX(filePath) {
   // access data from desired tracer detection sheet and write to json object
   const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
   const sheetName = "Sheet1";
-  const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+  const options = {
+    header: 0, // Use the first row as headers
+    defval: 0, // Set a default value for empty cells
+    raw: true,
+  };
+  const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], options);
 
   return jsonData;
 }
@@ -154,6 +170,7 @@ function cleanData(data) {
   const uniqueSampleNames = [];
   data.forEach(row => {
     Object.entries(row).forEach(([colName, value]) => {
+
       if (!columnsToKeep.includes(colName) && !colName.startsWith(blankSubHeaderSuffix) && !colName.startsWith(concentrationHeaderSuffix)) {
         delete row[colName];
         return;
@@ -177,7 +194,7 @@ function cleanData(data) {
 
       if (colName.startsWith(blankSubHeaderSuffix)) {
         row[`log${colName}`] = Math.log10(value) !== -Infinity ? Math.log10(value) : undefined;
-      }
+      } 
     });
   });
 
@@ -201,12 +218,15 @@ function getPointData(data, uniqueSampleNames) {
   const pointData = [];
   data.forEach(row => {
     for (let sampleName of uniqueSampleNames) {
+
       const pointDatum = {};
 
       // remove undefined values
       if (row[`logBlankSub Mean ${sampleName}`] === undefined || row[`logConc ${sampleName}`] === undefined) {
         continue;
       }
+
+
       pointDatum[`Conc`] = row[`Conc ${sampleName}`];
       pointDatum[`logConc`] = row[`logConc ${sampleName}`];
       pointDatum[`BlankSub Mean`] = row[`BlankSub Mean ${sampleName}`];
@@ -219,7 +239,7 @@ function getPointData(data, uniqueSampleNames) {
       columnsToKeep.forEach(colName => {
         pointDatum[colName] = row[colName];
       });
-      
+
       pointData.push(pointDatum);
     }
   });
@@ -528,10 +548,6 @@ function makeCalCurve(
     yMin = d3.min(predictionIntervals, d => d["yLower"]) - 0.1;
     yMax = d3.max(predictionIntervals, d => d["yUpper"]) + 0.1;
 
-    if (resolution === "1x1") {
-      console.log(predictionIntervals)
-    }
-
     // now get the actual prediction intervals that will be used on the plot
     if (plotPredictionIntervals) {
       predictionIntervals = calculatePredictionIntervals(filteredPointData, "logConc", "logBlankSub Mean", slope, intercept, confidence);
@@ -640,7 +656,7 @@ function makeCalCurve(
           const filteredPData = pData.filter(d => d["Enabled"]);
           const [ slopeT, interceptT, r_sqT ] = ols(filteredPData, "logConc", "logBlankSub Mean");
 
-          return [thisChemName, slopeT]
+          return [thisChemName, slopeT, r_sqT]
         });
 
         const tableRows = d3.select("#slopeTableContainer").select("tbody").selectAll("tr")
@@ -654,9 +670,26 @@ function makeCalCurve(
           .join("td")
           .style("border", "1px solid black")
           .style("padding", "6px 10px")
-          .text((d, i) => i % 2 === 0 ? d : Number(d) === Number(d) ? Number(d).toFixed(3) : "");
+          .text((d, i) => i === 0 ? d : Number(d) === Number(d) ? Number(d).toFixed(3) : "");
       
         tableRows.exit().remove();
+
+        
+        // update the disabled table tows
+        const tableRowsDis = d3.select("#disabledTableContainer").select("tbody").selectAll("tr")
+          .data(getDisabledData(pointDataAll));
+
+        tableRowsDis.enter()
+          .append("tr")
+          .merge(tableRowsDis)
+          .selectAll("td")
+          .data(d => d)
+          .join("td")
+          .style("border", "1px solid black")
+          .style("padding", "6px 10px")
+          .text((d, i) => d);
+      
+        tableRowsDis.exit().remove();
 
       });
     
@@ -1250,6 +1283,8 @@ async function calCurvesMain(inputXlsxPath) {
     .style("font-size", "16px")
     .style("margin-top", "5px")
     .on("click", function() {
+      // toggle off disabled table
+      d3.select("#disabledTableContainer").style("visibility", "hidden");
       const t = d3.select("#slopeTableContainer")
         if (t.style("visibility") === "hidden") {
           t.style("visibility", "visible")
@@ -1258,6 +1293,23 @@ async function calCurvesMain(inputXlsxPath) {
           t.style("visibility", "hidden")
             .style("pointer-events", "none");
         }
+    });
+
+    confidenceDropdownDiv.append("button")
+      .text("Disabled")
+      .style("padding", "5px 8px")
+      .style("font-size", "16px")
+      .style("margin-top", "5px")
+      .on("click", function() {
+      d3.select("#slopeTableContainer").style("visibility", "hidden");
+        const t = d3.select("#disabledTableContainer")
+          if (t.style("visibility") === "hidden") {
+            t.style("visibility", "visible")
+              .style("pointer-events", "all");
+          } else {
+            t.style("visibility", "hidden")
+              .style("pointer-events", "none");
+          }
     });
   
   const confDiv = confidenceDropdownDiv.append("div")
@@ -1268,17 +1320,17 @@ async function calCurvesMain(inputXlsxPath) {
   confDiv.append("text")
     .text("Prediction:")
     .style("font-size", "18px")
-    .style("margin-top", "14px")
+    .style("margin-top", "5px")
     .style("font-weight", "bold");
 
   const confidenceDropdown = confDiv.append("select")
     .attr("id", "confidence-dropdown")
     .style("grid-area", "confidence")
-    .style("font-size", "22px")
-    .style("padding-left", "17px")
+    .style("font-size", "15px")
+    .style("padding-left", "28px")
     .style("margin", "3px")
-    .style("margin-top", "5px")
-    .style("height", "40px")
+    .style("margin-top", "0px")
+    .style("height", "22px")
     .style("width", "100px")
     .on("change", function() {
       confidence = this.value;
@@ -1691,16 +1743,6 @@ async function calCurvesMain(inputXlsxPath) {
   }
 
 
-  function getDisabledData() {
-    const disabledData = [];
-    pointData.forEach(row => {
-      if (!row["Enabled"]) {
-        disabledData.push([row["Chemical Name"], row["Feature ID"], row["Sample Name"], "Disabled"]);
-      }
-    });
-
-    return disabledData;
-  }
 
   /** Uncomment below to test the getGroupData() function */
 
@@ -1709,10 +1751,10 @@ async function calCurvesMain(inputXlsxPath) {
   //   console.log(dat)
   // });
 
-  /** Uncomment below to test the getDisabledData() function */
+  // /** Uncomment below to test the getDisabledData() function */
 
   // d3.select("body").append("button").text("get disabled data").on("click", () => {
-  //   const dat = getDisabledData();
+  //   const dat = getDisabledData(pointData);
   //   console.log(dat);
   // });
 
@@ -1723,7 +1765,7 @@ async function calCurvesMain(inputXlsxPath) {
     filteredPointData = pData.filter(d => d["Enabled"]);
     [ slope, intercept, r_sq ] = ols(filteredPointData, "logConc", "logBlankSub Mean");
 
-    return [chemName, slope]
+    return [chemName, slope, r_sq];
   });
 
   const tableContainer = gridContainer.append("div")
@@ -1740,8 +1782,26 @@ async function calCurvesMain(inputXlsxPath) {
     .style("border", "3px solid black")
     .style("border-radius", "5px")
     .style("margin-top", "5px");
+
+  const tableContainerDis = gridContainer.append("div")
+    .attr("id", "disabledTableContainer")
+    .style("visibility", "hidden")
+    .style("pointer-events", "none")
+    .style("height", "500px")
+    .style("overflow-y", "scroll")
+    .style("position", "absolute")
+    .style("background-color", "white")
+    .style("display", "grid")
+    .style("grid-template-columns", "1fr 100px")
+    .style("margin-left", d => gridContainer.node().getBoundingClientRect().width / 2 - 100 + "px")
+    .style("border", "3px solid black")
+    .style("border-radius", "5px")
+    .style("margin-top", "5px");
     
   const tableDiv = tableContainer.append("div")
+    .style("padding", "8px");
+
+  const tableDivDis = tableContainerDis.append("div")
     .style("padding", "8px");
 
   const table = tableDiv
@@ -1752,22 +1812,46 @@ async function calCurvesMain(inputXlsxPath) {
     .style("border-collapse", "collapse")
     .style("border", "1px solid black");
 
+  const tableDis = tableDivDis
+    .append("table")
+    .attr("id", "disabledTable")
+    .style("margin-top", "10px")
+    .style("margin-left", "20px")
+    .style("border-collapse", "collapse")
+    .style("border", "1px solid black");
+
   const tableHeader = table.append("thead")
     .append("tr");
 
+  const tableHeaderDis = tableDis.append("thead")
+    .append("tr");
+
   tableHeader.selectAll("th")
-    .data(["Chemical Name", "Slope"])
+    .data(["Chemical Name", "Slope", "R<sup>2</sup>"])
     .enter()
     .append("th")
     .style("border", "1px solid black")
     .style("padding", "5px")
-    .style("cursor", "pointer")
-    .text(d => d)
+    .style("cursor", (d) => d === "R<sup>2</sup>" ? "default" : "pointer")
+    .html(d => d)
     .on("click", function(event, d) {
-      sortTable(d);
+      if (d !== "R<sup>2</sup>") {
+        sortTable(d);
+      }
     });
 
+  tableHeaderDis.selectAll("th")
+    .data(["Chemical Name", "Feature ID", "Sample Name"])
+    .enter()
+    .append("th")
+    .style("border", "1px solid black")
+    .style("padding", "5px")
+    .style("cursor", "none")
+    .html(d => d);
+
   const tableBody = table.append("tbody");
+
+  const tableBodyDis = tableDis.append("tbody");
 
   tableBody.selectAll("tr")
     .data(tableData)
@@ -1779,10 +1863,28 @@ async function calCurvesMain(inputXlsxPath) {
     .append("td")
     .style("border", "1px solid black")
     .style("padding", "6px 10px")
-    .text((d, i) => i % 2 === 0 ? d : Number(d) === Number(d) ? Number(d).toFixed(3) : "");
+    .text((d, i) => i === 0 ? d : Number(d) === Number(d) ? Number(d).toFixed(3) : "");
+
+  tableBodyDis.selectAll("tr")
+    .data(getDisabledData(pointData))
+    .enter()
+    .append("tr")
+    .selectAll("td")
+    .data(d => d)
+    .enter()
+    .append("td")
+    .style("border", "1px solid black")
+    .style("padding", "6px 10px")
+    .text((d, i) => d);
 
   // Create the button and add it to the DOM
   const buttonDiv = tableContainer.append("div")
+    .style("position", "sticky")
+    .style("top", "0")
+    .style("margin-top", "12px")
+    .style("height", "300px");
+
+  const buttonDivDis = tableContainerDis.append("div")
     .style("position", "sticky")
     .style("top", "0")
     .style("margin-top", "12px")
@@ -1798,7 +1900,18 @@ async function calCurvesMain(inputXlsxPath) {
     .style("margin-top", "5px")
     .style("margin-left", "12px")
     .style("margin-right", "5px")
-    .on("click", exportTableToXLSX);
+    .on("click", () => exportTableToXLSX('slopeTable'));
+
+  const exportButtonDis = buttonDivDis
+    .append("button")
+    .text("Export to XLSX")
+    .style("height", "50px")
+    .style("top", "10px")
+    .style("right", "10px")
+    .style("margin-top", "5px")
+    .style("margin-left", "12px")
+    .style("margin-right", "5px")
+    .on("click", () => exportTableToXLSX('disabledTable'));
 
   const copyButton = buttonDiv
     .append("button")
@@ -1809,14 +1922,25 @@ async function calCurvesMain(inputXlsxPath) {
     .style("margin-top", "10px")
     .style("margin-left", "12px")
     .style("margin-right", "5px")
-    .on("click", copyTableToClipboard);
+    .on("click", () => copyTableToClipboard('slopeTable'));
+
+  const copyButtonDis = buttonDivDis
+    .append("button")
+    .text("Copy to Clipboard")
+    .style("height", "50px")
+    .style("top", "10px")
+    .style("right", "10px")
+    .style("margin-top", "10px")
+    .style("margin-left", "12px")
+    .style("margin-right", "5px")
+    .on("click", () => copyTableToClipboard('disabledTable'));
 
   // Function to copy the table content to the clipboard
-  function copyTableToClipboard() {
-    const table = d3.select("table").node();
+  function copyTableToClipboard(id) {
+    console.log("yes")
+    const table = d3.select(`table#${id}`).node();
     const range = document.createRange();
     range.selectNode(table);
-    console.log(range)
     window.getSelection().removeAllRanges(); // Clear any existing selections
     window.getSelection().addRange(range);
     document.execCommand("copy");
@@ -1826,8 +1950,8 @@ async function calCurvesMain(inputXlsxPath) {
   
 
   // Function to export the table to an XLSX file
-  function exportTableToXLSX() {
-    const table = d3.select("#slopeTable").node();
+  function exportTableToXLSX(id) {
+    const table = d3.select(`#${id}`).node();
     const rows = table.querySelectorAll("tr");
     const data = [];
 
@@ -1877,7 +2001,7 @@ async function calCurvesMain(inputXlsxPath) {
       .data(sortedData)
       .selectAll("td")
       .data(d => d)
-      .text((d, i) => i % 2 === 0 ? d : Number(d) === Number(d) ? Number(d).toFixed(3) : "");
+      .text((d, i) => i === 0 ? d : Number(d) === Number(d) ? Number(d).toFixed(3) : "");
   }
 
 }
