@@ -1047,13 +1047,12 @@ d3.csv(csv_path).then(function(data) {
     countData = resetCounts(countData);
 
     // check first row of data to determine which string is used for MB
-    console.log(data)
     var row_keys = Object.keys(data[1]);
     var blank_perc_header = false;
     for (let key of row_keys) {
       if (key.startsWith("Detection Percentage ")) {
         for (let valid_blank_string of ["MB", "Mb", "mb", "BLANK", "Blank", "blank", "BLK", "Blk"]) {
-          if (key.endsWith(valid_blank_string)) {
+          if (key.includes(valid_blank_string)) {
             blank_perc_header = key;
             break;
           }
@@ -1068,6 +1067,7 @@ d3.csv(csv_path).then(function(data) {
     for (let iRow in data) {
       var row = data[iRow];
       if (!(Array.isArray(row))) {
+
         if (row[blank_perc_header] >= countData["A"]["threshold"]["blankRep"]) {
           countData["A"]["threshold"]["blankRepPassArr"].push(true);
         } else {
@@ -1263,7 +1263,7 @@ d3.csv(csv_path).then(function(data) {
     svg.setAttribute('height', svgHeight);
     svg.style['background-color'] = 'white';
 
-    let fontSizeText = "1.1rem";
+    let fontSizeText = "1rem";
 
     // add the title
     let textValue = 'Features   ' + svgID.charAt(svgID.length-4)
@@ -1372,8 +1372,8 @@ d3.csv(csv_path).then(function(data) {
       xOverCVThreshold = 5.4 * svgWidth / 9, 
       xUnderCVOverMRL = svgWidth / 30,
       xUnderCVUnderMRL = 3.9 * svgWidth / 13,
-      xOverCVOverMRL = 7.45 *svgWidth / 13,
-      xOverCVUnderMRL = 10.4 * svgWidth / 13;
+      xOverCVOverMRL = 7.22 *svgWidth / 13,
+      xOverCVUnderMRL = 10.2 * svgWidth / 13;
 
     // set colors for SVG elements. fc = facecolor; ec = edgecolor; tc = textcolor
     let pass_arrow_fc = '#FFF',
@@ -1399,7 +1399,7 @@ d3.csv(csv_path).then(function(data) {
     svg.setAttribute('height', svgHeight);
     svg.style['background-color'] = 'white';
 
-    let fontSizeText = "1.1rem";
+    let fontSizeText = "1rem";
 
     // add the title
     let textValue = 'Occurrences   ' + svgID.charAt(svgID.length-4)
