@@ -43,7 +43,7 @@ async function readInterpretOutputXLSX(filePath) {
 
   // access data from desired tracer detection sheet and write to json object
   const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
-  const sheetName = "Surrogate Detection Statistics";
+  const sheetName = "Sheet1";
   const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
 
   return jsonData;
@@ -80,9 +80,6 @@ function cleanData(data) {
       // if we have an RF value, add a log key-value pair and remove the original RF value
       if (colName.startsWith("RF ")) {
         const logColName = `log ${colName}`;
-        if (Number(value) <= 0) {
-          return;
-        }
         row[logColName] = Math.log(value);
         delete row[colName];
 
@@ -572,7 +569,6 @@ async function stripPlotsMain(inputXlsxPath) {
 }
 
 const inputXlsxPath = "./data/qNTA_Surrogate_Detection_Statistics_File_WW2DW.xlsx";
-// const inputXlsxPath = "./data/test_qnta_outputs_NTA_WebApp_qNTA.xlsx";
 stripPlotsMain(inputXlsxPath);
 
 
