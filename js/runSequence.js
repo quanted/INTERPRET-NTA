@@ -133,19 +133,59 @@ async function readInterpretOutputXLSX(filePath) {
 }
 
 /**
- * Returns the sequence data from the input sequence CSV for Interpret NTA.
+ * Returns the sequence data from the CSV for Interpret NTA.
  * @param {string} filePath Path to the INTERPRET NTA run sequence input CSV.
- * @returns {Object[]} An array of objects, each object corresponding to one row of the sequence.csv file.
+ * @returns {Object[]} An array of objects, each object corresponding to one row of the csv file.
  */
-async function readInterpretSequenceCSV(filePath) {
+async function readCSV(filePath) {
   // fetch the file
   const response = await fetch(filePath);
   const text = await response.text();
 
-  // manually deconstruct the csv text contents and store in json object
-  const rows = text.split("\n").map(row => row.split(","));
+  // Parse the CSV manually
+  const rows = [];
+  let currentRow = [];
+  let currentField = '';
+  let insideQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    const nextChar = text[i + 1];
+
+    if (char === '"') {
+      if (insideQuotes && nextChar === '"') {
+        // Handle escaped quotes ("" -> ")
+        currentField += '"';
+        i++; // Skip the next quote
+      } else {
+        // Toggle the insideQuotes flag
+        insideQuotes = !insideQuotes;
+      }
+    } else if (char === ',' && !insideQuotes) {
+      // End of a field
+      currentRow.push(currentField.trim());
+      currentField = '';
+    } else if (char === '\n' && !insideQuotes) {
+      // End of a row
+      currentRow.push(currentField.trim());
+      rows.push(currentRow);
+      currentRow = [];
+      currentField = '';
+    } else {
+      // Add character to the current field
+      currentField += char;
+    }
+  }
+
+  // Add the last field and row if necessary
+  if (currentField) currentRow.push(currentField.trim());
+  if (currentRow.length > 0) rows.push(currentRow);
+
+  // Extract headers and map rows to objects
   const headers = rows.shift();
-  const jsonData = rows.map(row => Object.fromEntries(row.map((val, i) => [headers[i], val])));
+  const jsonData = rows.map(row =>
+    Object.fromEntries(row.map((val, i) => [headers[i], val]))
+  );
 
   return jsonData;
 }
@@ -487,10 +527,9 @@ function makeRunSequencePlot(
   let svgBoundingClient = svg.node().getBoundingClientRect()
   let svgWidth = svgBoundingClient.width;
   let svgHeight = svgBoundingClient.height;
-  let yMin = d3.min(chemPlottingData, d => d.abundance);
-  let yMax = d3.max(chemPlottingData, d => d.abundance);
+  let yMin = d3.min(chemPlottingData.filter(d => d.abundance > 0), d => d.abundance);
+  let yMax = d3.max(chemPlottingData.filter(d => d.abundance > 0), d => d.abundance);
   const dy = (yMax - yMin) / 12;
-  yMin -= dy;
   yMax += dy;
   let widthOffset = 50;
   let heightOffset = 20;
@@ -502,12 +541,20 @@ function makeRunSequencePlot(
 
   // add points to scatter plot
   svg.selectAll("circle")
-    .data(chemPlottingData)
+    .data(chemPlottingData)//.filter(d => d.abundance >= 1))
     .enter()
     .append("circle")
     .attr("class", d => "c" + d.sequenceBaseName)
-    .attr("cx", d => xScale(d.seqIndex + 1))
-    .attr("cy", d => yScale(d.abundance))
+    .attr("cx", d => {
+        // console.log(d)
+        return xScale(d.seqIndex + 1)
+      }
+    )
+    .attr("cy", d => {
+        // console.log(d.abundance, yScale(d.abundance))
+        return yScale(d.abundance);
+      }
+    )
     .attr("r", circleR)
     .attr("fill", d => colorScale(d.groupName))
     .attr("opacity", 0.6)
@@ -560,7 +607,7 @@ function makeRunSequencePlot(
     yTicks = logspace(yMin, yMax, nYticks, 10, 3);
   }
   const xAxis = d3.axisBottom(xScale);
-  const yAxis = d3.axisLeft(yScale).tickValues(yTicks).tickFormat(d => yScaleType === "linear" ? d3.format(".2s")(d) : d3.format("~s")(d));
+  const yAxis = d3.axisLeft(yScale).tickValues(yTicks).tickFormat(d => yScaleType === "linear" ? d3.format(".2s")(d) : d3.format(",~g")(d));
 
   /// xAxis
   const xAxisG = svg.append("g")
@@ -609,15 +656,17 @@ function makeRunSequencePlot(
       x,
       y: a*x**2 + b*x + c
     }));
-    return curvePoints;
-  }
+    return curvePoints.filter(d => d.y >= 1);
+  } 
 
   const groupedData = d3.group(chemPlottingData, d => d.groupName);
 
   groupedData.forEach((points, group) => {
+    // const points = pointss.filter(d => d.abundance >= 1);
     if (points.length < 3) {
       return;
     }
+
     const [ a, b, c ] = quadraticRegression(points);
     const xExtent = d3.extent(points, d => d.seqIndex + 1);
     const xMin = xExtent[0] - 1;
@@ -693,7 +742,7 @@ async function mainRunSequence(xlsxPath, seqPath) {
   // get data
   let [ dataPos, dataNeg ] = await readInterpretOutputXLSX(xlsxPath);
   
-  let dataSeq = await readInterpretSequenceCSV(seqPath);
+  let dataSeq = await readCSV(seqPath);
 
   // clean sample sequence data, getting unique sample names and sample indices
   let [ uniqueSampleGroupsPos, seqGroupMapPos ] = cleanSeqData(dataPos, dataSeq);
@@ -710,9 +759,6 @@ async function mainRunSequence(xlsxPath, seqPath) {
   // we start in positive mode
   let plottingData = plottingDataPos.concat(plottingDataNeg);
   let chemNames = chemNamesPos.concat(chemNamesNeg);
-
-  console.log(plottingData)
-
 
   let chemNamesToggled = chemNames;
 
@@ -972,10 +1018,10 @@ async function mainRunSequence(xlsxPath, seqPath) {
   const legend = svgL.append("g")
     .attr("transform", `translate(0, ${svgBoundingClient.top + 60})`);
 
-  legend.append("rect")
+  const legendBox = legend.append("rect")
     .attr("x", 15)
     .attr("y", -180)
-    .attr("width", 125)
+    .attr("width", 1)
     .attr("height", legendSpacing * uniqueSampleGroupsPos.length + 14)
     .attr("fill", "#E9E9E9")
     .attr("stroke", "#000")
@@ -994,7 +1040,7 @@ async function mainRunSequence(xlsxPath, seqPath) {
     .attr("stroke", "#000")
     .attr("stroke-width", 1);
 
-  legend.selectAll("text")
+  const legendText = legend.selectAll("text")
     .data(uniqueSampleGroupsPos)
     .enter()
     .append("text")
@@ -1005,6 +1051,16 @@ async function mainRunSequence(xlsxPath, seqPath) {
     .text(d => d);
 
   let legendBounds = legend.node().getBoundingClientRect();
+
+  // find widest text and set width of the legend box accordingly
+  legendText.each(function(d, i) {
+    const textWidth = this.getBoundingClientRect().width;
+    const desiredWidth = textWidth + legendRadius*2 + 30;
+    if (desiredWidth > Number(legendBox.attr("width"))) {
+      legendBox.attr("width", desiredWidth);
+      console.log(desiredWidth, Number(legendBox.attr("width")))
+    }
+  })
 
   // add tooltip
   tooltipContainer.style("visibility", "visible")
