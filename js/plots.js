@@ -1,30 +1,20 @@
 // ======= UTILITY FUNCTIONS ====================================================================================================
 
-// Returns the contents of the input CSV. Values in the last column have a "\r" added to the end, so make sure the last column is not needed for the vis
 async function parseCSV(filePath) {
-  
   // fetch the file
   const response = await fetch(filePath);
   const csvText = await response.text();
   
-  // parse the file
-  const lines = csvText.split('\n');
-  const headers = lines[0].split(',');
-  var result = [];
-
-  // remove the '\r' from the last column of the csv
-  // headers[headers.length - 1] = headers[headers.length - 1].replace(/\r/g, "");
-
-  for (let i = 1; i < lines.length; i++) {
-    const values = lines[i].split(',');
-    const obj = {};
-    for (let j = 0; j < headers.length; j++) {obj[headers[j]] = values[j];}
-    result.push(obj);
-  }
-
-  // Remove rows with no feature ID
-  const cleaned_result = result.filter(feature => feature['Feature ID'] != "")
-  return cleaned_result;
+  return new Promise((resolve) => {
+    Papa.parse(csvText, {
+      header: true, 
+      skipEmptyLines: true,
+      complete: function(results) {
+        const cleaned = results.data.filter(row => row['Feature ID'] != "");
+        resolve(cleaned);
+      }
+    })
+  })
 }
 
 // Returns a boolean indicating whether or not the element is visible within the scrollable ancestor container
@@ -746,7 +736,7 @@ function createAmenabilityToggleButtons(){
     buttonNEG.disabled = false
     amenabilityMode = "POSITIVE_MODE_AMENABILITY_PREDICTION"
     MS2_bars.remove()
-    showBarsMS2(data)
+    showBarsMS2(subGroupData)
     });
 
   const buttonNEG= document.createElement('button')
@@ -765,8 +755,7 @@ function createAmenabilityToggleButtons(){
     buttonPOS.disabled = false
     amenabilityMode = "NEGATIVE_MODE_AMENABILITY_PREDICTION"
     MS2_bars.remove()
-    showBarsMS2(data)
-
+    showBarsMS2(subGroupData)
     });  
 }
 
@@ -1358,6 +1347,7 @@ var barClickMeta = function(){
 
 // Define function for bar click on MS2 and hazard plot
 var barClickMS2Hazard = function(){
+
   var DTXCIDname = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["DTXCID_INDIVIDUAL_COMPONENT"]}-hazard`).innerHTML
   structure_label.nodeValue = DTXCIDname
 
@@ -1948,6 +1938,7 @@ showBarsMS2 = function(data){
         return "red"
       }
       else if (d[amenabilityMode] == 0){
+        console.log(d)
         return "#DBE4F0"
       }
     })
@@ -2467,9 +2458,9 @@ screenshotButton.addEventListener('click', () => {
 }
 
 // ======= CALL MAIN FUNCTION ==================================================================================================
-// const dataPath = "./data/short_test.csv";
+const dataPath = "./data/short_test.csv";
 // const dataPath = "./data/short_test_no_amen.csv";
-const dataPath = "./data/data_with_MS2.csv";
+// const dataPath = "./data/data_with_MS2.csv";
 // const dataPath = "./data/data_without_MS2.csv";
 generatePlots(dataPath);
 
