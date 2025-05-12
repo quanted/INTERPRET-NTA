@@ -181,16 +181,22 @@
   z-index: 10;
 }
 
-#tripod-gradient-rect-hazard{
-  position: absolute;
-  left: 20px;
-  top: 234px;
+#tripod-POSButton {
+  position: relative;
+  left: 200px;
+  top: 5px;
+}
+
+#tripod-NEGButton {
+  position: relative;
+  left: 220px;
+  top: 5px;
 }
 
 #tripod-gradient-rect-MS2{
   position: absolute;
   left: 20px;
-  top: 335px;
+  top: 355px;
 }
 
 #input-MS2{
