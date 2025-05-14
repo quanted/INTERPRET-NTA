@@ -121,7 +121,7 @@ function cleanData(data, keysToKeep) {
         if (key == "Feature ID"){value = Number(value);}
         else if (key.includes("AMENABILITY")){
           if (value === ""){
-            value = 9999
+            value = -9999
           }
           else {value = Number(value)}
         }
@@ -1818,7 +1818,7 @@ function loadData(data){
     else {
       var MS2Score = d3.select(this)._groups[0][0]["__data__"]["MS2 quotient score"];
       var amenabilityScore = d3.select(this)._groups[0][0]["__data__"][amenabilityMode];
-      if (amenabilityScore == 9999){amenabilityScore = "No Data"}
+      if (amenabilityScore == -9999){amenabilityScore = "No Data"}
     tooltipBarMS2
       .html("MS2 Score: " + MS2Score + "<br>" + "Amenability Score: " + amenabilityScore)
       .style("opacity", 1)}
@@ -1923,7 +1923,7 @@ showBarsMS2 = function(data){
   .data(data)
   .enter().append("rect").attr("fill", d => {
     if (hasAmenability){
-      if (d[amenabilityMode] == 9999){
+      if (d[amenabilityMode] == -9999){
         return "white"
       }
       else{
@@ -1934,7 +1934,7 @@ showBarsMS2 = function(data){
   })
 
   .attr("stroke", d => {
-      if (d[amenabilityMode] == 9999){
+      if (d[amenabilityMode] == -9999){
         return "red"
       }
       else if (d[amenabilityMode] == 0){
@@ -2126,12 +2126,56 @@ function makeLargeGrid(){
     {columnGroupShow: "open", headerName: '(pos) Amenability Score', 
       field: 'POSITIVE_MODE_AMENABILITY_PREDICTION', floatingFilter: true, filter: 'agNumberColumnFilter', width: 150, sortingOrder: ['desc', 'asc', null], 
       // cellRenderer: params => {params.value === "" ? "N/A" : params.value}, 
-      valueGetter: (params) => {return params.data?.["POSITIVE_MODE_AMENABILITY_PREDICTION"] ?? 'N/A'}
-    }, 
+      valueGetter: (params) => {
+        const value = params.data["POSITIVE_MODE_AMENABILITY_PREDICTION"];
+        if (value === -9999){
+          return 'No Data'
+        }
+        else {return params.data?.["POSITIVE_MODE_AMENABILITY_PREDICTION"] ?? 'N/A'}}, 
+      comparator: (valueA, valueB, isDescending) => {
+          const isNoData = (val) => val === "No Data"
+
+          if (isDescending){
+            if (isNoData(valueA)) return -1;
+            if (isNoData(valueB)) return 1
+          }
+          else {
+            if (isNoData(valueA)) return 1;
+            if (isNoData(valueB)) return -1
+          }
+
+          return ('' + valueA).localeCompare('' + valueB)
+
+        }
+      
+      
+      },
     {columnGroupShow: "open", headerName: '(neg) Amenability Score', 
       field: 'NEGATIVE_MODE_AMENABILITY_PREDICTION', floatingFilter: true, filter: 'agNumberColumnFilter', width: 150, sortingOrder: ['desc', 'asc', null], 
       // cellRenderer: params => {params.value === "" ? "N/A" : params.value}, 
-      valueGetter: (params) => {return params.data?.["NEGATIVE_MODE_AMENABILITY_PREDICTION"] ?? 'N/A'}
+      valueGetter: (params) => {
+        const value = params.data["NEGATIVE_MODE_AMENABILITY_PREDICTION"];
+        if (value === -9999){
+          return 'No Data'
+        }
+        else {return params.data?.["NEGATIVE_MODE_AMENABILITY_PREDICTION"] ?? 'N/A'}},
+
+        comparator: (valueA, valueB, isDescending) => {
+          const isNoData = (val) => val === "No Data"
+
+          if (isDescending){
+            if (isNoData(valueA)) return -1;
+            if (isNoData(valueB)) return 1
+          }
+          else {
+            if (isNoData(valueA)) return 1;
+            if (isNoData(valueB)) return -1
+          }
+
+          return ('' + valueA).localeCompare('' + valueB)
+
+        }
+
     }, 
   
   ]
