@@ -1,15 +1,17 @@
 // ======= UTILITY FUNCTIONS ====================================================================================================
 
+// Parse the input csv file
 async function parseCSV(filePath) {
   // fetch the file
   const response = await fetch(filePath);
   const csvText = await response.text();
-  
+
   return new Promise((resolve) => {
     Papa.parse(csvText, {
       header: true, 
       skipEmptyLines: true,
       complete: function(results) {
+        // Remove rows without Feature ID
         const cleaned = results.data.filter(row => row['Feature ID'] != "");
         resolve(cleaned);
       }
@@ -22,39 +24,40 @@ function isElementVisibleInScrollContainer(element, scrollContainer) {
   const elementRect = element.getBoundingClientRect();
   const containerRect = scrollContainer.getBoundingClientRect();
   return (elementRect.top >= containerRect.top && elementRect.bottom <= containerRect.bottom)
-  
 }
 
-// Removes rows with no metadata from dataset, and sorts dataset by category
+// Removes rows with no metadata from dataset, sets minimum metadata value to 0.05, and sorts dataset by category
 function sortData(data, category = null) {
-  let headers = null
-  if (data.length > 0){
-    headers = Object.keys(data[0])}
-    else{return []}
+  let headers = null // list of all headers from the dataset
+  if (data.length > 0){headers = Object.keys(data[0])}
+  else{return []}
 
-  const headers_norm = [] //contains normalized headers (not including total norm)
+  const headers_norm = [] //List of normalized metadata column headers (not including total norm)
   headers.forEach((key) => {if ((key.includes("NORM") || key.includes("norm")) && !key.includes("TOTAL")) {headers_norm.push(key);}});
 
-  let itemToRemove = []
-  for (let i = 0; i < data.length; i++) { 
-    if (data[i]['STRUCTURE_TOTAL_NORM'] == 0){itemToRemove.push(data[i]);}
-    
+  let itemToRemove = [] // List of rows containing no metadata, not to be included in the bar plots
+  for (let i = 0; i < data.length; i++) {if (data[i]['STRUCTURE_TOTAL_NORM'] == 0){itemToRemove.push(data[i]);}
     for (let j = 0; j < headers_norm.length; j++){
       const currentHeader = headers_norm[j];
+      // Save original metadata values (before setting minimum value to 0.05) in separate columns
       data[i][currentHeader + "_original"] = data[i][currentHeader]
+      // If metadata value is between 0 and 0.05, set the metadata value to 0.05. This is so that the bar segment widths in the bar plots will be wide enough to mouse-over. 
       if (0 < data[i][currentHeader] && data[i][currentHeader] < 0.05) {data[i][currentHeader] = 0.05;}
     }
   }
   let removeSet = new Set(itemToRemove);
+  // Filter our the rows with no metadata from the dataset
   let newArray = data.filter(item => !removeSet.has(item));
 
+  // Sort the dataset in descending order of 'category'
   if (category != null) {newArray.sort((a, b) => b[category] - a[category])}
   
   return newArray;
 }
 
-// Only keeps the required column names from the input data, and converts numerical columns to Number data type
+// Returns a dataset containing only relevant columns for the visualization and with numerical columns converted to Number data type.
 function cleanData(data, keysToKeep) {
+  // list of keys to convert to Number data type
   const keysToNum = [
     "Feature ID",
     "SOURCE_COUNT_COLLAPSED",
@@ -128,11 +131,14 @@ function cleanData(data, keysToKeep) {
     let filteredRow = {};
     Object.entries(row).forEach(([key, value]) => {
       if (keysToKeep.includes(key)) {
-        if (key == "Feature ID"){value = Number(value);}
+        // Convert the Feature ID column into Number data type
+        if (key == "Feature ID"){value = Number(value);} 
+        // If no amenability data is present, set the value to -9999
         else if (key.includes("AMENABILITY")){
           if (value === ""){value = -9999}
           else {value = Number(value)}}
-        else if (keysToNum.includes(key)) {value = Number(Number(value).toPrecision(3));} //Rounds all numerical columns to 3 sig figs
+        //Rounds all columns other than Feature ID and amenability columns to 3 sig figs  
+        else if (keysToNum.includes(key)) {value = Number(Number(value).toPrecision(3));} 
         filteredRow[key] = value;
       }
     });
@@ -141,7 +147,7 @@ function cleanData(data, keysToKeep) {
   return filteredData;
 }
 
-// Creates an SVG element inside a parent element
+// Creates an SVG element of specified width, height, and class inside a parent element
 function makeSvgElement(width, height, className, parentElement) {
   const svg = parentElement.append("svg")
     .attr("width", width)
@@ -151,13 +157,14 @@ function makeSvgElement(width, height, className, parentElement) {
   return svg;
 }
 
-// Returns the candidate data for only a single selected feature
+// Returns the candidate data for only a single selected feature out of the entire input dataset
 function truncateData(data, selectedFeature){
+  // Filter out the rows from the dataset where 'Feature ID' equals the specified selectedFeature number
   const result_truncated = data.filter(feature => feature['Feature ID'] == selectedFeature);
   return result_truncated;
 }
 
-//Returns the dataset with only the top 5 metadata candidates for each feature
+//Returns a dataset containing only the top 5 metadata candidates for each feature
 function getTop5Rows(arr, categoryField, valueField) {
   const groupedData = {};
 
@@ -286,10 +293,9 @@ function addHazardLegend(){
   gradRect.setAttribute("fill", 'url(#tripod-Gradient1)')
 
   gradientSVG.appendChild(gradRect)
-
-  
 }
 
+//Creates the white-to-blue gradient for the MS2 amenability score legend
 function addMS2Legend(){
 
   const svgNS = "http://www.w3.org/2000/svg";
@@ -332,7 +338,6 @@ function addMS2Legend(){
   gradRect.setAttribute("fill", 'url(#tripod-Gradient2)')
 
   gradientSVG.appendChild(gradRect)
-
 }
 
 
@@ -346,8 +351,6 @@ var imageDiv = null
 var image = null
 var outlinksvg = null
 
-
-
 // Static URL links
 const comptoxURL = "https://ccte-res-ncd.epa.gov/dashboard/dsstoxdb/results?search="
 const structureImageURL = "https://comptox.epa.gov/dashboard-api/ccdapp1/chemical-files/image/by-dtxcid/"
@@ -360,15 +363,19 @@ async function generatePlots(filePath) {
 // Import the input csv
 const fullData = await parseCSV(filePath)
 
-// Check if the dataset contains MS2 data
+// Check if the dataset contains MS2 data columns
 const hasMS2 = Object.keys(fullData[0]).some(col => col.includes("MS2"))
 
-var hasAmenability = false
+// Set default amenability mode to positive. positive mode will be selected upon first rendering of the visualization. 
 var amenabilityMode = "POSITIVE_MODE_AMENABILITY_PREDICTION"
+// Instantiate the hasAmenability boolean value. This value changed to 'true' if amenability data columns are present in the input dataset
+var hasAmenability = false  
+// If the dataset has MS2 data, check if the dataset contains amenability data columns
 if (hasMS2){hasAmenability = Object.keys(fullData[0]).some(col => col.includes("AMENABILITY"))}
 
-
+// Assign positioning layout values to visualization elements in case of the presence/absence of amenability data in the input dataset
 if (hasAmenability){
+  // In amenability data is present, display the MS2 amenability score legend gradient
   addMS2Legend()
   infoboxHeight = 300
   infoboxTop = "482px"
@@ -384,13 +391,11 @@ else{
   settingsHeight = 420
   buttonTop = "200px"
   gradientTop= "304px"
-
 }
 
 function addInfoBox() {
-  // Add a border around the visualization options
+  // Add a border around the visualization options box
   var settingsBorder = makeSvgElement(465, 420, "settings-border", d3.select("#tripod-settings-container"));
-  
   settingsBorder.append("rect")
     .attr("width", 465)
     .attr("height", settingsHeight)
@@ -400,6 +405,7 @@ function addInfoBox() {
     .style("stroke", "#a7b2c2")
     .attr("z-index", -1);
 
+    // If amenability data is present in the datase, add the legend text for the amenability score legend and reposition the hazard legend
     if (hasAmenability){  
       settingsBorder.append("text")
         .text("MS2 Amenability Score")  
@@ -444,7 +450,6 @@ function addInfoBox() {
         .attr("font-size", 18)
         .attr("x", 358)
         .attr("y", 319)     
-    
       }  
 
     else {
@@ -468,18 +473,20 @@ function addInfoBox() {
         .attr("y", 354)
     }  
 
+      // Set the position of the hazard legend gradient
       document.getElementById("tripod-gradient-rect-hazard").style.position = "absolute"
       document.getElementById("tripod-gradient-rect-hazard").style.top = gradientTop  
- 
+
+  // Add text for the metadata legend title
   settingsBorder.append("text")
     .text("Metadata Legend")  
     .attr("font-size", 22)
     .attr("font-weight", "bold")
     .attr("x", 156)
     .attr("y", 45) 
-  
+
+  // Add a border around the candidate information box
   infoBox = makeSvgElement(465, 304, "infobox", d3.select("#tripod-infobox"))
-  
   infoBox.append("rect")
     .attr("width", 465)
     .attr("height", infoboxHeight)
@@ -491,7 +498,8 @@ function addInfoBox() {
     .attr("z-index", -1)
 
     document.getElementById("tripod-infobox").style.top = infoboxTop 
-  
+
+  // Create a span element containing the dtxcid of the currently-selected candidate
   structure_label_span = document.createElement('span')
     structure_label_span.style.position = "absolute"
     structure_label_span.style.top = spanTop
@@ -500,7 +508,8 @@ function addInfoBox() {
     structure_label = document.createTextNode(' ')
     structure_label_span.appendChild(structure_label)
     document.getElementById("tripod-settings-container").appendChild(structure_label_span)
-  
+
+  // Create a span element containing the list of other features to which the currently-selected candidate also belongs
   more_features_span = document.createElement('span')
     more_features_span.style.position = "absolute"
     more_features_span.style.fontSize = "18px"
@@ -516,8 +525,8 @@ function addInfoBox() {
   
     // Create the clickable InfoBox structure image tooltip
     structureToolTip = d3.select(`#tripod-infobox`)
-    .append("div")
-    .attr("id", `tripod-StructureToolTip`)
+      .append("div")
+      .attr("id", `tripod-StructureToolTip`)
     imageDiv = document.getElementById("tripod-StructureToolTip")
     imageDiv.style.height = "200px"
     imageDiv.style.width = "200px"
@@ -541,7 +550,8 @@ function addInfoBox() {
   outlinkDiv.style.width = "20px"
   outlinkDiv.style.zIndex = 1
   document.getElementById('tripod-infobox').appendChild(outlinkDiv)
-  
+
+  // Create outlink symbol SVG that changes color to purple once the structure link has been clicked
   outlinksvg = makeSvgElement(30, 30, 'tripod-outlink-svg', d3.select("#tripod-outlinkDiv"));
     outlinksvgGroup = outlinksvg.append("g")
       .attr("id", "tripod-outlink")
@@ -560,13 +570,11 @@ function addInfoBox() {
       .attr("points", "304 16 304 48 441.373 48 188.687 300.687 211.313 323.313 464 70.627 464 208 496 208 496 16 304 16")  
      
     outlinksvgGroup.attr("transform", "translate(190, -252) scale(0.06)")
-  
-  
   }
 
   addInfoBox()
 
-// create checkboxes for selecting plots to load
+// create checkboxes for selecting plots to sort
 var metaInput = document.createElement("input")
   metaInput.setAttribute('type', 'checkbox')
   metaInput.setAttribute('id', 'input-meta')
@@ -586,6 +594,7 @@ var MS2Input = document.createElement("input")
   document.getElementById("tripod-main-container").appendChild(MS2Input)
 MS2Input.checked = true
 }
+// If no MS2 data is present in the dataset, display a 'No MS2 data found' message in place of the MS2 plots
 else{
   const mySpan = document.createElement('span')
   noMS2Text = document.createTextNode("No MS2 data found.")
@@ -598,7 +607,7 @@ else{
 }
 
 
-// Gets the dataset containing only the top 5 highest metadata rows. 
+// Gets a dataset containing only the top 5 highest metadata rows. 
 const top5groups = getTop5Rows(fullData, 'Feature ID', 'STRUCTURE_TOTAL_NORM');
 
 // Get a list of all unique features in the dataset, sorted from smallest to largest
@@ -606,25 +615,27 @@ var uniqueFeatureList = [...new Set(fullData.map(item =>item['Feature ID']))]
 for (let i = 0; i < uniqueFeatureList.length; i++) {uniqueFeatureList[i] = Number(uniqueFeatureList[i]);}
 uniqueFeatureList.sort((a, b) => a - b);
 
-// Define the feature to initially display in the plots
+// Define the feature to initially display upon first rendering of the plots (first feature present in the input dataset)
 var selectedFeature = uniqueFeatureList[0]
 
 // Define the number of unique feature IDs in the dataset
 const uniqueFeatureListLength = uniqueFeatureList.length
 
-// Define the mass, RT, abundance, and occurrence percentage of the selectedFeature to initially display in the plot title
+// Define the mass, retention time (RT), abundance, and occurrence percentage of the selectedFeature to initially display in the plot title
 var mass = Number(fullData[0]["Mass"]).toFixed(4)
 var RT = Number(fullData[0]["Retention Time"]).toFixed(2)
 var abundance = Math.round(fullData[0]["Median blanksub mean feature abundance"])
 var occ_percentage = Number(fullData[0]["Final Occurrence Percentage"])
 
-// boolean used by loadData() to check whether to use all data in the plots, or just the dataFromGrid
+// boolean used by loadData() to check whether to use all data in the plots, or just the data visible in the grid after filtering (dataFromGrid)
 var gridUpdated = false 
 
+// Defines the data visible in the grid after a grid filter is set
 var dataFromGrid = null 
 
+// Boolean to definer whether or not the visualization is currently displaying all candidates, or jsut the 5 candidates with the highest total metadata
 var showingTop5 = false
-// Create a button that toggles between showing all candidates, and just the top 5 candidates
+// Create a button that toggles between showing all candidates, and just the top 5 metadata candidates
 function createTop5ToggleButton(){
   const button = document.createElement('button')
     button.textContent = "Click to show top 5 metadata candidates only";
@@ -707,8 +718,8 @@ function createTop5ToggleButton(){
       hazardInput.checked = true
       }
 
+      // If the currently selected dtxcid exists in the plots after applying the top-5-metadata filter, highlight the dtxcid red in the y-axis
       if (clickedDTXCID){
-
         try{
           fieldList.forEach(key =>{
             let IdToHighlight = document.getElementById(`ylabel-${clickedDTXCID}-${key}`);
@@ -722,6 +733,7 @@ function createTop5ToggleButton(){
     });
 }
 
+// Create buttons to switch between viewing positive mode and negative mode amenability prediction data. 
 function createAmenabilityToggleButtons(){
   const buttonPOS = document.createElement('button')
     buttonPOS.textContent = "POS";
@@ -764,20 +776,26 @@ function createAmenabilityToggleButtons(){
     });  
 }
 
+// If amenability data is present, display the pos/neg mode amenability data toggle buttons
 if (hasAmenability) {createAmenabilityToggleButtons()}
 
-// function to shuttle between feature IDs. argument position = 'first', 'last', 'forward', 'back', or 'input'
+// Function used to shuttle between feature IDs. argument position = 'first', 'last', 'forward', 'back', or 'input'
 function goToPosition(event, position){
+  // If position = first, shuttle to the first feature in the dataset
   if (position == "first"){selectedFeature = uniqueFeatureList[0]}
+  // If position = last, shuttle to the last feature in the dataset
   else if (position == "last"){selectedFeature = uniqueFeatureList[uniqueFeatureListLength -1]}
+  // If position = forward, shuttle to the next feature in the dataset. If the current feature is the last feature in the dataset, do nothing. 
   else if (position == "forward"){
     if (uniqueFeatureList.indexOf(selectedFeature) == uniqueFeatureListLength -1){return};
     let newIndex = uniqueFeatureList.indexOf(selectedFeature) + 1;
     selectedFeature = uniqueFeatureList[newIndex]}
+  // If position = back, shuttle to the previous feature in the dataset. If the current feature is the first feature in the dataset, do nothing. 
   else if (position == "back"){
     if (uniqueFeatureList.indexOf(selectedFeature) == 0){return}
     let newIndex = uniqueFeatureList.indexOf(selectedFeature) - 1
     selectedFeature = uniqueFeatureList[newIndex]}
+  // if position - input, shuttle to the feature specified in the input field by the user.   
   else if (position == "input"){
     let input = document.getElementById("input-feature").value
     if (uniqueFeatureList.includes(Number(input))){selectedFeature = Number(input)}
@@ -827,7 +845,7 @@ function goToPosition(event, position){
 
 }
 
-//Create shuttle buttons
+//Create shuttle buttons and Feature ID dropdown menu / input field
 function makeArrows(){
   const arrowsvgleft = makeSvgElement(30, 30, 'tripod-arrow-left', d3.select("#tripod-chart-container"));
     arrowsvgleft.attr('id', "left-arrow")
@@ -961,7 +979,6 @@ else {
   xMeta = addXaxis(8, pre_space = 674)
   xHazard = addXaxis(12, pre_space = 810)
 }
-
 
 // Keys to keep for cleaning data
 const keysToKeep = [
@@ -1242,6 +1259,7 @@ function yAxisMS2(data){
     .on("click", ylabelClick)
 }
 
+// Changes the outlink symbol and structure image border color to purple, and opens another window to the comptox link of the clicked structure
 function goToHyperlink(){
   if (clickedDTXCID != null){
   outlinksvg.selectAll('polygon').attr("fill", "#800080");
@@ -1265,7 +1283,6 @@ function createYToolTip(){
     .attr("id", "tripod-yAxisToolTip"); 
   }
   createYToolTip()
-
 
   imageDiv.addEventListener('click', goToHyperlink)
   document.getElementById('tripod-outlink').addEventListener('click', goToHyperlink);
