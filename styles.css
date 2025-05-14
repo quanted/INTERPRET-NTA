@@ -175,15 +175,25 @@
 }
 
 #tripod-gradient-rect-hazard{
-  position: absolute;
   left: 80px;
-  top: 234px;
 }
 
 #tripod-gradient-rect-MS2{
   position: absolute;
   left: 80px;
-  top: 335px;
+  top: 355px;
+}
+
+#tripod-POSButton {
+  position: relative;
+  left: 260px;
+  top: 5px;
+}
+
+#tripod-NEGButton {
+  position: relative;
+  left: 290px;
+  top: 5px;
 }
 
 #input-MS2{

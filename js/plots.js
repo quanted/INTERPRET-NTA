@@ -147,7 +147,8 @@ function cleanData(data, keysToKeep) {
     "Exposure_score_mapped",
     "Hazard Score",
     "Hazard Completeness Score",
-    "Amenability",
+    "POSITIVE_MODE_AMENABILITY_PREDICTION",
+    "NEGATIVE_MODE_AMENABILITY_PREDICTION"
   ];
 
   let filteredData = [];
@@ -156,8 +157,8 @@ function cleanData(data, keysToKeep) {
     Object.entries(row).forEach(([key, value]) => {
       if (keysToKeep.includes(key)) {
         if (key == "Feature ID"){value = Number(value);}
-        else if (key == "Amenability"){
-          if (value === ""){value = 9999}
+        else if (key.includes("AMENABILITY")){
+          if (value === ""){value = -9999}
           else {value = Number(value)}}
         else if (keysToNum.includes(key)) {value = Number(Number(value).toPrecision(3));} //Rounds all numerical columns to 3 sig figs
         filteredRow[key] = value;
@@ -264,7 +265,8 @@ function getTop5Rows(arr, categoryField, valueField) {
     "Exposure_score_mapped",
     "Hazard Score",
     "Hazard Completeness Score",
-    "Amenability"
+    "POSITIVE_MODE_AMENABILITY_PREDICTION",
+    "NEGATIVE_MODE_AMENABILITY_PREDICTION"
   ];
 
   return cleanData(data = result, keysToKeep = usefulKeys)
@@ -390,21 +392,27 @@ const fullData = await parseCSV(filePath)
 const hasMS2 = Object.keys(fullData[0]).some(col => col.includes("MS2"))
 
 var hasAmenability = false
-if (hasMS2){hasAmenability = Object.keys(fullData[0]).some(col => col.includes("Amenability"))}
+var amenabilityMode = "POSITIVE_MODE_AMENABILITY_PREDICTION"
+if (hasMS2){hasAmenability = Object.keys(fullData[0]).some(col => col.includes("AMENABILITY"))}
+
+
 if (hasAmenability){
   addMS2Legend()
   infoboxHeight = 300
   infoboxTop = "482px"
   spanTop = "510px"
   settingsHeight = 470
-  buttonTop = "415px"
+  buttonTop = "180px"
+  gradientTop= "270px"
 }
 else{
   infoboxHeight = 347
   infoboxTop = "435px"
   spanTop = "460px"
   settingsHeight = 420
-  buttonTop = "340px"
+  buttonTop = "200px"
+  gradientTop= "304px"
+
 }
 
 function addInfoBox() {
@@ -419,55 +427,84 @@ function addInfoBox() {
     .attr("fill", "transparent")
     .style("stroke", "#a7b2c2")
     .attr("z-index", -1);
-  
-  settingsBorder.append("text")
-    .text("Hazard Completeness Score")  
-    .attr("font-size", 22)
-    .attr("font-weight", "bold")
-    .attr("x", 110)
-    .attr("y", 230)
 
     if (hasAmenability){  
       settingsBorder.append("text")
         .text("MS2 Amenability Score")  
         .attr("font-size", 22)
         .attr("font-weight", "bold")
-        // .attr("x", 110)
         .attr("x", 125)
-        .attr("y", 335)  
+        .attr("y", 355)  
+
+      settingsBorder.append("text")
+        .text("Amenability Mode: ")  
+        .attr("font-size", 20)
+        .attr("x", 80)
+        .attr("y", 450)  
     
       settingsBorder.append("text")
         .text("0.0")  
         .attr("font-size", 18)
         .attr("x", 90)
-        .attr("y", 385) 
+        .attr("y", 405) 
       
       settingsBorder.append("text")
         .text("1.0")  
         .attr("font-size", 18)
         .attr("x", 358)
-        .attr("y", 385) 
+        .attr("y", 405) 
+
+      settingsBorder.append("text")
+        .text("Hazard Completeness Score")  
+        .attr("font-size", 22)
+        .attr("font-weight", "bold")
+        .attr("x", 110)
+        .attr("y", 270)
+
+      settingsBorder.append("text")
+        .text("0.0")  
+        .attr("font-size", 18)
+        .attr("x", 90)
+        .attr("y", 319) 
+  
+      settingsBorder.append("text")
+        .text("1.0")  
+        .attr("font-size", 18)
+        .attr("x", 358)
+        .attr("y", 319)     
     
       }  
+
+    else {
+      settingsBorder.append("text")
+        .text("Hazard Completeness Score")  
+        .attr("font-size", 22)
+        .attr("font-weight", "bold")
+        .attr("x", 110)
+        .attr("y", 305)
+
+      settingsBorder.append("text")
+        .text("0.0")  
+        .attr("font-size", 18)
+        .attr("x", 90)
+        .attr("y", 354) 
   
+      settingsBorder.append("text")
+        .text("1.0")  
+        .attr("font-size", 18)
+        .attr("x", 358)
+        .attr("y", 354)
+    }  
+
+      document.getElementById("tripod-gradient-rect-hazard").style.position = "absolute"
+      document.getElementById("tripod-gradient-rect-hazard").style.top = gradientTop  
+ 
   settingsBorder.append("text")
     .text("Metadata Legend")  
     .attr("font-size", 22)
     .attr("font-weight", "bold")
     .attr("x", 156)
-    .attr("y", 45)
-  
-  settingsBorder.append("text")
-    .text("0.0")  
-    .attr("font-size", 18)
-    .attr("x", 90)
-    .attr("y", 284) 
-  
-  settingsBorder.append("text")
-    .text("1.0")  
-    .attr("font-size", 18)
-    .attr("x", 358)
-    .attr("y", 284)   
+    .attr("y", 45) 
   
   infoBox = makeSvgElement(465, 304, "infobox", d3.select("#tripod-infobox"))
   
@@ -713,6 +750,50 @@ function createTop5ToggleButton(){
     });
 }
 
+function createAmenabilityToggleButtons(){
+  const buttonPOS = document.createElement('button')
+    buttonPOS.textContent = "POS";
+    buttonPOS.style.width = '50px';
+    buttonPOS.id = 'tripod-POSButton';
+    buttonPOS.style.padding = '5px 10px';
+    buttonPOS.style.border = 'none';
+    buttonPOS.style.borderRadius = '5px';
+    buttonPOS.style.cursor = 'pointer';
+    buttonPOS.style.backgroundColor = "#DBE4F0"
+    buttonPOS.disabled = true;
+    document.getElementById('tripod-settings-container').appendChild(buttonPOS);
+  
+  buttonPOS.addEventListener('click', function() {
+    buttonPOS.disabled = true
+    buttonNEG.disabled = false
+    amenabilityMode = "POSITIVE_MODE_AMENABILITY_PREDICTION"
+    MS2_bars.remove()
+    showBarsMS2(subGroupData)
+    });
+
+  const buttonNEG= document.createElement('button')
+    buttonNEG.textContent = "NEG";
+    buttonNEG.style.width = '50px';
+    buttonNEG.id = 'tripod-NEGButton';
+    buttonNEG.style.padding = '5px 10px';
+    buttonNEG.style.border = 'none';
+    buttonNEG.style.borderRadius = '5px';
+    buttonNEG.style.cursor = 'pointer';
+    buttonNEG.style.backgroundColor = "#DBE4F0"
+    document.getElementById('tripod-settings-container').appendChild(buttonNEG);
+  
+  buttonNEG.addEventListener('click', function() {
+    buttonNEG.disabled = true
+    buttonPOS.disabled = false
+    amenabilityMode = "NEGATIVE_MODE_AMENABILITY_PREDICTION"
+    MS2_bars.remove()
+    showBarsMS2(subGroupData)
+
+    });  
+}
+
+if (hasAmenability) {createAmenabilityToggleButtons()}
+
 // function to shuttle between feature IDs. argument position = 'first', 'last', 'forward', 'back', or 'input'
 function goToPosition(event, position){
   if (position == "first"){selectedFeature = uniqueFeatureList[0]}
@@ -935,7 +1016,8 @@ const keysToKeep = [
     "STRUCTURE_TOTAL_NORM", 
     "Hazard Score", 
     "Hazard Completeness Score",
-    "Amenability",
+    "POSITIVE_MODE_AMENABILITY_PREDICTION",
+    "NEGATIVE_MODE_AMENABILITY_PREDICTION",
     "MS2 quotient score", 
     "Median blanksub mean feature abundance",
     "Final Occurrence Percentage", 
@@ -1004,7 +1086,8 @@ const subgroupKeys = [
     "STRUCTURE_TOTAL_NORM", 
     "Hazard Score", 
     "Hazard Completeness Score",
-    "Amenability",
+    "POSITIVE_MODE_AMENABILITY_PREDICTION",
+    "NEGATIVE_MODE_AMENABILITY_PREDICTION",
     "MS2 quotient score", 
     "energy0", 
     "feature_spectrum"
@@ -1340,6 +1423,7 @@ var barClickMS2Hazard = function(){
   // In the future, we want this to open the hazard table of the clicked-on DTXCID
   if (this.className["baseVal"] == "hazard-bar") {window.open(`https://hazard-dev.sciencedataexperts.com/#/hazard/report/${DTXCIDname}`)}
     else if (this.className["baseVal"] == "MS2-bar") {
+      console.log(d3.select(this))
       // spectrum 1 should be the experimental data of the feature
       const inputSpec=d3.select(this)._groups[0][0]["__data__"]["energy0"]
       // spectrum 2 should be the CFMID spectrum of the candidate DTXCID
@@ -1847,8 +1931,8 @@ function loadData(data){
 
     else {
       var MS2Score = d3.select(this)._groups[0][0]["__data__"]["MS2 quotient score"];
-      var amenabilityScore = d3.select(this)._groups[0][0]["__data__"]["Amenability"];
-      if (amenabilityScore == 9999){amenabilityScore = "No Data"}
+      var amenabilityScore = d3.select(this)._groups[0][0]["__data__"][amenabilityMode];
+      if (amenabilityScore == -9999){amenabilityScore = "No Data"}
     tooltipBarMS2
       .html("MS2 Score: " + MS2Score + "<br>" + "Amenability Score: " + amenabilityScore)
       .style("opacity", 1)
@@ -1953,7 +2037,7 @@ showBarsMS2 = function(data){
   .data(data)
   .enter().append("rect").attr("fill", d => {
     if (hasAmenability){
-      if (d["Amenability"] == 9999){
+      if (d[amenabilityMode] == -9999){
         return "white"
       }
       else{
@@ -1963,14 +2047,14 @@ showBarsMS2 = function(data){
 
   })
   .attr("stroke", d => {
-    if (d["Amenability"] == 9999){
+    if (d[amenabilityMode] == -9999){
       return "red"
     }
-    else if (d["Amenability"] == 0){
+    else if (d[amenabilityMode] == 0){
       return "#DBE4F0"
     }
   })
-  .attr("fill-opacity", d => d["Amenability"])
+  .attr("fill-opacity", d => d[amenabilityMode])
   .attr("transform", `translate(137, 20)`)
   .attr("class", "MS2-bar")
   .attr("y", d => yMS2(d.DTXCID_INDIVIDUAL_COMPONENT))
@@ -2135,15 +2219,67 @@ function makeLargeGrid(){
           }
         },
       ]},
-          {headerName: "MS2", children: [{headerName: 'MS2 Score', 
+    {headerName: "MS2", children: [{columnGroupShow: "closed", headerName: 'MS2 Score', 
       field: 'MS2 quotient score', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], 
       valueGetter: (params) => {return params.data?.["MS2 quotient score"] ?? 'N/A'}
     }, 
-    {headerName: 'Amenability Score', 
-      field: 'Amenability', floatingFilter: true, filter: 'agNumberColumnFilter', width: 120, sortingOrder: ['desc', 'asc', null], 
+    {columnGroupShow: "open", headerName: 'MS2 Score', 
+      field: 'MS2 quotient score', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], 
       // cellRenderer: params => {params.value === "" ? "N/A" : params.value}, 
-      valueGetter: (params) => {return params.data?.["Amenability"] ?? 'N/A'}
-    }
+      valueGetter: (params) => {return params.data?.["MS2 quotient score"] ?? 'N/A'}
+    },
+    {columnGroupShow: "open", headerName: '(pos) Amenability Score', 
+      field: 'POSITIVE_MODE_AMENABILITY_PREDICTION', floatingFilter: true, filter: 'agNumberColumnFilter', width: 150, sortingOrder: ['desc', 'asc', null], 
+      // cellRenderer: params => {params.value === "" ? "N/A" : params.value}, 
+      valueGetter: (params) => {
+        const value = params.data["POSITIVE_MODE_AMENABILITY_PREDICTION"];
+        if (value === -9999){
+          return 'No Data'
+        }
+        else {return params.data?.["POSITIVE_MODE_AMENABILITY_PREDICTION"] ?? 'N/A'}}, 
+        comparator: (valueA, valueB, isDescending) => {
+          const isNoData = (val) => val === "No Data"
+
+          if (isDescending){
+            if (isNoData(valueA)) return -1;
+            if (isNoData(valueB)) return 1
+          }
+          else {
+            if (isNoData(valueA)) return 1;
+            if (isNoData(valueB)) return -1
+          }
+
+          return ('' + valueA).localeCompare('' + valueB)
+
+        }
+        
+    }, 
+    {columnGroupShow: "open", headerName: '(neg) Amenability Score', 
+      field: 'NEGATIVE_MODE_AMENABILITY_PREDICTION', floatingFilter: true, filter: 'agNumberColumnFilter', width: 150, sortingOrder: ['desc', 'asc', null], 
+      // cellRenderer: params => {params.value === "" ? "N/A" : params.value}, 
+      valueGetter: (params) => {
+        const value = params.data["NEGATIVE_MODE_AMENABILITY_PREDICTION"];
+        if (value === -9999){
+          return 'No Data'
+        }
+        else {return params.data?.["NEGATIVE_MODE_AMENABILITY_PREDICTION"] ?? 'N/A'}},
+        comparator: (valueA, valueB, isDescending) => {
+          const isNoData = (val) => val === "No Data"
+
+          if (isDescending){
+            if (isNoData(valueA)) return -1;
+            if (isNoData(valueB)) return 1
+          }
+          else {
+            if (isNoData(valueA)) return 1;
+            if (isNoData(valueB)) return -1
+          }
+
+          return ('' + valueA).localeCompare('' + valueB)
+
+        }
+
+    }, 
   
   ]},
     {headerName: "Metadata", 
@@ -2469,8 +2605,10 @@ screenshotButton.addEventListener('click', () => {
 }
 
 // ======= CALL MAIN FUNCTION ==================================================================================================
-// const dataPath = "./data/short_test.csv";
-const dataPath = "./data/WW2DW_Data_Analysis_file_5_with_MS2.csv";
+// const dataPath = "./data/short_test_noMS2.csv";
+const dataPath = "./data/short_test_amen.csv";
+// const dataPath = "./data/short_test_no_amen.csv";
+// const dataPath = "./data/WW2DW_Data_Analysis_file_5_with_MS2.csv";
 // const dataPath = "./data/WW2DW_Data_Analysis_file_5_without_MS2.csv";
 generatePlots(dataPath);
 
