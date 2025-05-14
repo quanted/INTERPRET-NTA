@@ -33,7 +33,6 @@ function flagSpectra(spectrum1, spectrum2, mass_window=0, window_type="da", peak
   }
 
   function createDualMassSpectrumPlot(DTXCID, feature, inputSpec, CFMIDSpec){
-    console.log('hi')
     var svg = d3.select("#msplot")
     var width = svg.attr("width")
     var height = svg.attr("height")
@@ -221,10 +220,9 @@ function flagSpectra(spectrum1, spectrum2, mass_window=0, window_type="da", peak
       svg.call(zoom.transform, d3.zoomIdentity)
     })  
 
+    console.log("new mirror plot loaded")
+
 }
-
-
-
 
 function getQueryParam(key){
     const params = new URLSearchParams(window.location.search);
@@ -234,11 +232,45 @@ function getQueryParam(key){
 document.addEventListener("DOMContentLoaded", () => {
     const DTXCID = getQueryParam("dtxcid")
     const feature = getQueryParam("feature")
-    const inputSpec = JSON.parse(getQueryParam("inputSpec"))
+    // const inputSpec0 = JSON.parse(getQueryParam("inputSpec"))
+    const inputSpec0 = JSON.parse(getQueryParam("inputSpec0"))
+    const inputSpec1 = JSON.parse(getQueryParam("inputSpec1"))
+    const inputSpec2 = JSON.parse(getQueryParam("inputSpec2"))
     const CFMIDSpec = JSON.parse(getQueryParam("CFMIDSpec"))
-    createDualMassSpectrumPlot(DTXCID, feature, inputSpec, CFMIDSpec)
+    createDualMassSpectrumPlot(DTXCID, feature, inputSpec0, CFMIDSpec)
 
     if (DTXCID){
         document.body.insertAdjacentHTML("beforeend", `<p>WARNING: YOU ARE SEEING FAKE DATA. MIRROR PLOTS ARE STILL UNDER DEVELOPMENT. </p>`)
     }
+
+    const energy0button = document.getElementById("energy0button")
+    const energy1button = document.getElementById("energy1button")
+    const energy2button = document.getElementById("energy2button")
+
+    energy0button.disabled = true
+
+    energy0button.addEventListener("click", function() {
+      energy1button.disabled = false;
+      energy0button.disabled = true;
+      energy2button.disabled = false;
+      createDualMassSpectrumPlot(DTXCID, feature, inputSpec0, CFMIDSpec)
+    })
+
+      energy1button.addEventListener("click", function() {
+      energy1button.disabled = true;
+      energy0button.disabled = false;
+      energy2button.disabled = false;
+      createDualMassSpectrumPlot(DTXCID, feature, inputSpec1, CFMIDSpec)
+    })
+
+      energy2button.addEventListener("click", function() {
+      energy1button.disabled = false;
+      energy0button.disabled = false;
+      energy2button.disabled = true;
+      createDualMassSpectrumPlot(DTXCID, feature, inputSpec2, CFMIDSpec)
+    })
+
+
+
+
 })

@@ -1,32 +1,5 @@
 // ======= UTILITY FUNCTIONS ====================================================================================================
 
-// Returns the contents of the input CSV. Values in the last column have a "\r" added to the end, so make sure the last column is not needed for the vis
-// async function parseCSV(filePath) {
-//   // fetch the file
-//   const response = await fetch(filePath);
-//   const csvText = await response.text();
-  
-//   // parse the file
-//   const lines = csvText.split('\n');
-//   const headers = lines[0].split(',');
-//   var result = [];
-
-//   // remove the '\r' from the last column of the csv
-//   // headers[headers.length - 1] = headers[headers.length - 1].replace(/\r/g, "");
-
-//   for (let i = 1; i < lines.length; i++) {
-//     const values = lines[i].split(',');
-//     const obj = {};
-//     for (let j = 0; j < headers.length; j++) {obj[headers[j]] = values[j];}
-//     result.push(obj);
-//   }
-
-//   // Remove rows with no feature ID
-//   const cleaned_result = result.filter(feature => feature['Feature ID'] != "")
-//   console.log(cleaned_result)
-//   return cleaned_result;
-// }
-
 async function parseCSV(filePath) {
   // fetch the file
   const response = await fetch(filePath);
@@ -38,7 +11,6 @@ async function parseCSV(filePath) {
       skipEmptyLines: true,
       complete: function(results) {
         const cleaned = results.data.filter(row => row['Feature ID'] != "");
-        console.log(cleaned)
         resolve(cleaned);
       }
     })
@@ -1062,6 +1034,8 @@ const keysToKeep = [
     "Bioaccumulation_score_mapped",
     "Exposure_score_mapped",
     "energy0", 
+    "energy1", 
+    "energy2", 
     "feature_spectrum"
   ];
 // Keys to keep for cleaning data further for sub-grouping on bar plot
@@ -1090,6 +1064,8 @@ const subgroupKeys = [
     "NEGATIVE_MODE_AMENABILITY_PREDICTION",
     "MS2 quotient score", 
     "energy0", 
+    "energy1", 
+    "energy2", 
     "feature_spectrum"
   ];
 
@@ -1423,13 +1399,12 @@ var barClickMS2Hazard = function(){
   // In the future, we want this to open the hazard table of the clicked-on DTXCID
   if (this.className["baseVal"] == "hazard-bar") {window.open(`https://hazard-dev.sciencedataexperts.com/#/hazard/report/${DTXCIDname}`)}
     else if (this.className["baseVal"] == "MS2-bar") {
-      console.log(d3.select(this))
-      // spectrum 1 should be the experimental data of the feature
-      const inputSpec=d3.select(this)._groups[0][0]["__data__"]["energy0"]
-      // spectrum 2 should be the CFMID spectrum of the candidate DTXCID
+      const inputSpec0=d3.select(this)._groups[0][0]["__data__"]["energy0"]
+      const inputSpec1=d3.select(this)._groups[0][0]["__data__"]["energy1"]
+      const inputSpec2=d3.select(this)._groups[0][0]["__data__"]["energy2"]
       const CFMIDSpec=d3.select(this)._groups[0][0]["__data__"]["feature_spectrum"]
 
-      window.open(`mirror_plots.html?dtxcid=${DTXCIDname}&feature=${selectedFeature}&inputSpec=${inputSpec}&CFMIDSpec=${CFMIDSpec}`, "PopupWindow", "width=700,height=600");
+      window.open(`mirror_plots.html?dtxcid=${DTXCIDname}&feature=${selectedFeature}&inputSpec0=${inputSpec0}&inputSpec1=${inputSpec1}&inputSpec2=${inputSpec2}&CFMIDSpec=${CFMIDSpec}`, "PopupWindow", "width=700,height=600");
   }
 
   //Get the other features that this DTXCID is a candidate for 
