@@ -1,0 +1,90 @@
+div#metadataScatterContainer {
+  display: grid;
+  grid-template-areas: 
+    "scatterTitle scatterTitle scatterTitle"
+    "scatterYAxis scatterSVG scatterLegendContainer"
+    "null0 scatterXAxis null1";
+  grid-template-columns: 150px 600px 250px;
+  grid-template-rows: 60px 600px 200px;
+  margin: 10px;
+}
+svg#metadataScatterSVG {
+  grid-area: scatterSVG;
+  user-select: none; /* Prevent text selection */
+  -webkit-user-select: none; /* For Safari */
+  -ms-user-select: none; /* For older versions of IE */
+}
+#xAxisSelector {
+  grid-area: scatterXAxis;
+  align-content: center;
+}
+#yAxisSelector {
+  grid-area: scatterYAxis;
+  flex-direction: column;
+  width: 150px;
+  justify-content: center;
+}
+#scatterLegendContainer {
+  grid-area: scatterLegendContainer;
+  display: grid;
+  grid-template-areas:
+  "scatterColorLegend"
+  "scatterSizeLegend";
+  grid-template-rows: 1fr 1fr;
+}
+#scatterColorSelector {
+  grid-area: scatterColorLegend;
+  flex-direction: column;
+  width: fit-content;
+}
+#scatterSizeSelector {
+  grid-area: scatterSizeLegend;
+  flex-direction: column;
+  width: fit-content;
+}
+#scatterTooltip {
+  z-index: 10;
+  pointer-events: none;
+  width: fit-content;
+  min-width: 200px;
+}
+
+#paginationContainer {
+  grid-area: scatterXAxis;
+  justify-content: center;
+}
+
+#paginationTooltip {
+  z-index: 10;
+  pointer-events: none;
+  width: fit-content;
+  min-width: 200px;
+  max-width: 400px;
+  height: fit-content;
+}
+#selectionBox {
+  pointer-events: none;
+}
+
+#boxSelectionTooltip {
+  margin-left: 10px;
+  font-size: 12px;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 10px;
+  width: 300px;
+  height: auto;
+  white-space: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  font-size: 15px;
+}
+
+.clickable-feature-id {
+  text-decoration: underline;
+}
+.clickable-feature-id:hover {
+  color: darkblue;
+}
