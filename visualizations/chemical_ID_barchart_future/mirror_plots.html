@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Mirror Plots</title>
+    <link rel="stylesheet" href="spectrum_plots.css">
+  </head>
+  <body>
+    <div class="graph-container">
+      <h4>Mass Spectrum Comparison</h4>
+      <div>Select collision energy: 
+        <button id="energy0button">10 eV</button>
+        <button id="energy1button">20 eV</button>
+        <button id="energy2button">40 eV</button>
+      </div>
+      <svg width="600" height="450" id="msplot"></svg>
+      <button id="zoomReset">Reset Zoom</button>
+    </div>
+    <script src="./js/mirror_plots.js"></script>
+    <script src="./js/d3.v7.min.js"></script>
+  </body>
+</html>

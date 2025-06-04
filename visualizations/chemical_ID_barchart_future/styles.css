@@ -1,0 +1,275 @@
+.body {position: absolute;}
+
+#tripod-settings-container {
+    height: 600px;
+    width: 500px; 
+    position: absolute;
+    left: 1630px;
+    top: 6px;
+}
+
+#tripod-main-container {
+    height: 820px;
+    width: 1620px; 
+    position: relative;
+    left: 8px;
+    top: 0px;
+    background-color: white;
+}
+
+.tripod-chart {
+  height: 700px;
+  width: 536px;
+  top: 85px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+}
+
+#tripod-StructureToolTip{
+  position: absolute;
+  top: 50px;
+  left: 20px;
+  border: solid;
+  border-width : 1px;
+  border-radius: 8px;
+  padding: 2px;
+}
+
+#tripod-shuttle-buttons{
+  position: absolute;
+  left: 1406px;
+  top: 12px; 
+  height: 28px;
+  width: 120px;
+}
+
+#input-feature{
+  width: 81px;
+  height: 82%;
+}
+
+#feature-input-button{
+  height: 100%;
+  width: 30px;
+  font-weight: bold;
+  cursor : pointer;
+  z-index: 1;
+  padding-left: 1px;
+  padding-right: 1px;
+}
+
+.tripod-arrow-first{
+  position: absolute;
+  left: 1326px;
+  top: 9px;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.tripod-arrow-left{
+  position: absolute;
+  left: 1366px;
+  top: 9px;
+  cursor : pointer;
+  z-index: 1;
+}
+
+.tripod-arrow-right{
+  position: absolute;
+  left: 1530px;
+  top: 9px;
+  cursor : pointer;
+  z-index: 1;
+}
+
+.tripod-arrow-last{
+  position: absolute;
+  left: 1570px;
+  top: 9px;
+  cursor : pointer;
+  z-index: 1;
+}
+
+#tripod-chart-MS2 {
+    position: absolute; 
+}
+
+#tripod-chart-hazard {
+  position: absolute;
+  left: 1074px;
+}
+
+#tripod-chart-meta {
+  position: absolute;
+  left: 537px;
+}
+
+#tripod-xaxis {
+    height: 30px;
+    width: 1310px; 
+    position: absolute;
+    z-index:1;
+    top: 787px;
+}
+
+#metadata-legend {
+  height: 210px;
+  width: 25%;
+  position: absolute;
+  left: 45px;
+  z-index:1;
+}
+
+#tripod-infobox {
+  position: absolute;
+  z-index:1;
+}
+
+#tripod-title {
+    height: 30px;
+    width: 50%;
+    position: relative;
+    float: left;
+    padding-top: 15px;
+    padding-left: 20px;
+    z-index: 1
+}
+
+#tripod-title text{
+  white-space: pre;
+}
+
+#tripod-chart-container {
+    position: relative;
+    height: 800px;
+    width: 1620px;
+}
+
+#tripod-ylabel-meta {font-size: 14px;}
+#tripod-ylabel-hazard {font-size: 14px;}
+#tripod-ylabel-MS2 {font-size: 14px;}
+
+.tripod-xlabel {font-size: 14px;}
+
+#tripod-Top5ToggleButton {
+  position: absolute;
+  left: 140px;
+  z-index: 1;
+  background-color: #DBE4F0;
+}
+
+#tripod-Top5ToggleButton:hover {
+  background-color: #3d4e634d;
+}
+
+#tripod-export-button{
+  position: absolute;
+  top: 6px;
+  left: 2050px;
+  cursor : pointer;
+  z-index: 1;
+}
+
+#tripod-tooltipbar {
+  z-index: 10;
+}
+
+#tripod-gradient-rect-hazard{
+  left: 80px;
+}
+
+#tripod-gradient-rect-MS2{
+  position: absolute;
+  left: 80px;
+  top: 355px;
+}
+
+#tripod-POSButton {
+  position: relative;
+  left: 260px;
+  top: 5px;
+}
+
+#tripod-NEGButton {
+  position: relative;
+  left: 290px;
+  top: 5px;
+}
+
+#input-MS2{
+  position: absolute;
+  left: 512px;
+  top: 55px;
+  transform: scale(1.2);
+  z-index: 10;
+}
+
+#input-hazard{
+  position: absolute;
+  left: 1584px;
+  top: 55px;
+  transform: scale(1.2);
+  z-index: 10;
+}
+
+#input-meta{
+  position: absolute;
+  left: 1047px;
+  top: 55px;
+  transform: scale(1.2);
+  z-index: 10;
+}
+
+#screenshot-btn{
+  position: absolute;
+  top: 750px;
+  left: 335px;
+  z-index: 1;
+}
+
+#tripod-i{
+  z-index: 2;
+  position:absolute;
+  top: 16px;
+  left: 520px;
+}
+
+#tripod-title-static{
+  position:absolute;
+  top: 15px;
+  left: 20px;
+}
+
+#tripod-title-static text{
+  white-space: pre;
+}
+
+/* ag grid styles --------------------------------------------------------------------*/
+#tripod-grid {
+    height: 800px;
+    width: 2090px; 
+    position: absolute;
+    left: 8px;
+    top: 820px;
+}
+
+#tripod-grid .ag-input-wrapper:before{
+  height: 0px
+}
+
+#tripod-grid .ag-row-position-absolute .ag-cell-value{
+  display: flex;
+  align-items: center;
+}
+
+#tripod-grid .ag-theme-balham {
+  --ag-odd-row-background-color: #fafcff;
+}
+
+#tripod-grid .ag-header{
+  background-color: #DBE4F0;
+}
+
+#tripod-grid .ag-header-cell-label{
+  color: #000000;
+}
