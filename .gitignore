@@ -2,3 +2,4 @@
 *.zip
 alternateJS/
 resources/*.mp4
+.vscode/
