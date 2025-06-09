@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:xlink="http://www.w3.org/1999/xlink">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="./styles/decisionTree-styles.css">
+
+  <title>NTA WebApp Logic Tree</title>
+</head>
+<body>
+  <!-- outer div as parent grid -->
+  <div class="parent-grid">
+
+    <!-- button grid -->
+    <div class="button-grid">
+      <button class="logicTree toggleButton" id="toggleOccurrenceButton">&#128300;</button>
+      <button class="logicTree toggleButton" id="toggleIcicle">&#129482;</button>
+      <button class="logicTree" id="downloadA">&#11123;A</button>
+      <button class="logicTree" id="downloadB">&#11123;B</button>
+    </div>
+
+
+    <!-- set up container to store all elements -->
+    <div class="logicTreeGrid-container logicTree" id="grid-container">
+
+      <!-- create threshold sliders -->
+      <div class="blankRepThreshSliderA logicTree" style="font-size: 20px;">
+        <span style="font-size: 17px">Blank Replicate Threshold ( A ):</span><br>
+
+        <input class="logicTreeSlider slider_rep" id="ThreshSliderRange_blankRepA" type="range" min="0" max="100" step="1" value="66">
+        <input class="logicTree" id="ThreshSliderNumber_blankRepA"  type="number" min="0" max="100" step="1" placeholder="66" value="66"> %
+      </div>
+
+      <div class="repThreshSliderA logicTree" style="font-size: 20px;">
+        <span style="font-size: 17px">Sample Replicate Threshold ( A ):</span><br>
+
+        <input class="logicTreeSlider slider_rep" id="ThreshSliderRange_repA" type="range" min="0" max="100" step="1" value="66">
+        <input class="logicTree" id="ThreshSliderNumber_repA"  type="number" min="0" max="100" step="1" placeholder="66" value="66"> %
+      </div>
+      
+      <div class="cvThreshSliderA logicTree">
+        <span style="font-size: 17px">CV Threshold ( A ):</span><br>
+
+        <input class="logicTreeSlider slider_cv" id="ThreshSliderRange_cvA" type="range" min="0.0" max="5" step="0.01" value="1.25">
+        <input class="logicTree" id="ThreshSliderNumber_cvA"  type="number" min="0.0" max="5.00" step="0.01" placeholder="1.25" value="1.25"> &nbsp;&nbsp; 
+      </div>
+
+      <div class="mrlThreshSliderA logicTree">
+        <span style="font-size: 17px">Blank MRL Multiplier ( A ):</span><br>
+
+        <input class="logicTreeSlider slider_mrl" id="ThreshSliderRange_mrlA" type="range" min="0" max="10" value="3">
+        <input class="logicTree" id="ThreshSliderNumber_mrlA"  type="number" min="0" max="10" placeholder="3" value="3" disabled="true"> &nbsp;&nbsp; 
+      </div>
+
+
+      <div class="blankRepThreshSliderB logicTree" style="font-size: 20px;">
+        <span style="font-size: 17px">Blank Replicate Threshold ( B ):</span><br>
+
+        <input class="logicTreeSlider slider_rep" id="ThreshSliderRange_blankRepB" type="range" min="0" max="100" step="1" value="50">
+        <input class="logicTree" id="ThreshSliderNumber_blankRepB"  type="number" min="0" max="100" step="1" placeholder="50" value="50"> %
+      </div>
+
+      <div class="repThreshSliderB logicTree" style="font-size: 20px;">
+        <span style="font-size: 17px">Sample Replicate Threshold ( B ):</span><br>
+
+        <input class="logicTreeSlider slider_rep" id="ThreshSliderRange_repB" type="range" min="0" max="100" step="1" value="50">
+        <input class="logicTree" id="ThreshSliderNumber_repB"  type="number" min="0" max="100" step="1" placeholder="50" value="50"> %
+      </div>
+
+      <div class="cvThreshSliderB logicTree">
+        <span style="font-size: 17px">CV Threshold ( B ):</span><br>
+
+        <input class="logicTreeSlider slider_cv" id="ThreshSliderRange_cvB" type="range" min="0.0" max="5" step="0.01" value="0.80">
+        <input class="logicTree" id="ThreshSliderNumber_cvB"  type="number" min="0.0" max="5.00" step="0.01" placeholder="0.80" value="0.80"> &nbsp;&nbsp;
+      </div>
+
+      <div class="mrlThreshSliderB logicTree">
+        <span style="font-size: 17px">Blank MRL Multiplier ( B ):</span><br>
+
+        <input class="logicTreeSlider slider_mrl" id="ThreshSliderRange_mrlB" type="range" min="0" max="10" value="3">
+        <input class="logicTree" id="ThreshSliderNumber_mrlB"  type="number" min="0" max="10" placeholder="3" value="3" disabled="true"> &nbsp;&nbsp; 
+      </div>
+
+      <!-- Table -->
+      <div class="myLogicTreeTable logicTree" id="myTable"></div>
+
+      <!-- SVGs for drawing plots -->
+      <div class="occTreeA logicTree" id="occTreeABox">
+          <svg id="occTreeASVG"></svg>
+      </div>
+      <div class="occTreeB logicTree" id="occTreeBBox">
+          <svg id="occTreeBSVG"></svg>
+      </div>
+      
+    </div>
+  </div>
+
+  <!-- canvas element needed to draw SVG in to then save as PNG -->
+  <canvas id="logicTreeCanvas" style="display: none;"></canvas>
+
+</body>
+
+<script src="./js/d3.v7.min.js"></script>
+<script src="./js/nta_decision_tree-v0.6.1_rifampicin.js"></script>
+
+</html>

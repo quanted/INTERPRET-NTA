@@ -1,0 +1,36 @@
+Parameter,Value
+Project name,060425_chlorpromazine
+Date & time,2025-06-04 13:43:54.060766
+Run test files only (debugging),no
+Positive mode file,detectionMatrix.csv
+Negative mode file,
+Positive mode adducts,"['Na', 'K', 'NH4']"
+Negative mode adducts,[]
+Neutral losses (both modes),"['H2O', 'CO2']"
+Adduct / duplicate mass accuracy units,ppm
+Adduct / duplicate mass accuracy,10
+Adduct / duplicate retention time accuracy (mins),0.05
+Run sequence positive mode file,sequence.csv
+Run sequence negative mode file,
+Tracer file,tracer.csv
+Tracer mass accuracy units,ppm
+Tracer mass accuracy,10
+Tracer retention time accuracy (mins),0.2
+Tracer plot y-axis scaling,log
+Tracer plot trendlines shown,yes
+Min replicate hits (%),66
+Min replicate hits in blanks (%),66
+Max replicate CV,0.8
+Filter on CV values?,no
+MRL standard deviation multiplier,3
+Parent ion mass accuracy (ppm),5
+Discard features below this retention time (mins),0
+Search DSSTox for possible structures,no
+Return chemical candidates with no data sources?,yes
+Search Cheminformatics Hazard Module for toxicity data,no
+Search dashboard by,mass
+Perform qNTA?,no
+qNTA Surrogate input file,
+qNTA Validation input file,
+Do atom filtering?,no
+Atom filtering ranges,

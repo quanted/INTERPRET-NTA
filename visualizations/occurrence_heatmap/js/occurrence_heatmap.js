@@ -1,8 +1,7 @@
 import * as dataUtils from './dataUtils.js';
 import * as heatmapUtils from './heatmapUtils.js';
 
-import * as THREE from 'three';
-import * as XLSX from 'xlsx';
+import * as THREE from '../node_modules/three/build/three.module.js';
 
 function createOccurrenceHeatmap(dataXlsxPath, data=null, minSample=null, minBlank=null, maxCv=null, mrlMult=null) {
 
@@ -477,15 +476,27 @@ function createOccurrenceHeatmap(dataXlsxPath, data=null, minSample=null, minBla
   }
 }
 
+// function loadHeatmap() {
+//   fetch('/data/Example_nta_NTA_WebApp_results.xlsx')
+//   .then(response => response.arrayBuffer()) // read file as array buffer
+//   .then(data => {
+//     const workbook = XLSX.read(data, { type: 'array' });
+
+//     // call the main function that cleans data and draws heatmap
+//     createOccurrenceHeatmap(workbook);
+//   });
+// }
+
+// Use the global XLSX object provided by the CDN
 function loadHeatmap() {
   fetch('/data/Example_nta_NTA_WebApp_results.xlsx')
-  .then(response => response.arrayBuffer()) // read file as array buffer
-  .then(data => {
-    const workbook = XLSX.read(data, { type: 'array' });
+    .then(response => response.arrayBuffer()) // read file as array buffer
+    .then(data => {
+      const workbook = XLSX.read(data, { type: 'array' });
 
-    // call the main function that cleans data and draws heatmap
-    createOccurrenceHeatmap(workbook);
-  });
+      // call the main function that cleans data and draws heatmap
+      createOccurrenceHeatmap(workbook);
+    });
 }
 
 loadHeatmap();
