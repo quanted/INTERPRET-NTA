@@ -1,7 +1,8 @@
 import * as dataUtils from './dataUtils.js';
 import * as heatmapUtils from './heatmapUtils.js';
 
-import * as THREE from '../node_modules/three/build/three.module.js';
+import * as THREE from 'three';
+import * as XLSX from 'xlsx';
 
 function createOccurrenceHeatmap(dataXlsxPath, data=null, minSample=null, minBlank=null, maxCv=null, mrlMult=null) {
 
