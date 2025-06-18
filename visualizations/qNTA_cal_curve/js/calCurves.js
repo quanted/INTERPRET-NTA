@@ -1,5 +1,8 @@
 const getNumber = (d) => (Number.isNaN(d) ? "" : Number(d).toFixed(3));
 
+const MainSheet = "Surrogate Detection Statistics";
+const SlopeValsSheet = "Calibration Curve Metrics";
+
 // tvalue table
 const tStatisticValues = {
   "50%": {
@@ -321,18 +324,22 @@ async function readInterpretOutputXLSX(filePath) {
 
   // access data from desired tracer detection sheet and write to json object
   const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: "array" });
-  const sheetName = "Sheet1";
   const options = {
     header: 0, // Use the first row as headers
     defval: 0, // Set a default value for empty cells
     raw: true,
   };
   const jsonData = XLSX.utils.sheet_to_json(
-    workbook.Sheets[sheetName],
+    workbook.Sheets[MainSheet],
     options
   );
 
-  return jsonData;
+  const slopeData = XLSX.utils.sheet_to_json(
+    workbook.Sheets[SlopeValsSheet],
+    options
+  );
+
+  return { main: jsonData, slope: slopeData };
 }
 
 /**
@@ -919,7 +926,7 @@ function makeCalCurve(
       "logBlankSub Mean"
     );
 
-    return [thisChemName, slopeT, r_sqT];
+    return [thisChemName, slopeT, interceptT, r_sqT];
   });
 
   const tableRows = d3
@@ -1144,7 +1151,9 @@ function makeCalCurve(
 
 async function calCurvesMain(inputXlsxPath) {
   // input data and process
-  const data = await readInterpretOutputXLSX(inputXlsxPath);
+  const { main: data, slopeData } = await readInterpretOutputXLSX(
+    inputXlsxPath
+  );
 
   const [cleanedData, uniqueSampleNames] = cleanData(data);
   let pointData = getPointData(cleanedData, uniqueSampleNames);
@@ -2143,7 +2152,7 @@ async function calCurvesMain(inputXlsxPath) {
       "logBlankSub Mean"
     );
 
-    return [chemName, slope, r_sq];
+    return [chemName, slope, intercept, r_sq];
   });
 
   const tableContainer = gridContainer
@@ -2210,7 +2219,7 @@ async function calCurvesMain(inputXlsxPath) {
 
   tableHeader
     .selectAll("th")
-    .data(["Chemical Name", "Slope", "R<sup>2</sup>"])
+    .data(["Chemical Name", "Slope", "Y-Intercept", "R<sup>2</sup>"])
     .enter()
     .append("th")
     .style("border", "1px solid black")
@@ -2431,6 +2440,5 @@ async function calCurvesMain(inputXlsxPath) {
   }
 }
 
-const inputXlsxPath =
-  "./data/qNTA_Surrogate_Detection_Statistics_File_WW2DW.xlsx";
+const inputXlsxPath = "./data/Example_NTA_NTA_WebApp_qNTA.xlsx";
 calCurvesMain(inputXlsxPath);
