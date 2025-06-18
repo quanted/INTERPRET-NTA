@@ -1,3 +1,5 @@
+const getNumber = (d) => (Number.isNaN(d) ? "" : Number(d).toFixed(3));
+
 // tvalue table
 const tStatisticValues = {
   "50%": {
@@ -178,15 +180,17 @@ const tStatisticValues = {
   },
 };
 
-function getDisabledData(pointData) {
+function getDisabledData(pointDataAll) {
   const disabledData = [];
-  pointData.forEach((row) => {
-    if (!row["Enabled"]) {
-      disabledData.push([
-        row["Chemical Name"],
-        row["Feature ID"],
-        row["Sample Name"],
-      ]);
+  pointDataAll.forEach((row) => {
+    if (!Array.isArray(row)) {
+      if (!row["Enabled"]) {
+        disabledData.push([
+          row["Chemical Name"],
+          row["Feature ID"],
+          row["Sample Name"],
+        ]);
+      }
     }
   });
 
@@ -421,7 +425,7 @@ function getPointData(data, uniqueSampleNames) {
       pointDatum["Sample Name"] = sampleName;
       pointDatum["Enabled"] = true;
       pointDatum["Color"] = "rgb(1, 199, 234)";
-      pointData["Hovered"] = false;
+      pointDatum["Hovered"] = false;
 
       columnsToKeep.forEach((colName) => {
         pointDatum[colName] = row[colName];
@@ -709,7 +713,6 @@ function makeCalCurve(
   if (chemName === "Empty") {
     return;
   }
-
   const pointDataChem = getPlottingDataForChem(pointData, chemName);
 
   // Add X axis
@@ -724,6 +727,7 @@ function makeCalCurve(
     .domain([xMin, xMax])
     .range([widthOffset, svgWidth - 10]);
   svg
+    .attr("class", chemName)
     .append("g")
     .attr("transform", `translate(0, ${svgHeight - heightOffset})`) // Adjusted transformation
     .call(d3.axisBottom(x).ticks(5))
@@ -877,86 +881,85 @@ function makeCalCurve(
         d["Color"] = "rgb(0, 0, 0)";
       }
 
-      // update this plot
-      makeCalCurve(
-        svg,
-        svgWidth,
-        svgHeight,
-        pointData,
-        chemName,
-        resolution,
-        tooltip,
-        tooltipContainer,
-        confidence,
-        circleR,
-        bestFitLW,
-        nYticks,
-        fontSize,
-        chemNames,
-        pointDataAll
-      );
+      d3.selectAll(`[class="${chemName}"]`).each(function (d, i) {
+        makeCalCurve(
+          d3.select(this),
+          svgWidth,
+          svgHeight,
+          pointData,
+          chemName,
+          resolution,
+          tooltip,
+          tooltipContainer,
+          confidence,
+          circleR,
+          bestFitLW,
+          nYticks,
+          fontSize,
+          chemNames,
+          [...pointDataAll]
+        );
+      });
 
       // update the tooltip
       d3.select("#calCurveTooltip")
         .transition()
         .duration(300)
         .style("background", d["Color"]);
-
-      // update table of slopes
-      const tableData = chemNames.map((thisChemName) => {
-        const pData = getPlottingDataForChem(pointDataAll, thisChemName);
-
-        const filteredPData = pData.filter((d) => d["Enabled"]);
-        const [slopeT, interceptT, r_sqT] = ols(
-          filteredPData,
-          "logConc",
-          "logBlankSub Mean"
-        );
-
-        return [thisChemName, slopeT, r_sqT];
-      });
-
-      const getNumber = (d) => (Number.isNaN(d) ? "" : Number(d).toFixed(3));
-
-      const tableRows = d3
-        .select("#slopeTableContainer")
-        .select("tbody")
-        .selectAll("tr")
-        .data(tableData);
-
-      tableRows
-        .enter()
-        .append("tr")
-        .merge(tableRows)
-        .selectAll("td")
-        .data((d) => d)
-        .join("td")
-        .style("border", "1px solid black")
-        .style("padding", "6px 10px")
-        .text((d, i) => (i === 0 ? d : getNumber(d)));
-
-      tableRows.exit().remove();
-
-      // update the disabled table tows
-      const tableRowsDis = d3
-        .select("#disabledTableContainer")
-        .select("tbody")
-        .selectAll("tr")
-        .data(getDisabledData(pointDataAll));
-
-      tableRowsDis
-        .enter()
-        .append("tr")
-        .merge(tableRowsDis)
-        .selectAll("td")
-        .data((d) => d)
-        .join("td")
-        .style("border", "1px solid black")
-        .style("padding", "6px 10px")
-        .text((d, i) => d);
-
-      tableRowsDis.exit().remove();
     });
+
+  // update table of slopes
+  const tableData = chemNames.map((thisChemName) => {
+    const pData = getPlottingDataForChem(pointDataAll, thisChemName);
+
+    const filteredPData = pData.filter((d) => d["Enabled"]);
+    const [slopeT, interceptT, r_sqT] = ols(
+      filteredPData,
+      "logConc",
+      "logBlankSub Mean"
+    );
+
+    return [thisChemName, slopeT, r_sqT];
+  });
+
+  const tableRows = d3
+    .select("#slopeTableContainer")
+    .select("tbody")
+    .selectAll("tr")
+    .data(tableData);
+
+  tableRows
+    .enter()
+    .append("tr")
+    .merge(tableRows)
+    .selectAll("td")
+    .data((d) => d)
+    .join("td")
+    .style("border", "1px solid black")
+    .style("padding", "6px 10px")
+    .text((d, i) => (i === 0 ? d : getNumber(d)));
+
+  tableRows.exit().remove();
+
+  // update the disabled table tows
+  const tableRowsDis = d3
+    .select("#disabledTableContainer")
+    .select("tbody")
+    .selectAll("tr")
+    .data(getDisabledData(pointDataAll));
+
+  tableRowsDis
+    .enter()
+    .append("tr")
+    .merge(tableRowsDis)
+    .selectAll("td")
+    .data((d) => d)
+    .join("td")
+    .style("border", "1px solid black")
+    .style("padding", "6px 10px")
+    .text((d, i) => d);
+
+  tableRowsDis.exit().remove();
 
   // mark all circles as non-hovered in case mouseout event doesn't get triggered after click event
   pointData.forEach((d) => (d["Hovered"] = false));
@@ -1556,7 +1559,7 @@ async function calCurvesMain(inputXlsxPath) {
         svg,
         resolutionData[resolution]["svgWidth"],
         resolutionData[resolution]["svgHeight"],
-        pointData,
+        getPlottingDataForChem(pointData, selectedChemName),
         selectedChemName,
         resolution,
         tooltip,
@@ -1567,7 +1570,7 @@ async function calCurvesMain(inputXlsxPath) {
         resolutionData[resolution]["nYTicks"],
         resolutionData[resolution]["fontSize"],
         chemNames,
-        plottingData
+        plottingData.flat(1)
       );
 
       // update dropdown menu to reflect the current chemical name
@@ -2322,7 +2325,6 @@ async function calCurvesMain(inputXlsxPath) {
 
   // Function to copy the table content to the clipboard
   function copyTableToClipboard(id) {
-    console.log("yes");
     const table = d3.select(`table#${id}`).node();
     const range = document.createRange();
     range.selectNode(table);
