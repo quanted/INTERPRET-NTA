@@ -1147,7 +1147,7 @@ async function calCurvesMain(inputXlsxPath) {
   const data = await readInterpretOutputXLSX(inputXlsxPath);
 
   const [cleanedData, uniqueSampleNames] = cleanData(data);
-  const pointData = getPointData(cleanedData, uniqueSampleNames);
+  let pointData = getPointData(cleanedData, uniqueSampleNames);
 
   // get unique chemical names
   const chemNames = [];
@@ -1159,7 +1159,7 @@ async function calCurvesMain(inputXlsxPath) {
   let chemNamesToggled = chemNames;
 
   // get plotting data for every chemical
-  const plottingData = chemNames.map((chemName) =>
+  let plottingData = chemNames.map((chemName) =>
     getPlottingDataForChem(pointData, chemName)
   );
 
@@ -2322,6 +2322,42 @@ async function calCurvesMain(inputXlsxPath) {
     .style("margin-left", "12px")
     .style("margin-right", "5px")
     .on("click", () => copyTableToClipboard("disabledTable"));
+
+  const refreshButtonDis = buttonDivDis
+    .append("button")
+    .text("Reset Disabled values")
+    .style("height", "60px")
+    .style("top", "10px")
+    .style("right", "10px")
+    .style("margin-top", "10px")
+    .style("margin-left", "12px")
+    .style("margin-right", "5px")
+    .on("click", function () {
+      pointData = pointData.map((p) => {
+        return { ...p, Enabled: true, Color: "rgb(1, 199, 234)" };
+      });
+      plottingData = chemNames.map((chemName) =>
+        getPlottingDataForChem(pointData, chemName)
+      );
+      const chemNamesTemp = [];
+      dropdownData.forEach((ddObject) => {
+        const dd = d3.select(`#${ddObject.id}`);
+        if (dd.property("disabled") === true) {
+          return;
+        }
+        chemNamesTemp.push(dd.property("value"));
+      });
+      makeCalCurvesXxY(
+        resolutionData,
+        resolution,
+        pointData,
+        chemNamesTemp,
+        tooltip,
+        tooltipContainer,
+        confidence,
+        chemNames
+      );
+    });
 
   // Function to copy the table content to the clipboard
   function copyTableToClipboard(id) {
