@@ -352,8 +352,9 @@ async function readInterpretOutputXLSX(filePath) {
   );
 
   const filteredQAQCJsonData = qAQCJsonData.filter(
-    (q) => q["Surrogate Chemical Match?"] !== 0 && q["Feature Removed?"] !== 0
+    (q) => q["Surrogate Chemical Match?"] !== 0
   );
+
   const slopeData = XLSX.utils.sheet_to_json(
     qNTAWorkbook.Sheets[SlopeValsSheet],
     options
@@ -366,21 +367,24 @@ function cleanQaqcData(data) {
   const columnPrefix = "Mean";
   const columnSuffix = "ppb_";
   const keysToKeep = [];
-  Object.keys(data[0]).forEach((k) => {
-    if (k.startsWith(columnPrefix) && k.endsWith(columnSuffix))
-      keysToKeep.push(k);
-  });
-
-  return data.map((d) => {
-    const retObject = {};
-    keysToKeep.forEach((k) => {
-      retObject[k] = d[k];
+  if (data.length > 0) {
+    Object.keys(data[0]).forEach((k) => {
+      if (k.startsWith(columnPrefix) && k.endsWith(columnSuffix))
+        keysToKeep.push(k);
     });
-    return {
-      ...retObject,
-      ["Feature ID"]: d["Feature ID"],
-    };
-  });
+
+    return data.map((d) => {
+      const retObject = {};
+      keysToKeep.forEach((k) => {
+        retObject[k] = d[k];
+      });
+      return {
+        ...retObject,
+        ["Feature ID"]: d["Feature ID"],
+      };
+    });
+  }
+  return data;
 }
 
 /**
