@@ -1,7 +1,11 @@
 const getNumber = (d) => (Number.isNaN(d) ? "" : Number(d).toFixed(3));
 
+const QNTAData = "Example_NTA_NTA_WebApp_qNTA.xlsx";
+const QAQCData = "Example_NTA_NTA_WebApp_QAQC.xlsx";
+
 const MainSheet = "Surrogate Detection Statistics";
 const SlopeValsSheet = "Calibration Curve Metrics";
+const QAQCSheet = "Decision Documentation";
 
 // tvalue table
 const tStatisticValues = {
@@ -319,27 +323,64 @@ const resolutionData = {
  */
 async function readInterpretOutputXLSX(filePath) {
   // fetch file
-  const response = await fetch(filePath);
-  const arrayBuffer = await response.arrayBuffer();
+  const qNTAresponse = await fetch(filePath + QNTAData);
+  const qNTAArrayBuffer = await qNTAresponse.arrayBuffer();
+
+  const qAQCResponse = await fetch(filePath + QAQCData);
+  const qAQCArrayBuffer = await qAQCResponse.arrayBuffer();
 
   // access data from desired tracer detection sheet and write to json object
-  const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: "array" });
+  const qNTAWorkbook = XLSX.read(new Uint8Array(qNTAArrayBuffer), {
+    type: "array",
+  });
+  const qAQCWorkbook = XLSX.read(new Uint8Array(qAQCArrayBuffer), {
+    type: "array",
+  });
   const options = {
     header: 0, // Use the first row as headers
     defval: 0, // Set a default value for empty cells
     raw: true,
   };
   const jsonData = XLSX.utils.sheet_to_json(
-    workbook.Sheets[MainSheet],
+    qNTAWorkbook.Sheets[MainSheet],
     options
   );
 
+  const qAQCJsonData = XLSX.utils.sheet_to_json(
+    qAQCWorkbook.Sheets[QAQCSheet],
+    options
+  );
+
+  const filteredQAQCJsonData = qAQCJsonData.filter(
+    (q) => q["Surrogate Chemical Match?"] !== 0 && q["Feature Removed?"] !== 0
+  );
   const slopeData = XLSX.utils.sheet_to_json(
-    workbook.Sheets[SlopeValsSheet],
+    qNTAWorkbook.Sheets[SlopeValsSheet],
     options
   );
 
-  return { main: jsonData, slope: slopeData };
+  return { main: jsonData, slope: slopeData, qaqc: filteredQAQCJsonData };
+}
+
+function cleanQaqcData(data) {
+  const columnPrefix = "Mean";
+  const columnSuffix = "ppb_";
+  const keysToKeep = [];
+  Object.keys(data[0]).forEach((k) => {
+    if (k.startsWith(columnPrefix) && k.endsWith(columnSuffix))
+      keysToKeep.push(k);
+  });
+
+  return data.map((d) => {
+    const retObject = {};
+    keysToKeep.forEach((k) => {
+      retObject[k] = d[k];
+    });
+    return {
+      ...retObject,
+      ["Feature ID"]: d["Feature ID"],
+    };
+  });
 }
 
 /**
@@ -394,7 +435,6 @@ function cleanData(data) {
       }
     });
   });
-
   return [data, uniqueSampleNames];
 }
 
@@ -404,7 +444,7 @@ function cleanData(data) {
  * @param {string[]} uniqueSampleNames The array of unique sample ground names (e.g., 10ppb, 100ppb, etc...)
  * @returns {object[]} An array of object, each mapped to a single point.
  */
-function getPointData(data, uniqueSampleNames) {
+function getPointData(data, uniqueSampleNames, qaqcData = []) {
   const columnsToKeep = [
     "Feature ID",
     "Chemical Name",
@@ -430,8 +470,15 @@ function getPointData(data, uniqueSampleNames) {
       pointDatum[`BlankSub Mean`] = row[`BlankSub Mean ${sampleName}`];
       pointDatum[`logBlankSub Mean`] = row[`logBlankSub Mean ${sampleName}`];
       pointDatum["Sample Name"] = sampleName;
-      pointDatum["Enabled"] = true;
-      pointDatum["Color"] = "rgb(1, 199, 234)";
+      pointDatum["Enabled"] =
+        qaqcData.filter(
+          (q) =>
+            q["Feature ID"] === row["Feature ID"] &&
+            Number.isNaN(Number.parseFloat(q[`Mean ${sampleName}`]))
+        ).length < 1;
+      pointDatum["Color"] = pointDatum["Enabled"]
+        ? "rgb(1, 199, 234)"
+        : "rgb(0, 0, 0)";
       pointDatum["Hovered"] = false;
 
       columnsToKeep.forEach((colName) => {
@@ -595,7 +642,7 @@ function makeTooltip(parentGrid) {
     .style("position", "absolute")
     .style("border-left", "1px solid black")
     .style("background-color", "rgb(1, 199, 234)")
-    .style("height", "150px")
+    .style("height", "170px")
     .style("width", "350px")
     .style("margin-top", "50px");
 
@@ -604,7 +651,7 @@ function makeTooltip(parentGrid) {
     .style("background", "#fff")
     .style("color", "#000")
     .style("padding", "5px 10px")
-    .style("height", "140px")
+    .style("height", "160px")
     .style("width", "345px")
     .style("border-left", "1px solid black")
     .style("font-size", "18px")
@@ -636,6 +683,7 @@ function makeCalCurvesXxY(
   chemNames,
   tooltip,
   tooltipContainer,
+  cleanedQaqcData,
   confidence = "95%",
   chemNamesAll = []
 ) {
@@ -686,6 +734,7 @@ function makeCalCurvesXxY(
       tooltip,
       tooltipContainer,
       confidence,
+      cleanedQaqcData,
       circleR,
       bestFitLW,
       nYTicks,
@@ -706,6 +755,7 @@ function makeCalCurve(
   tooltip,
   tooltipContainer,
   confidence,
+  qaqcData,
   circleR = 10,
   bestFitLW = 5,
   nYticks = 6,
@@ -868,15 +918,25 @@ function makeCalCurve(
           3
         )}<br><b>log<sub>10</sub>(Mean Area):</b> ${d[
           "logBlankSub Mean"
-        ].toFixed(3)}`
+        ].toFixed(3)}<br><b>Flag(s):</b> ${
+          qaqcData.filter(
+            (q) =>
+              q["Feature ID"] === d["Feature ID"] &&
+              Number.isNaN(parseFloat(q[`Mean ${d["Sample Name"]}`]))
+          ).length > 0
+            ? qaqcData.filter((q) => q["Feature ID"] === d["Feature ID"])[0][
+                `Mean ${d["Sample Name"]}`
+              ]
+            : "None"
+        }`
       );
 
       d3.select("#calCurveTooltip")
         .transition()
         .duration(300)
-        .style("background", d["Color"]);
+        .style("background-color", d["Color"]);
     })
-    .on("mouseout", function (event, d) {
+    .on("mouseleave", function (event, d) {
       d["Hovered"] = false;
     })
     .on("click", function (event, d) {
@@ -899,6 +959,7 @@ function makeCalCurve(
           tooltip,
           tooltipContainer,
           confidence,
+          qaqcData,
           circleR,
           bestFitLW,
           nYticks,
@@ -912,7 +973,7 @@ function makeCalCurve(
       d3.select("#calCurveTooltip")
         .transition()
         .duration(300)
-        .style("background", d["Color"]);
+        .style("background-color", d["Color"]);
     });
 
   // update table of slopes
@@ -1151,12 +1212,13 @@ function makeCalCurve(
 
 async function calCurvesMain(inputXlsxPath) {
   // input data and process
-  const { main: data, slopeData } = await readInterpretOutputXLSX(
+  const { main: data, qaqc: qaqcData } = await readInterpretOutputXLSX(
     inputXlsxPath
   );
 
   const [cleanedData, uniqueSampleNames] = cleanData(data);
-  let pointData = getPointData(cleanedData, uniqueSampleNames);
+  const cleanedQaqcData = cleanQaqcData(qaqcData);
+  let pointData = getPointData(cleanedData, uniqueSampleNames, cleanedQaqcData);
 
   // get unique chemical names
   const chemNames = [];
@@ -1396,6 +1458,7 @@ async function calCurvesMain(inputXlsxPath) {
     chemNamesToggled,
     tooltip,
     tooltipContainer,
+    cleanedQaqcData,
     confidence,
     chemNames
   );
@@ -1459,6 +1522,7 @@ async function calCurvesMain(inputXlsxPath) {
         chemNamesTemp,
         tooltip,
         tooltipContainer,
+        cleanedQaqcData,
         confidence,
         chemNames
       );
@@ -1574,6 +1638,7 @@ async function calCurvesMain(inputXlsxPath) {
         tooltip,
         tooltipContainer,
         confidence,
+        cleanedQaqcData,
         resolutionData[resolution]["circleR"],
         resolutionData[resolution]["bestFitLW"],
         resolutionData[resolution]["nYTicks"],
@@ -1620,6 +1685,7 @@ async function calCurvesMain(inputXlsxPath) {
         chemNamesToggled,
         tooltip,
         tooltipContainer,
+        cleanedQaqcData,
         confidence,
         chemNames
       );
@@ -1708,6 +1774,7 @@ async function calCurvesMain(inputXlsxPath) {
         chemNamesTemp,
         tooltip,
         tooltipContainer,
+        cleanedQaqcData,
         confidence,
         chemNames
       );
@@ -1749,6 +1816,7 @@ async function calCurvesMain(inputXlsxPath) {
           chemNamesToggled,
           tooltip,
           tooltipContainer,
+          cleanedQaqcData,
           confidence,
           chemNames
         );
@@ -1928,6 +1996,7 @@ async function calCurvesMain(inputXlsxPath) {
           chemNamesToggled,
           tooltip,
           tooltipContainer,
+          cleanedQaqcData,
           confidence,
           chemNames
         );
@@ -1995,6 +2064,7 @@ async function calCurvesMain(inputXlsxPath) {
               chemNamesToggled,
               tooltip,
               tooltipContainer,
+              cleanedQaqcData,
               confidence,
               chemNames
             );
@@ -2363,6 +2433,7 @@ async function calCurvesMain(inputXlsxPath) {
         chemNamesTemp,
         tooltip,
         tooltipContainer,
+        cleanedQaqcData,
         confidence,
         chemNames
       );
@@ -2440,5 +2511,5 @@ async function calCurvesMain(inputXlsxPath) {
   }
 }
 
-const inputXlsxPath = "./data/Example_NTA_NTA_WebApp_qNTA.xlsx";
+const inputXlsxPath = "./data/";
 calCurvesMain(inputXlsxPath);
