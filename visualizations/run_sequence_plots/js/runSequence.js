@@ -349,11 +349,18 @@ function getPlottingData(dataMain, seqGroupMap, chemNameSuffix = "(ESI+)") {
           if (value === "") {
             continue;
           }
-          let sequenceBaseName = blankHeaders.includes(
+          let baseName = blankHeaders.includes(
             colName.slice(0, colName.length - 1)
           )
             ? colName.slice(0, colName.length - 1)
-            : colName.split("_")[0] + "_";
+            : colName
+                .split("_")
+                .filter((c) => Number.isNaN(Number(c)))
+                .join("_")
+                .concat("_");
+
+          let sequenceBaseName = baseName;
+
           pointData["featureID"] = featureID;
           pointData["sequenceName"] = colName;
           pointData["sequenceBaseName"] = sequenceBaseName;
@@ -617,11 +624,9 @@ function makeRunSequencePlot(
     .append("circle")
     .attr("class", (d) => "c" + d.sequenceBaseName)
     .attr("cx", (d) => {
-      // console.log(d)
       return xScale(d.seqIndex + 1);
     })
     .attr("cy", (d) => {
-      // console.log(d.abundance, yScale(d.abundance))
       return yScale(d.abundance);
     })
     .attr("r", circleR)
@@ -1213,7 +1218,6 @@ async function mainRunSequence(xlsxPath) {
     const desiredWidth = textWidth + legendRadius * 2 + 30;
     if (desiredWidth > Number(legendBox.attr("width"))) {
       legendBox.attr("width", desiredWidth);
-      console.log(desiredWidth, Number(legendBox.attr("width")));
     }
   });
 
