@@ -594,20 +594,22 @@ function createOccurrenceHeatmap(
   }
 }
 
-// function loadHeatmap() {
-//   fetch('/data/Example_nta_NTA_WebApp_results.xlsx')
-//   .then(response => response.arrayBuffer()) // read file as array buffer
-//   .then(data => {
-//     const workbook = XLSX.read(data, { type: 'array' });
 
-//     // call the main function that cleans data and draws heatmap
-//     createOccurrenceHeatmap(workbook);
-//   });
+// // Use the global XLSX object provided by the CDN
+// function loadHeatmap() {
+//   fetch("./data/Example_nta_NTA_WebApp_results.xlsx")
+//     .then((response) => response.arrayBuffer()) // read file as array buffer
+//     .then((data) => {
+//       const workbook = XLSX.read(data, { type: "array" });
+
+//       // call the main function that cleans data and draws heatmap
+//       createOccurrenceHeatmap(workbook);
+//     });
 // }
 
 // Use the global XLSX object provided by the CDN
 function loadHeatmap() {
-  fetch("./data/Example_nta_NTA_WebApp_results.xlsx")
+  fetch("./data/060425_rifampicin_NTA_WebApp_QAQC.xlsx")
     .then((response) => response.arrayBuffer()) // read file as array buffer
     .then((data) => {
       const workbook = XLSX.read(data, { type: "array" });
@@ -616,6 +618,7 @@ function loadHeatmap() {
       createOccurrenceHeatmap(workbook);
     });
 }
+
 
 loadHeatmap();
 

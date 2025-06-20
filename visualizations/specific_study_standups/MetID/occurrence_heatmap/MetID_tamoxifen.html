@@ -1,53 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Occurrence Heatmap</title>
-</head>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Occurrence Heatmap</title>
+  </head>
 
-<style>
-  #controls {
-    margin: auto;
-    margin-top: 0px;
-  }
-  .tooltip {
-    font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif
-  }
-  .yAxisLabel, .title {
-    background-color: white;
-    color: black;
-    padding: 3px;
-    border-radius: 3px;
-    transition: color 0.3s ease, background-color 0.3s ease;
-    cursor: pointer;
-  }
-  .title {
-    padding: 4px 6px;
-    text-align: center;
-  }
-  #heatmapTitle {
-    font-size: 20px;
-  }
-  span.subTitle {
-    font-size: 20px;
-    pointer-events: none;
-  }
-</style>
+  <style>
+    #controls {
+      margin: auto;
+      margin-top: 0px;
+    }
+    .tooltip {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .yAxisLabel,
+    .title {
+      background-color: white;
+      color: black;
+      padding: 3px;
+      border-radius: 3px;
+      transition: color 0.3s ease, background-color 0.3s ease;
+      cursor: pointer;
+    }
+    .title {
+      padding: 4px 6px;
+      text-align: center;
+    }
+    #heatmapTitle {
+      font-size: 20px;
+    }
+    span.subTitle {
+      font-size: 20px;
+      pointer-events: none;
+    }
+  </style>
 
-<body>
+  <body>
+    <br />
+    <div id="heatmap-container" style="top: 80px; margin-top: 60px">
+      <canvas id="heatmap"></canvas>
+    </div>
 
-  <!-- <button id="loadDataBtn">Construct Heatmap</button>
-  <br> -->
-  <div id="heatmap-container" style="top: 80px; margin-top: 60px;">
-    <canvas id="heatmap"></canvas>
-  </div>
-
-  <!-- Tween.js for animations -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script> 
-  <!-- <script type="module" src="./js/occurrence_heatmap.js"></script> -->
-  <script type="module" src="./js/occurrence_heatmap.js"></script>
-  
-
-</body>
+    <!-- Tween.js for animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.177.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.177.0/examples/jsm/"
+        }
+      }
+    </script>
+    <script src="./js/xlsx.core.min.js"></script>
+    <script type="module" src="./js/occurrence_heatmap_tamoxifen.js"></script>
+  </body>
 </html>

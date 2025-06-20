@@ -537,11 +537,18 @@ export function getFlattenedCvData(cvDataDiscrete, data, sampleGroups) {
         //   featureData[`passMRL${sample.slice(3, sample.length)}`] = false;
         // }
         let cv = featureData[`CV ${sample.slice(3, sample.length)}`];
-        if (cv === "") {
+        // if (cv === "") {
+        //   cv = "NA";
+        //   mrlQuotient = "NA";
+        // } else {
+        //   cv = Number(cv.toFixed(3));
+        // }
+        // AC - update code to handle undefined values
+        if (cv === "" || cv === undefined || isNaN(cv)) {
           cv = "NA";
           mrlQuotient = "NA";
         } else {
-          cv = Number(cv.toFixed(3));
+          cv = Number(cv).toFixed(3);
         }
 
         let s_name = null;

@@ -15,9 +15,15 @@ This project requires the following libraries:
 - Tween.js: ^0.9.0
 - SheetJS (xlsx): ^0.17.0
 
+## Development
+
+This code is set upt to run without a node server. All of the dependences are linked via a CDN or included in the code.
+
+On VS Code, install the plugin **Live Server (Five Server)**. To run the visualization, right click `index.html` and select **Open with Five Server**.
+
 ## Functionality
 
-This plot shows a heatmap of occurrences from an INTERPRET NTA job. Each column represents a feature, and each row represents a sample. Every occurrence is checked against a replicate percentage threshold, a CV threshold and an MRL threshold (denoted by the (blank_mean + STD*MRL_Multiplier)), whose default values are provided in the "Analysis Parameters.csv" file.
+This plot shows a heatmap of occurrences from an INTERPRET NTA job. Each column represents a feature, and each row represents a sample. Every occurrence is checked against a replicate percentage threshold, a CV threshold and an MRL threshold (denoted by the (blank_mean + STD\*MRL_Multiplier)), whose default values are provided in the "Analysis Parameters.csv" file.
 
 ![Static image of heatmap](./resources/static_heatmap.png)
 
