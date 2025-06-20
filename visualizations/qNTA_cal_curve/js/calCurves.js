@@ -187,21 +187,30 @@ const tStatisticValues = {
   },
 };
 
-function getDisabledData(pointDataAll) {
-  const disabledData = [];
+function getExcludedData(pointDataAll, qaqcData) {
+  const excludedData = [];
   pointDataAll.forEach((row) => {
     if (!Array.isArray(row)) {
       if (!row["Enabled"]) {
-        disabledData.push([
+        excludedData.push([
           row["Chemical Name"],
           row["Feature ID"],
           row["Sample Name"],
+          qaqcData.filter(
+            (q) =>
+              q["Feature ID"] === row["Feature ID"] &&
+              Number.isNaN(parseFloat(q[`Mean ${row["Sample Name"]}`]))
+          ).length > 0
+            ? qaqcData.filter((q) => q["Feature ID"] === row["Feature ID"])[0][
+                `Mean ${row["Sample Name"]}`
+              ]
+            : "None",
         ]);
       }
     }
   });
 
-  return disabledData;
+  return excludedData;
 }
 
 // setup a data structure for generating 1x1, 2x2, 3x3 and 4x4 plots
@@ -1013,12 +1022,12 @@ function makeCalCurve(
 
   tableRows.exit().remove();
 
-  // update the disabled table tows
+  // update the excluded table tows
   const tableRowsDis = d3
-    .select("#disabledTableContainer")
+    .select("#excludedTabledContainer")
     .select("tbody")
     .selectAll("tr")
-    .data(getDisabledData(pointDataAll));
+    .data(getExcludedData(pointDataAll, qaqcData));
 
   tableRowsDis
     .enter()
@@ -1509,8 +1518,8 @@ async function calCurvesMain(inputXlsxPath) {
           return;
         }
         const chemName = chemNamesToggled[chemNameIndex + index];
-        this.value = chemNamesToggled[chemNameIndex + index];
-        this.text = chemNamesToggled[chemNameIndex + index];
+        this.value = chemName;
+        this.text = chemName;
         index++;
       });
 
@@ -1709,11 +1718,12 @@ async function calCurvesMain(inputXlsxPath) {
     .append("button")
     .text("Slope Table")
     .style("padding", "5px 8px")
+    .style("width", "100%")
     .style("font-size", "16px")
     .style("margin-top", "5px")
     .on("click", function () {
-      // toggle off disabled table
-      d3.select("#disabledTableContainer").style("visibility", "hidden");
+      // toggle off excluded table
+      d3.select("#excludedTabledContainer").style("visibility", "hidden");
       const t = d3.select("#slopeTableContainer");
       if (t.style("visibility") === "hidden") {
         t.style("visibility", "visible").style("pointer-events", "all");
@@ -1724,13 +1734,14 @@ async function calCurvesMain(inputXlsxPath) {
 
   confidenceDropdownDiv
     .append("button")
-    .text("Disabled")
+    .text("Excluded")
     .style("padding", "5px 8px")
+    .style("width", "100%")
     .style("font-size", "16px")
     .style("margin-top", "5px")
     .on("click", function () {
       d3.select("#slopeTableContainer").style("visibility", "hidden");
-      const t = d3.select("#disabledTableContainer");
+      const t = d3.select("#excludedTabledContainer");
       if (t.style("visibility") === "hidden") {
         t.style("visibility", "visible").style("pointer-events", "all");
       } else {
@@ -2250,7 +2261,7 @@ async function calCurvesMain(inputXlsxPath) {
 
   const tableContainerDis = gridContainer
     .append("div")
-    .attr("id", "disabledTableContainer")
+    .attr("id", "excludedTabledContainer")
     .style("visibility", "hidden")
     .style("pointer-events", "none")
     .style("height", "500px")
@@ -2281,7 +2292,7 @@ async function calCurvesMain(inputXlsxPath) {
 
   const tableDis = tableDivDis
     .append("table")
-    .attr("id", "disabledTable")
+    .attr("id", "excludedTable")
     .style("margin-top", "10px")
     .style("margin-left", "20px")
     .style("border-collapse", "collapse")
@@ -2308,7 +2319,7 @@ async function calCurvesMain(inputXlsxPath) {
 
   tableHeaderDis
     .selectAll("th")
-    .data(["Chemical Name", "Feature ID", "Sample Name"])
+    .data(["Chemical Name", "Feature ID", "Sample Name", "Flag(s)"])
     .enter()
     .append("th")
     .style("border", "1px solid black")
@@ -2335,7 +2346,7 @@ async function calCurvesMain(inputXlsxPath) {
 
   tableBodyDis
     .selectAll("tr")
-    .data(getDisabledData(pointData))
+    .data(getExcludedData(pointData, qaqcData))
     .enter()
     .append("tr")
     .selectAll("td")
@@ -2382,7 +2393,7 @@ async function calCurvesMain(inputXlsxPath) {
     .style("margin-top", "5px")
     .style("margin-left", "12px")
     .style("margin-right", "5px")
-    .on("click", () => exportTableToXLSX("disabledTable"));
+    .on("click", () => exportTableToXLSX("excludedTable"));
 
   const copyButton = buttonDiv
     .append("button")
@@ -2404,11 +2415,11 @@ async function calCurvesMain(inputXlsxPath) {
     .style("margin-top", "10px")
     .style("margin-left", "12px")
     .style("margin-right", "5px")
-    .on("click", () => copyTableToClipboard("disabledTable"));
+    .on("click", () => copyTableToClipboard("excludedTable"));
 
   const refreshButtonDis = buttonDivDis
     .append("button")
-    .text("Reset Disabled values")
+    .text("Reset Excluded Values")
     .style("height", "60px")
     .style("top", "10px")
     .style("right", "10px")
@@ -2418,6 +2429,53 @@ async function calCurvesMain(inputXlsxPath) {
     .on("click", function () {
       pointData = pointData.map((p) => {
         return { ...p, Enabled: true, Color: "rgb(1, 199, 234)" };
+      });
+      plottingData = chemNames.map((chemName) =>
+        getPlottingDataForChem(pointData, chemName)
+      );
+      const chemNamesTemp = [];
+      dropdownData.forEach((ddObject) => {
+        const dd = d3.select(`#${ddObject.id}`);
+        if (dd.property("disabled") === true) {
+          return;
+        }
+        chemNamesTemp.push(dd.property("value"));
+      });
+      makeCalCurvesXxY(
+        resolutionData,
+        resolution,
+        pointData,
+        chemNamesTemp,
+        tooltip,
+        tooltipContainer,
+        cleanedQaqcData,
+        confidence,
+        chemNames
+      );
+    });
+
+  const excludeFlagsButton = buttonDivDis
+    .append("button")
+    .text("Exclude Flags")
+    .style("height", "60px")
+    .style("top", "10px")
+    .style("right", "10px")
+    .style("margin-top", "10px")
+    .style("margin-left", "12px")
+    .style("margin-right", "5px")
+    .on("click", function () {
+      pointData = pointData.map((p) => {
+        const hasFlag =
+          qaqcData.filter(
+            (q) =>
+              q["Feature ID"] === p["Feature ID"] &&
+              Number.isNaN(Number.parseFloat(q[`Mean ${p["Sample Name"]}`]))
+          ).length > 0;
+        return {
+          ...p,
+          Enabled: !hasFlag,
+          Color: hasFlag ? "rgb(0, 0, 0)" : "rgb(1, 199, 234)",
+        };
       });
       plottingData = chemNames.map((chemName) =>
         getPlottingDataForChem(pointData, chemName)
@@ -2456,6 +2514,18 @@ async function calCurvesMain(inputXlsxPath) {
 
   // Function to export the table to an XLSX file
   function exportTableToXLSX(id) {
+    let download = "";
+    switch (id) {
+      case "slopeTable":
+        download = "Slopes";
+        break;
+      case "excludedTable":
+        download = "Excluded";
+        break;
+      default:
+        download = "Values";
+        break;
+    }
     const table = d3.select(`#${id}`).node();
     const rows = table.querySelectorAll("tr");
     const data = [];
@@ -2470,10 +2540,10 @@ async function calCurvesMain(inputXlsxPath) {
     // Create a worksheet from the data
     const worksheet = XLSX.utils.aoa_to_sheet(data);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Slopes");
+    XLSX.utils.book_append_sheet(workbook, worksheet, `${download}`);
 
     // Write the workbook to a file
-    XLSX.writeFile(workbook, "Slopes.xlsx");
+    XLSX.writeFile(workbook, `${download}.xlsx`);
   }
 
   // Function to sort the table
