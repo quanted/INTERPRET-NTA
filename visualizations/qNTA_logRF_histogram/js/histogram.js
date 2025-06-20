@@ -171,20 +171,20 @@ async function histogramMain(inputXlsxPath) {
   });
 
   const { posRFPercentiles, negRFPercentiles } = await readRFPercentileVals();
-  var rfValuesPos = getRFValues(dataPos);
-  var rfValuesNeg = getRFValues(dataNeg);
-  var logRfValuesPos = rfValuesPos.map((d) => Math.log10(d));
-  var logRfValuesNeg = rfValuesNeg.map((d) => Math.log10(d));
+  let rfValuesPos = getRFValues(dataPos);
+  let rfValuesNeg = getRFValues(dataNeg);
+  let logRfValuesPos = rfValuesPos.map((d) => Math.log10(d));
+  let logRfValuesNeg = rfValuesNeg.map((d) => Math.log10(d));
 
-  var [lambdaPos, lambdaValuesPos, llValuesPos] =
+  let [lambdaPos, lambdaValuesPos, llValuesPos] =
     findOptimalLambda(rfValuesPos);
   lambdaPos = lambdaPos.toFixed(2);
-  var [lambdaNeg, lambdaValuesNeg, llValuesNeg] =
+  let [lambdaNeg, lambdaValuesNeg, llValuesNeg] =
     findOptimalLambda(rfValuesNeg);
   lambdaNeg = lambdaNeg.toFixed(2);
 
-  var boxCoxRfValuesPos = rfValuesPos.map((d) => boxCoxTransform(d, lambdaPos));
-  var boxCoxRfValuesNeg = rfValuesNeg.map((d) => boxCoxTransform(d, lambdaNeg));
+  let boxCoxRfValuesPos = rfValuesPos.map((d) => boxCoxTransform(d, lambdaPos));
+  let boxCoxRfValuesNeg = rfValuesNeg.map((d) => boxCoxTransform(d, lambdaNeg));
 
   // create grid containers
   const parentGrid = d3
@@ -269,7 +269,7 @@ async function histogramMain(inputXlsxPath) {
   });
 
   // Create a box to display the lambda value
-  var boxCoxToggled = false;
+  let boxCoxToggled = false;
   const buttonPanel = parentGrid
     .append("div")
     .style("grid-area", "rightButtons");
@@ -508,7 +508,7 @@ async function histogramMain(inputXlsxPath) {
   });
 
   // Add help button
-  var helpTooltipClicked = false;
+  let helpTooltipClicked = false;
   const helpButton = buttonPanel
     .append("div")
     .style("grid-area", "rightButtons")
@@ -593,8 +593,8 @@ async function histogramMain(inputXlsxPath) {
     helpTooltip.transition().duration(200).style("opacity", 0);
   }
 
-  var showingBoxCox = false;
-  var mode = "pos";
+  let showingBoxCox = false;
+  let mode = "pos";
   makeHisto(logRfValuesPos, [0.025, 0.5, 0.975]);
 
   function toggleHistogram() {
