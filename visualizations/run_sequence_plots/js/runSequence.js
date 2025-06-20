@@ -135,7 +135,15 @@ async function readInterpretOutputXLSX(filePath) {
   // access data from desired tracer detection sheet and write to json object
   const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: "array" });
   const sheetName = "Tracer Detection Statistics";
+  const posSequenceSheetName = "Run Sequence (pos)";
+  const negSequenceSheetName = "Run Sequence (neg)";
   const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+  const posSeqData = XLSX.utils.sheet_to_json(
+    workbook.Sheets[posSequenceSheetName]
+  );
+  const negSeqData = XLSX.utils.sheet_to_json(
+    workbook.Sheets[negSequenceSheetName]
+  );
 
   // separate the Pos and Neg data
   let jsonDataPos = [];
@@ -148,7 +156,7 @@ async function readInterpretOutputXLSX(filePath) {
     }
   });
 
-  return [jsonDataPos, jsonDataNeg];
+  return [jsonDataPos, jsonDataNeg, posSeqData, negSeqData];
 }
 
 /**
@@ -221,7 +229,11 @@ async function readCSV(filePath) {
 function cleanSeqData(dataMain, dataSeq) {
   // check if sample sequence file has more than one column, second column would be sample group column
   let uniqueSampleGroups = [];
-  if (Object.keys(dataSeq[0]).length > 1) {
+  if (
+    Array.isArray(dataSeq) &&
+    dataSeq.length > 0 &&
+    Object.keys(dataSeq[0]).length > 1
+  ) {
     dataSeq.forEach((row) => {
       const sampleGroup = String(Object.values(row)[1]).trim();
       if (
@@ -803,18 +815,23 @@ function makeRunSequencePlot(
  * @param {string} xlsxPath Path to the INTERPRET-NTA results .xlsx file.
  * @param {string} seqPath Path to the INTERPRET-NTA run sequence input CSV.
  */
-async function mainRunSequence(xlsxPath, seqPath) {
+async function mainRunSequence(xlsxPath) {
   var linesOfBestFit = true;
   var yScaleType = "log";
 
   // get data
-  let [dataPos, dataNeg] = await readInterpretOutputXLSX(xlsxPath);
-
-  let dataSeq = await readCSV(seqPath);
+  let [dataPos, dataNeg, posSeqData, negSeqData] =
+    await readInterpretOutputXLSX(xlsxPath);
 
   // clean sample sequence data, getting unique sample names and sample indices
-  let [uniqueSampleGroupsPos, seqGroupMapPos] = cleanSeqData(dataPos, dataSeq);
-  let [uniqueSampleGroupsNeg, seqGroupMapNeg] = cleanSeqData(dataNeg, dataSeq);
+  let [uniqueSampleGroupsPos, seqGroupMapPos] = cleanSeqData(
+    dataPos,
+    posSeqData
+  );
+  let [uniqueSampleGroupsNeg, seqGroupMapNeg] = cleanSeqData(
+    dataNeg,
+    negSeqData
+  );
 
   // get chemNames for positive mode (to generate plot of first chemical to start)
   let chemNamesPos = getChemNames(dataPos, "(ESI+)");
@@ -1814,6 +1831,5 @@ async function mainRunSequence(xlsxPath, seqPath) {
   // });
 }
 
-const xlsxPath = "./data/results.xlsx";
-const seqCsvPath = "./data/sequence.csv";
-mainRunSequence(xlsxPath, seqCsvPath);
+const xlsxPath = "./data/Example_NTA_NTA_WebApp_QAQC.xlsx";
+mainRunSequence(xlsxPath);
