@@ -374,12 +374,10 @@ async function readInterpretOutputXLSX(filePath) {
 
 function cleanQaqcData(data) {
   const columnPrefix = "Mean";
-  const columnSuffix = "ppb_";
   const keysToKeep = [];
   if (data.length > 0) {
     Object.keys(data[0]).forEach((k) => {
-      if (k.startsWith(columnPrefix) && k.endsWith(columnSuffix))
-        keysToKeep.push(k);
+      if (k.startsWith(columnPrefix)) keysToKeep.push(k);
     });
 
     return data.map((d) => {
@@ -484,11 +482,12 @@ function getPointData(data, uniqueSampleNames, qaqcData = []) {
       pointDatum[`logBlankSub Mean`] = row[`logBlankSub Mean ${sampleName}`];
       pointDatum["Sample Name"] = sampleName;
       pointDatum["Enabled"] =
-        qaqcData.filter(
-          (q) =>
+        qaqcData.filter((q) => {
+          return (
             q["Feature ID"] === row["Feature ID"] &&
             Number.isNaN(Number.parseFloat(q[`Mean ${sampleName}`]))
-        ).length < 1;
+          );
+        }).length < 1;
       pointDatum["Color"] = pointDatum["Enabled"]
         ? "rgb(1, 199, 234)"
         : "rgb(0, 0, 0)";

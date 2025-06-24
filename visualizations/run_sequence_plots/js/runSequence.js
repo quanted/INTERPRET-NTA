@@ -371,7 +371,9 @@ function getPlottingData(dataMain, seqGroupMap, chemNameSuffix = "(ESI+)") {
             Number(value).toFixed(0)
           ).toLocaleString();
           pointData["seqIndex"] = seqNames.indexOf(colName);
-          pointData["CV"] = Number(row[`CV ${sequenceBaseName}`]).toFixed(4);
+          pointData["CV"] = Number.isNaN(Number(row[`CV ${sequenceBaseName}`]))
+            ? "None"
+            : Number(row[`CV ${sequenceBaseName}`]).toFixed(4);
           if (pointData["CV"] === "0.0000") {
             pointData["CV"] = "0";
           }
@@ -689,7 +691,7 @@ function makeRunSequencePlot(
       yScaleType === "linear" ? d3.format(".2s")(d) : d3.format(",~g")(d)
     );
 
-  /// xAxis
+  // xAxis
   const xAxisG = svg
     .append("g")
     .attr("transform", `translate(0, ${svgHeight - heightOffset})`)
@@ -1259,7 +1261,7 @@ async function mainRunSequence(xlsxPath) {
     .style("font-size", "18px")
     .on("click", function () {
       yScaleType = yScaleType === "linear" ? "log" : "linear";
-      const chemNamesTemp = []; //chemNamesToggled.slice(chemNameIndex, chemNameIndex + Number(resolution[0])**2);
+      const chemNamesTemp = [];
       dropdownData.forEach((ddObject) => {
         const dd = d3.select(`#${ddObject.id}`);
         if (dd.property("disabled") === true) {
