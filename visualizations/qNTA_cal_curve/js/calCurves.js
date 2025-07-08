@@ -1513,13 +1513,12 @@ async function calCurvesMain(inputXlsxPath) {
       // update the dropdowns
       let index = 0;
       d3.selectAll(".dropdown").each(function (d, i) {
-        if (d3.select(this).property("disabled") === true) {
-          return;
+        if (d3.select(this).property("disabled") === false) {
+          const chemName = chemNamesToggled[chemNameIndex + index];
+          this.value = chemName;
+          this.text = chemName;
+          index++;
         }
-        const chemName = chemNamesToggled[chemNameIndex + index];
-        this.value = chemName;
-        this.text = chemName;
-        index++;
       });
 
       // replot chemicals
