@@ -2098,14 +2098,95 @@ async function calCurvesMain(inputXlsxPath) {
       .style("align-items", "center");
     groupCheckDiv
       .append("label")
-      .text("Remove group chemicals from output: ")
+      .text("Exclude group chemicals from output: ")
       .style("margin-bottom", "4px");
     groupCheckDiv
       .append("input")
       .attr("type", "checkbox")
       .attr("class", "disable-checkbox")
       .style("width", "20px")
-      .style("height", "20px");
+      .style("height", "20px")
+      .on("change", function () {
+        if (groupCheckDiv.select(".disable-checkbox").property("checked")) {
+          const chemList = [];
+          groupDiv
+            .selectAll("li")
+            .nodes()
+            .forEach((d) => {
+              chemList.push(d3.select(d).select("span").text());
+            });
+
+          if (chemList.length === 0) {
+            return;
+          }
+
+          pointData = pointData.map((p) => {
+            return {
+              ...p,
+              Enabled: chemList.includes(p["Chemical Name"])
+                ? false
+                : p["Enabled"],
+              Color: chemList.includes(p["Chemical Name"])
+                ? "rgb(0, 0, 0)"
+                : p["Color"],
+            };
+          });
+          plottingData = chemNames.map((chemName) =>
+            getPlottingDataForChem(pointData, chemName)
+          );
+          // update plots
+          makeCalCurvesXxY(
+            resolutionData,
+            resolution,
+            pointData,
+            chemNamesToggled,
+            tooltip,
+            tooltipContainer,
+            cleanedQaqcData,
+            confidence,
+            chemNames
+          );
+        } else {
+          const chemList = [];
+          groupDiv
+            .selectAll("li")
+            .nodes()
+            .forEach((d) => {
+              chemList.push(d3.select(d).select("span").text());
+            });
+
+          if (chemList.length === 0) {
+            return;
+          }
+
+          pointData = pointData.map((p) => {
+            return {
+              ...p,
+              Enabled: chemList.includes(p["Chemical Name"])
+                ? true
+                : p["Enabled"],
+              Color: chemList.includes(p["Chemical Name"])
+                ? "rgb(1, 199, 234)"
+                : p["Color"],
+            };
+          });
+          plottingData = chemNames.map((chemName) =>
+            getPlottingDataForChem(pointData, chemName)
+          );
+          // update plots
+          makeCalCurvesXxY(
+            resolutionData,
+            resolution,
+            pointData,
+            chemNamesToggled,
+            tooltip,
+            tooltipContainer,
+            cleanedQaqcData,
+            confidence,
+            chemNames
+          );
+        }
+      });
   }
 
   /**
@@ -2189,12 +2270,12 @@ async function calCurvesMain(inputXlsxPath) {
       const groupTitle = d3.select(group).select("input").property("value");
       const groupDesc = d3.select(group).select("textarea").property("value");
 
-      const groupDisabled = d3
+      const groupExcluded = d3
         .select(group)
         .select(".disable-checkbox")
         .property("checked");
 
-      let disabledString = groupDisabled ? "Disabled" : "Enabled";
+      let disabledString = groupExcluded ? "Disabled" : "Enabled";
 
       const groupDatum = [
         groupTitle,
@@ -2265,6 +2346,7 @@ async function calCurvesMain(inputXlsxPath) {
     .style("height", "500px")
     .style("overflow-y", "scroll")
     .style("position", "absolute")
+    .style("z-index", 500)
     .style("background-color", "white")
     .style("display", "grid")
     .style("grid-template-columns", "1fr 100px")
@@ -2450,6 +2532,9 @@ async function calCurvesMain(inputXlsxPath) {
         confidence,
         chemNames
       );
+      d3.selectAll(".disable-checkbox").each(function () {
+        d3.select(this).property("checked", false);
+      });
     });
 
   const excludeFlagsButton = buttonDivDis
