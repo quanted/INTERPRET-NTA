@@ -3,8 +3,9 @@ import * as heatmapUtils from "./heatmapUtils.js";
 
 import * as THREE from "three";
 
-function createOccurrenceHeatmap(
-  dataXlsxPath,
+async function createOccurrenceHeatmap(
+  csvPathOccurrence,
+  csvPathParameters,
   data = null,
   minSample = null,
   minBlank = null,
@@ -12,13 +13,34 @@ function createOccurrenceHeatmap(
   mrlMult = null
 ) {
   // read in and parse data from files
-  var [
-    data,
-    minReplicateHitsPercent,
-    minReplicateBlankHitPercent,
-    maxReplicateCvValue,
-    MrlMult,
-  ] = dataUtils.getOccurrenceAndParameterData(dataXlsxPath);
+  // var [
+  //   data,
+  //   minReplicateHitsPercent,
+  //   minReplicateBlankHitPercent,
+  //   maxReplicateCvValue,
+  //   MrlMult,
+  // ] = dataUtils.getOccurrenceAndParameterData(dataXlsxPath);
+  let fetchedData; // Declare fetchedData outside the block
+
+  try {
+    // Use the variables declared outside the block for destructuring
+    [
+      fetchedData,
+      minReplicateHitsPercent,
+      minReplicateBlankHitPercent,
+      maxReplicateCvValue,
+      MrlMult,
+    ] = await dataUtils.getOccurrenceAndParameterData(csvPathOccurrence, csvPathParameters);
+
+    console.log('data1');
+    console.log(fetchedData);
+
+  } catch (error) {
+    console.error('Error loading data:', error);
+  }
+
+  console.log('data2');
+  console.log(fetchedData); // This should now correctly log the fetched data
 
   if (minSample !== null) {
     var minReplicateHitsPercent = minSample;
@@ -34,8 +56,11 @@ function createOccurrenceHeatmap(
     MrlMult,
   };
 
+  // console.log('data')
+  // console.log(data)
+
   // get unique sample headers
-  const sampleGroups = dataUtils.getUniqueSampleHeaders(data);
+  const sampleGroups = dataUtils.getUniqueSampleHeaders(fetchedData);
 
   // find the blank sample names
   const [blankMeanHeader, blankStdHeader, blankRepPerHeader] =
@@ -47,7 +72,7 @@ function createOccurrenceHeatmap(
 
   // Calculate the MRL
   data = dataUtils.calcMRL(
-    data,
+    fetchedData,
     blankMeanHeader,
     blankStdHeader,
     blankRepPerHeader,
@@ -530,7 +555,8 @@ function createOccurrenceHeatmap(
           });
 
           createOccurrenceHeatmap(
-            dataXlsxPath,
+            csvPathOccurrence,
+            csvPathParameters,
             data,
             minReplicateHitsPercent,
             minReplicateBlankHitPercent,
@@ -568,7 +594,8 @@ function createOccurrenceHeatmap(
             });
 
             createOccurrenceHeatmap(
-              dataXlsxPath,
+              csvPathOccurrence,
+              csvPathParameters,
               data,
               minReplicateHitsPercent,
               minReplicateBlankHitPercent,
@@ -605,16 +632,24 @@ function createOccurrenceHeatmap(
 //   });
 // }
 
-// Use the global XLSX object provided by the CDN
-function loadHeatmap() {
-  fetch("./data/Example_nta_NTA_WebApp_results.xlsx")
-    .then((response) => response.arrayBuffer()) // read file as array buffer
-    .then((data) => {
-      const workbook = XLSX.read(data, { type: "array" });
+// // Use the global XLSX object provided by the CDN
+// function loadHeatmap() {
+//   fetch("./data/Example_nta_NTA_WebApp_results.xlsx")
+//     .then((response) => response.arrayBuffer()) // read file as array buffer
+//     .then((data) => {
+//       const workbook = XLSX.read(data, { type: "array" });
 
-      // call the main function that cleans data and draws heatmap
-      createOccurrenceHeatmap(workbook);
-    });
+//       // call the main function that cleans data and draws heatmap
+//       createOccurrenceHeatmap(workbook);
+//     });
+// }
+
+function loadHeatmap() {
+  const csvPathOccurrence = "./data/20250709_test_file_run/Example_NTA_for_QAQC_visuals.csv";
+  const csvPathParameters = "./data/20250709_test_file_run/Analysis_parameters.csv";
+  // const csvPathOccurrence = "./data/20250709_NTAW807/Method_1_-_HLB_for_QAQC_visuals.csv";
+  // const csvPathParameters = "./data/20250709_NTAW807/Analysis_parameters.csv";
+  createOccurrenceHeatmap(csvPathOccurrence, csvPathParameters);
 }
 
 loadHeatmap();

@@ -5,36 +5,69 @@
  * @returns {[number, number, number, number]} The number values for Min replicate hits (%), Min replicate hits in
  * blanks (%), Max replicate CV, and MRL standard deviation multiplier -- in that order.
  */
-export function getAnalysisParameters(file) {
-  // read in and parse the csv file
-  const analysisParamsSheetName = "Analysis Parameters";
-  const paramsObj = XLSX.utils.sheet_to_json(
-    file.Sheets[analysisParamsSheetName]
-  );
+// export function getAnalysisParameters(file) {
+//   // read in and parse the csv file
+//   const analysisParamsSheetName = "Analysis Parameters";
+//   const paramsObj = XLSX.utils.sheet_to_json(
+//     file.Sheets[analysisParamsSheetName]
+//   );
 
-  // Iterate over data for the parameters we want (min replicate %, min blanks, max CV, and mrl multiplier)
-  let min_replicate_hits = null,
-    min_replicate_hits_blanks = null,
-    max_replicate_cv = null,
-    mrl_std_multiplier = null;
-  for (let rowObj of paramsObj) {
-    if (rowObj["Parameter"] === "Min replicate hits (%)") {
-      min_replicate_hits = Number(rowObj["Value"]);
-    } else if (rowObj["Parameter"] === "Min replicate hits in blanks (%)") {
-      min_replicate_hits_blanks = Number(rowObj["Value"]);
-    } else if (rowObj["Parameter"] === "Max replicate CV") {
-      max_replicate_cv = Number(rowObj["Value"]);
-    } else if (rowObj["Parameter"] === "MRL standard deviation multiplier") {
-      mrl_std_multiplier = Number(rowObj["Value"]);
+//   // Iterate over data for the parameters we want (min replicate %, min blanks, max CV, and mrl multiplier)
+//   let min_replicate_hits = null,
+//     min_replicate_hits_blanks = null,
+//     max_replicate_cv = null,
+//     mrl_std_multiplier = null;
+//   for (let rowObj of paramsObj) {
+//     if (rowObj["Parameter"] === "Min replicate hits (%)") {
+//       min_replicate_hits = Number(rowObj["Value"]);
+//     } else if (rowObj["Parameter"] === "Min replicate hits in blanks (%)") {
+//       min_replicate_hits_blanks = Number(rowObj["Value"]);
+//     } else if (rowObj["Parameter"] === "Max replicate CV") {
+//       max_replicate_cv = Number(rowObj["Value"]);
+//     } else if (rowObj["Parameter"] === "MRL standard deviation multiplier") {
+//       mrl_std_multiplier = Number(rowObj["Value"]);
+//     }
+//   }
+
+//   return [
+//     min_replicate_hits,
+//     min_replicate_hits_blanks,
+//     max_replicate_cv,
+//     mrl_std_multiplier,
+//   ];
+// }
+
+export async function getAnalysisParameters(file) {
+  try {
+    const data = await d3.csv(file);
+
+    let min_replicate_hits = null,
+      min_replicate_hits_blanks = null,
+      max_replicate_cv = null,
+      mrl_std_multiplier = null;
+
+    for (let rowObj of data) {
+      if (rowObj["Parameter"] === "Min replicate hits (%)") {
+        min_replicate_hits = Number(rowObj["Value"]);
+      } else if (rowObj["Parameter"] === "Min replicate hits in blanks (%)") {
+        min_replicate_hits_blanks = Number(rowObj["Value"]);
+      } else if (rowObj["Parameter"] === "Max replicate CV") {
+        max_replicate_cv = Number(rowObj["Value"]);
+      } else if (rowObj["Parameter"] === "MRL standard deviation multiplier") {
+        mrl_std_multiplier = Number(rowObj["Value"]);
+      }
     }
-  }
 
-  return [
-    min_replicate_hits,
-    min_replicate_hits_blanks,
-    max_replicate_cv,
-    mrl_std_multiplier,
-  ];
+    return [
+      min_replicate_hits,
+      min_replicate_hits_blanks,
+      max_replicate_cv,
+      mrl_std_multiplier,
+    ];
+  } catch (error) {
+    console.error('Error loading CSV:', error);
+    throw error;
+  }
 }
 
 /**
@@ -46,27 +79,42 @@ export function getAnalysisParameters(file) {
  * sheets both exist, the "Pos" rows will be first, followed by the "Neg" rows. The keys  of each object are
  * the column header names.
  */
-export function getOccurrenceData(file) {
-  // now store the data from the "All Detection Statistics (X)" sheets
-  const sheetNames = [
-    "All Detection Statistics (Pos)",
-    "All Detection Statistics (Neg)",
-  ];
-  let data = [];
-  for (let i = 0; i < sheetNames.length; i++) {
-    // Does not matter if sheetName is missing
-    const temp = XLSX.utils.sheet_to_json(
-      file.Sheets[sheetNames[i]],
-      { defval: "" } // If missing value, set to empty string
-    );
+// export function getOccurrenceData(file) {
+//   // now store the data from the "All Detection Statistics (X)" sheets
+//   const sheetNames = [
+//     "All Detection Statistics (Pos)",
+//     "All Detection Statistics (Neg)",
+//   ];
+//   let data = [];
+//   for (let i = 0; i < sheetNames.length; i++) {
+//     // Does not matter if sheetName is missing
+//     const temp = XLSX.utils.sheet_to_json(
+//       file.Sheets[sheetNames[i]],
+//       { defval: "" } // If missing value, set to empty string
+//     );
 
-    temp.forEach((res) => {
-      data.push(res);
-    });
+//     temp.forEach((res) => {
+//       data.push(res);
+//     });
+//   }
+
+//   return data;
+// }
+export async function getOccurrenceData(fileUrl) {
+  try {
+    // Load and parse the CSV file
+    const data = await d3.csv(fileUrl, d3.autoType);
+
+    // d3.csv automatically parses the CSV into an array of objects
+    // where each object represents a row with keys as column headers
+
+    return data;
+  } catch (error) {
+    console.error('Error loading CSV:', error);
+    throw error;
   }
-
-  return data;
 }
+
 
 /**
  * Returns the Pos and Neg data as an array of objects which each represent a row of data, and
@@ -81,27 +129,53 @@ export function getOccurrenceData(file) {
  * Replicate Hits (%) parameter; the third is Min Replicate Hits Blanks (%); the fourth is Max Replicate CV; the fifth
  * is the MRL Standard Deviation Multiplier.
  */
-export function getOccurrenceAndParameterData(xlsxPath) {
-  // // get the file using 'xlsx' package
-  // const file = XLSX.readFile(xlsxPath);
+// export function getOccurrenceAndParameterData(xlsxPath) {
+//   // // get the file using 'xlsx' package
+//   // const file = XLSX.readFile(xlsxPath);
 
-  let file = xlsxPath;
+//   let file = xlsxPath;
 
-  let [
-    min_replicate_hits_percent,
-    min_replicate_blank_hit_percent,
-    max_replicate_cv_value,
-    MRL_mult,
-  ] = getAnalysisParameters(file);
-  let data = getOccurrenceData(file);
+//   let [
+//     min_replicate_hits_percent,
+//     min_replicate_blank_hit_percent,
+//     max_replicate_cv_value,
+//     MRL_mult,
+//   ] = getAnalysisParameters(file);
+//   let data = getOccurrenceData(file);
 
-  return [
-    data,
-    min_replicate_hits_percent,
-    min_replicate_blank_hit_percent,
-    max_replicate_cv_value,
-    MRL_mult,
-  ];
+//   return [
+//     data,
+//     min_replicate_hits_percent,
+//     min_replicate_blank_hit_percent,
+//     max_replicate_cv_value,
+//     MRL_mult,
+//   ];
+// }
+
+export async function getOccurrenceAndParameterData(csvPathOccurrence, csvPathParameters) {
+  try {
+    // Get the analysis parameters from the CSV file
+    const [
+      min_replicate_hits_percent,
+      min_replicate_blank_hit_percent,
+      max_replicate_cv_value,
+      MRL_mult,
+    ] = await getAnalysisParameters(csvPathParameters);
+
+    // Get the occurrence data from the CSV file
+    const data = await getOccurrenceData(csvPathOccurrence);
+
+    return [
+      data,
+      min_replicate_hits_percent,
+      min_replicate_blank_hit_percent,
+      max_replicate_cv_value,
+      MRL_mult,
+    ];
+  } catch (error) {
+    console.error('Error retrieving data:', error);
+    throw error;
+  }
 }
 
 /**
@@ -113,6 +187,8 @@ export function getOccurrenceAndParameterData(xlsxPath) {
 export function getUniqueHeaders(dataArr) {
   // iterate over all keys and store unique keys
   let uniqueHeaders = [];
+  // console.log('dataArr')
+  // console.log(dataArr)
   let data = [dataArr[0], dataArr[dataArr.length - 1]]; // only need to check the first and last rows (when pos + neg present)
   for (let rowObj of data) {
     // iterate over rows
@@ -164,6 +240,8 @@ export function differences(s1, s2) {
  */
 export function parseHeaders(dataArr) {
   // get the unique column headers and iterate over them
+  // console.log('dataArr')
+  // console.log(dataArr)
   const headers = getUniqueHeaders(dataArr);
   let countS = 0;
   let countD = 0;
@@ -211,6 +289,8 @@ export function parseHeaders(dataArr) {
  */
 export function getUniqueSampleHeaders(dataArr) {
   // get all headers grouped together by similarity
+  // console.log('dataArr')
+  // console.log(dataArr)
   let allHeaders = parseHeaders(dataArr);
 
   // clean headers to only have the header names
