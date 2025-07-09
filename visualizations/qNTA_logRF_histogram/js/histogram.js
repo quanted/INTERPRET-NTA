@@ -1,4 +1,4 @@
-const PATH_TO_DATA = "./data/val_out_test_NTA_WebApp_qNTA.xlsx";
+const PATH_TO_DATA = "./data/Example_NTA_NTA_WebApp_qNTA.xlsx";
 const RF_VALUES_SHEET = "Surrogate Detection Statistics";
 const POS_RF_PERCENTILES_SHEET = "Pos Mode RF Percentile Ests";
 const NEG_RF_PERCENTILES_SHEET = "Neg Mode RF Percentile Ests";
@@ -173,6 +173,7 @@ async function histogramMain(inputXlsxPath) {
   const { posRFPercentiles, negRFPercentiles } = await readRFPercentileVals();
   let rfValuesPos = getRFValues(dataPos);
   let rfValuesNeg = getRFValues(dataNeg);
+
   let logRfValuesPos = rfValuesPos.map((d) => Math.log10(d));
   let logRfValuesNeg = rfValuesNeg.map((d) => Math.log10(d));
 
@@ -239,18 +240,25 @@ async function histogramMain(inputXlsxPath) {
     .style("text-align", "center");
 
   // Both positive and negative RF percentile calculations will have the same quantile
-  // values, so we choose positive to create the quantile table data.
-  posRFPercentiles.forEach((d, i) => {
+  // values, so we choose positive to create the quantile table data as long as positive file exists.
+  const percentiles =
+    posRFPercentiles.length > 0
+      ? Object.keys(posRFPercentiles[0]).filter(
+          (k) => k !== "Response Factor Percentile Estimate"
+        )
+      : Object.keys(negRFPercentiles[0]).filter(
+          (k) => k !== "Response Factor Percentile Estimate"
+        );
+  percentiles.forEach((k, i) => {
     inputRow
       .append("td")
       .style("border", "1px solid black")
       .style("width", "25%")
       .attr("id", `quantile-${i}`)
-      .html(`<b>${d["Response Factor Percentile Estimate"] / 100}</b>`)
+      .html(`<b>${k}</b>`)
       .style("padding", "5.2px")
       .style("text-align", "center");
   });
-
   const rfRow = tableBody.append("tr");
   rfRow
     .append("td")
@@ -580,7 +588,7 @@ async function histogramMain(inputXlsxPath) {
 
   helpTooltip
     .html(
-      'The histogram displays ESI+ chemicals with the log Response Factor (RF) on the x-axis by default.<br><br>RF = abundance/concentration<br><br><b>Features</b><ul><li>2.5%, 50% and 97.5% quantiles are displayed by default. These may be updated with the input boxes within the second row of the table above the histogram. The transformed RF values for each quantile are displayed in the third row</li><li>Hovering over a bin will update the tooltip in the top right with the bin count and the range of transformed RF values that bin encompasses</li><li>Hovering over the λ button will display a graph of the log likelihood as a function of lambda for a Box Cox transformation with the optimal value of lambda highlighted. Clicking this button will apply a Box Cox transformation to the raw RF values</li><li>Clicking the "+" and "-" buttons will toggle between ESI+ and ESI- mode, respectively</li></ul>'
+      'The histogram displays ESI+ chemicals with the log Response Factor (RF) on the x-axis by default.<br><br>RF = abundance/concentration<br><br><b>Features</b><ul><li>2.5%, 50% and 97.5% quantiles are displayed by default.</li><li>Hovering over a bin will update the tooltip in the top right with the bin count and the range of transformed RF values that bin encompasses</li><li>Hovering over the λ button will display a graph of the log likelihood as a function of lambda for a Box Cox transformation with the optimal value of lambda highlighted. Clicking this button will apply a Box Cox transformation to the raw RF values</li><li>Clicking the "+" and "-" buttons will toggle between ESI+ and ESI- mode, respectively</li></ul>'
     )
     .style("font-size", "18px")
     .style("padding", "10px");
@@ -777,20 +785,26 @@ async function histogramMain(inputXlsxPath) {
         );
       });
 
-    addQuantileLines([0.025, 0.5, 0.975], x, height);
+    addQuantileLines(["2.5th", "50.0th", "97.5th"], x, height);
   }
 
   function addQuantileLines(quantiles, x, height) {
-    const quantileValues =
-      mode === "pos"
-        ? posRFPercentiles.map((p, i) => {
-            if (quantiles[i] === p["Response Factor Percentile Estimate"] / 100)
-              return p.Median;
-          })
-        : negRFPercentiles.map((p, i) => {
-            if (quantiles[i] === p["Response Factor Percentile Estimate"] / 100)
-              return p.Median;
-          });
+    const quantileValues = [];
+    mode === "pos"
+      ? posRFPercentiles.forEach((p) => {
+          if (p["Response Factor Percentile Estimate"] === "Median") {
+            quantileValues.push(
+              ...[p[quantiles[0]], p[quantiles[1]], p[quantiles[2]]]
+            );
+          }
+        })
+      : negRFPercentiles.forEach((p) => {
+          if (p["Response Factor Percentile Estimate"] === "Median") {
+            quantileValues.push(
+              ...[p[quantiles[0]], p[quantiles[1]], p[quantiles[2]]]
+            );
+          }
+        });
 
     const boxCoxTransformedQuantiles =
       mode === "pos"
@@ -819,9 +833,10 @@ async function histogramMain(inputXlsxPath) {
       .attr("stroke-width", 3.5);
 
     // Update RF values in the table
-    quantileValues.forEach((q, i) => {
-      d3.select(`#rf-${i}`).text(q.toFixed(2));
-    });
+    Array.isArray(quantileValues) &&
+      quantileValues.forEach((q, i) => {
+        d3.select(`#rf-${i}`).text(q.toFixed(2));
+      });
   }
 }
 

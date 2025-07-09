@@ -402,6 +402,7 @@ function cleanQaqcData(data) {
  */
 function cleanData(data) {
   const blankSubHeaderSuffix = "BlankSub Mean ";
+  const controlSubBlankSubHeaderSuffix = "ControlSub BlankSub Mean";
   const concentrationHeaderSuffix = "Conc ";
   const columnsToKeep = [
     "Feature ID",
@@ -417,6 +418,7 @@ function cleanData(data) {
       if (
         !columnsToKeep.includes(colName) &&
         !colName.startsWith(blankSubHeaderSuffix) &&
+        !colName.startsWith(controlSubBlankSubHeaderSuffix) &&
         !colName.startsWith(concentrationHeaderSuffix)
       ) {
         delete row[colName];
@@ -441,6 +443,11 @@ function cleanData(data) {
       }
 
       if (colName.startsWith(blankSubHeaderSuffix)) {
+        row[`log${colName}`] =
+          Math.log10(value) !== -Infinity ? Math.log10(value) : undefined;
+      }
+
+      if (colName.startsWith(controlSubBlankSubHeaderSuffix)) {
         row[`log${colName}`] =
           Math.log10(value) !== -Infinity ? Math.log10(value) : undefined;
       }
@@ -470,7 +477,8 @@ function getPointData(data, uniqueSampleNames, qaqcData = []) {
 
       // remove undefined values
       if (
-        row[`logBlankSub Mean ${sampleName}`] === undefined ||
+        (row[`logBlankSub Mean ${sampleName}`] === undefined &&
+          row[`logControlSub BlankSub Mean ${sampleName}`] === undefined) ||
         row[`logConc ${sampleName}`] === undefined
       ) {
         continue;
@@ -478,8 +486,12 @@ function getPointData(data, uniqueSampleNames, qaqcData = []) {
 
       pointDatum[`Conc`] = row[`Conc ${sampleName}`];
       pointDatum[`logConc`] = row[`logConc ${sampleName}`];
-      pointDatum[`BlankSub Mean`] = row[`BlankSub Mean ${sampleName}`];
-      pointDatum[`logBlankSub Mean`] = row[`logBlankSub Mean ${sampleName}`];
+      pointDatum[`BlankSub Mean`] =
+        row[`BlankSub Mean ${sampleName}`] ??
+        row[`ControlSub BlankSub Mean ${sampleName}`];
+      pointDatum[`logBlankSub Mean`] =
+        row[`logBlankSub Mean ${sampleName}`] ??
+        row[`logControlSub BlankSub Mean ${sampleName}`];
       pointDatum["Sample Name"] = sampleName;
       pointDatum["Enabled"] =
         qaqcData.filter((q) => {
@@ -496,7 +508,6 @@ function getPointData(data, uniqueSampleNames, qaqcData = []) {
       columnsToKeep.forEach((colName) => {
         pointDatum[colName] = row[colName];
       });
-
       pointData.push(pointDatum);
     }
   });
@@ -1230,6 +1241,7 @@ async function calCurvesMain(inputXlsxPath) {
 
   const [cleanedData, uniqueSampleNames] = cleanData(data);
   const cleanedQaqcData = cleanQaqcData(qaqcData);
+
   let pointData = getPointData(cleanedData, uniqueSampleNames, cleanedQaqcData);
 
   // get unique chemical names

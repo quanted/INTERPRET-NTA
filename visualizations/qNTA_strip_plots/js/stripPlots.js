@@ -42,7 +42,7 @@ async function readInterpretOutputXLSX(filePath) {
   const arrayBuffer = await response.arrayBuffer();
 
   // access data from desired tracer detection sheet and write to json object
-  const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
+  const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: "array" });
   const sheetName = "Surrogate Detection Statistics";
   const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
 
@@ -55,16 +55,16 @@ async function readInterpretOutputXLSX(filePath) {
  * @param {object[]} data The data representing the input spreadsheet.
  * @returns {object[]} The cleaned data.
  */
-function cleanData(data) { 
+function cleanData(data) {
   const columnsToKeep = [
     "Feature ID",
     "Chemical Name",
     "Ionization Mode",
-    "Retention Time"
+    "Retention Time",
   ];
   const logRFValues = {};
 
-  data.forEach(row => {
+  data.forEach((row) => {
     Object.entries(row).forEach(([colName, value]) => {
       // if the column isn't an RF value or in the list of columns to keep, remove it
       if (!colName.startsWith("RF ") && !columnsToKeep.includes(colName)) {
@@ -74,7 +74,7 @@ function cleanData(data) {
 
       // We need to append the ionization mode to the chemical name
       if (colName === "Chemical Name") {
-        row[colName] = `${row[colName]} (${row["Ionization Mode"]})`
+        row[colName] = `${row[colName]} (${row["Ionization Mode"]})`;
       }
 
       // if we have an RF value, add a log key-value pair and remove the original RF value
@@ -96,7 +96,7 @@ function cleanData(data) {
   });
 
   // calculate median log RF values and add to each row
-  data.forEach(row => {
+  data.forEach((row) => {
     const chemicalName = row["Chemical Name"];
     const logRFs = logRFValues[chemicalName];
     const medianLogRF = d3.median(logRFs);
@@ -113,13 +113,13 @@ function cleanData(data) {
  */
 function getPointsData(data, nChemsPerPlot, showMode = "both") {
   const pointsData = [];
-  let colors = generateColors("#CC00CC", "#009090", 4)
-  colors = colors.concat(generateColors("#009090", "#FF6600", 4).slice(1))
-  colors = colors.concat(generateColors("#FF9933", "#CC00CC", 2).slice(1, -1))
+  let colors = generateColors("#CC00CC", "#009090", 4);
+  colors = colors.concat(generateColors("#009090", "#FF6600", 4).slice(1));
+  colors = colors.concat(generateColors("#FF9933", "#CC00CC", 2).slice(1, -1));
   let chemName = data[0]["Chemical Name"];
   let i = 0;
   // iterate over rows of data
-  data.forEach(d => {
+  data.forEach((d) => {
     // filter on showMode (+ or - or both)
     if (showMode === "+") {
       if (d["Chemical Name"].includes("(ESI-)")) {
@@ -137,8 +137,10 @@ function getPointsData(data, nChemsPerPlot, showMode = "both") {
       if (key.startsWith("log RF ")) {
         // get the sample name, remove underscore suffix if exists
         let sampleName = key.split("log RF ")[1];
-        sampleName = sampleName.endsWith("_") ? sampleName.slice(0, sampleName.length-1) : sampleName;
-        
+        sampleName = sampleName.endsWith("_")
+          ? sampleName.slice(0, sampleName.length - 1)
+          : sampleName;
+
         if (d["Chemical Name"] !== chemName) {
           chemName = d["Chemical Name"];
           i++;
@@ -151,8 +153,8 @@ function getPointsData(data, nChemsPerPlot, showMode = "both") {
           featureId: d["Feature ID"],
           sampleName: sampleName,
           mode: d["Ionization Mode"],
-          retentionTime: d["Retention Time"],
-          color: colors[i % 7]
+          retentionTime: d["Retention Time"].toFixed(2),
+          color: colors[i % 7],
         };
 
         pointsData.push(datum);
@@ -172,7 +174,8 @@ function getPointsData(data, nChemsPerPlot, showMode = "both") {
  * @return {D3Selection} The d3 selection object for the new parent grid container.
  */
 function makeParentGridContainer(parentDivId, parentGridId) {
-  const parentGridContainer = d3.select(`#${parentDivId}`)
+  const parentGridContainer = d3
+    .select(`#${parentDivId}`)
     .append("div")
     .style("width", "fit-content")
     .attr("id", parentGridId)
@@ -192,19 +195,20 @@ async function stripPlotsMain(inputXlsxPath) {
 
   // set the number of chemicals per plot and calculate the number of plots needed to view all chemicals
   const nChemsPerPlot = data.length;
-  const nPlots = 1 //Math.floor(data.length / nChemsPerPlot) + 1;
+  const nPlots = 1; //Math.floor(data.length / nChemsPerPlot) + 1;
 
   // set the svgIDs that will be used as grid-areas for placing in the correct column of the parentGrid
   const svgIDs = [];
   for (let i = 0; i < nPlots; i++) {
-     svgIDs.push(`svg${i}`);
+    svgIDs.push(`svg${i}`);
   }
 
   // make the parent grid container for housing the application
   const parentDivId = "strip-plots-container"; // the main div from the html file for hosting the visual
   const parentGridId = "strip-plots-parent-grid-container"; // the grid div to house the visual
-  
-  const parentGridContainer = d3.select(`#${parentDivId}`)
+
+  const parentGridContainer = d3
+    .select(`#${parentDivId}`)
     .append("div")
     .style("display", "grid")
     .style("grid-template-columns", "40px 782px 300px")
@@ -215,28 +219,33 @@ async function stripPlotsMain(inputXlsxPath) {
 
   // add button to toggle between sorted by retention time and median log RF
   const buttonContainer = parentGridContainer.append("div");
-  
-  buttonContainer.append("button")
+
+  buttonContainer
+    .append("button")
     .attr("id", "sortButton")
     .style("height", "40px")
     .style("width", "60px")
-    .style("font-size", '28px')
+    .style("font-size", "28px")
     .style("padding-left", "0px")
     .style("padding-right", "10px")
     .style("padding-bottom", "40px")
     .style("margin-bottom", "10px")
     .style("margin-left", "5px")
     .style("text-align", "left")
-    .style("margin-top", '10px')
+    .style("margin-top", "10px")
     .style("border", "2px solid #999")
     .style("border-radius", "8px")
     .html("&#x1f503")
     .on("mouseover", () => {
-      d3.select("#sortButton").transition().duration(200)
+      d3.select("#sortButton")
+        .transition()
+        .duration(200)
         .style("border-color", "black");
     })
     .on("mouseout", () => {
-      d3.select("#sortButton").transition().duration(200)
+      d3.select("#sortButton")
+        .transition()
+        .duration(200)
         .style("border-color", "#999");
     })
     .on("click", () => {
@@ -244,65 +253,76 @@ async function stripPlotsMain(inputXlsxPath) {
       makeStripPlot(data, sortedBy, showMode, false);
     });
 
-  // add buttons to toggle between which ionization mode is shown  
+  // add buttons to toggle between which ionization mode is shown
   const modeButtonData = [
-    { "text": "+", "id": "pos" },
-    { "text": "-", "id": "neg" },
+    { text: "+", id: "pos" },
+    { text: "-", id: "neg" },
     // { "text": "+/-", "id": "both" }
   ];
 
-  modeButtonData.forEach(d => {
-    buttonContainer.append("button")
-    .attr("id", d.id)
-    .style("height", "40px")
-    .style("width", "60px")
-    .style("font-size", () => d.text === "-" ? "36px" : '26px')
-    .style("padding-left", () => d.text === "+/-" ? "3px": d.text === "+" ? "11px" : "14px")
-    .style("padding-right", "10px")
-    .style("padding-bottom", () => d.text === "-" ? "18px" :"1px")
-    .style("padding-top", () => d.text === "-" ? "0px" : "1px")
-    .style("margin-left", "5px")
-    .style("background-color", d.id === "pos" ? "#ddffdd" : "#efefef")
-    .style("text-align", "left")
-    .style("margin-top", '2px')
-    .style("line-height", "34px")
-    .style("border", `2px solid #999`)
-    .style("border-radius", "8px")
-    .html(d.text)
-    .on("mouseover", () => {
-      d3.select(`#${d.id}`).transition().duration(200)
-        .style("border-color", "black");
-    })
-    .on("mouseout", () => {
-      d3.select(`#${d.id}`).transition().duration(200)
-        .style("border-color", "#999");
-    })
-    .on("click", () => {
-      // update border-radius 
-      modeButtonData.forEach(q => {
-        if (q.id !== d.id) {
-          d3.select(`#${q.id}`).transition().duration(300)
-            .style("background-color", "#efefef");
-        }
-      });
-      d3.select(`#${d.id}`).transition().duration(300)
+  modeButtonData.forEach((d) => {
+    buttonContainer
+      .append("button")
+      .attr("id", d.id)
+      .style("height", "40px")
+      .style("width", "60px")
+      .style("font-size", () => (d.text === "-" ? "36px" : "26px"))
+      .style("padding-left", () =>
+        d.text === "+/-" ? "3px" : d.text === "+" ? "11px" : "14px"
+      )
+      .style("padding-right", "10px")
+      .style("padding-bottom", () => (d.text === "-" ? "18px" : "1px"))
+      .style("padding-top", () => (d.text === "-" ? "0px" : "1px"))
+      .style("margin-left", "5px")
+      .style("background-color", d.id === "pos" ? "#ddffdd" : "#efefef")
+      .style("text-align", "left")
+      .style("margin-top", "2px")
+      .style("line-height", "34px")
+      .style("border", `2px solid #999`)
+      .style("border-radius", "8px")
+      .html(d.text)
+      .on("mouseover", () => {
+        d3.select(`#${d.id}`)
+          .transition()
+          .duration(200)
+          .style("border-color", "black");
+      })
+      .on("mouseout", () => {
+        d3.select(`#${d.id}`)
+          .transition()
+          .duration(200)
+          .style("border-color", "#999");
+      })
+      .on("click", () => {
+        // update border-radius
+        modeButtonData.forEach((q) => {
+          if (q.id !== d.id) {
+            d3.select(`#${q.id}`)
+              .transition()
+              .duration(300)
+              .style("background-color", "#efefef");
+          }
+        });
+        d3.select(`#${d.id}`)
+          .transition()
+          .duration(300)
           .style("background-color", "#ddffdd");
-      
 
-      if (d.text === "+/-") {
-        showMode = "both";
-      } else {
-        showMode = d.text;
-      }
-      makeStripPlot(data, sortedBy, showMode, false);
-    });
+        if (d.text === "+/-") {
+          showMode = "both";
+        } else {
+          showMode = d.text;
+        }
+        makeStripPlot(data, sortedBy, showMode, false);
+      });
   });
 
-  const helpTooltipButton = buttonContainer.append("div")
+  const helpTooltipButton = buttonContainer
+    .append("div")
     .attr("id", "helpButton")
     .style("height", "35px")
     .style("width", "60px")
-    .style("font-size", '28px')
+    .style("font-size", "28px")
     .style("padding-left", "6px")
     .style("padding-right", "10px")
     .style("padding-bottom", "4px")
@@ -314,38 +334,55 @@ async function stripPlotsMain(inputXlsxPath) {
     .style("color", "#777")
     .html("�")
     .on("mouseover", () => {
-      d3.select("#helpButton").transition().duration(300)
+      d3.select("#helpButton")
+        .transition()
+        .duration(300)
         .style("border-color", "black");
       if (!helpTooltipClicked) {
-        d3.select("#helpTooltip").transition().duration(500)
+        d3.select("#helpTooltip")
+          .transition()
+          .duration(500)
           .style("opacity", 1);
       }
     })
     .on("mouseout", () => {
-      d3.select("#helpButton").transition().duration(300)
+      d3.select("#helpButton")
+        .transition()
+        .duration(300)
         .style("border-color", "#999");
       if (!helpTooltipClicked) {
-        d3.select("#helpTooltip").transition().duration(500)
+        d3.select("#helpTooltip")
+          .transition()
+          .duration(500)
           .style("opacity", 0);
       }
     })
     .on("click", () => {
       helpTooltipClicked = !helpTooltipClicked;
       if (helpTooltipClicked) {
-        d3.select("#helpTooltip").transition().duration(500)
+        d3.select("#helpTooltip")
+          .transition()
+          .duration(500)
           .style("opacity", 1);
-        d3.select("#helpButton").transition().duration(300)
+        d3.select("#helpButton")
+          .transition()
+          .duration(300)
           .style("background-color", "#ddffdd");
       } else {
-        d3.select("#helpTooltip").transition().duration(500)
+        d3.select("#helpTooltip")
+          .transition()
+          .duration(500)
           .style("opacity", 0);
-        d3.select("#helpButton").transition().duration(300)
+        d3.select("#helpButton")
+          .transition()
+          .duration(300)
           .style("background-color", "#fff");
       }
     });
 
   // make SVG container
-  const svgGridContainer = parentGridContainer.append("div")
+  const svgGridContainer = parentGridContainer
+    .append("div")
     .style("gap", "5px")
     .style("padding", "8px")
     .style("border", "3px solid black")
@@ -356,7 +393,8 @@ async function stripPlotsMain(inputXlsxPath) {
     .style("background-color", "white");
 
   // create tooltip container
-  const tooltipContainer = parentGridContainer.append("div")
+  const tooltipContainer = parentGridContainer
+    .append("div")
     .attr("class", "tooltip")
     .style("border", "1px solid black")
     .style("border-radius", "5px")
@@ -364,22 +402,25 @@ async function stripPlotsMain(inputXlsxPath) {
     .style("box-shadow", "0 0 5px rgba(0,0,0,0.3)")
     .style("display", "block")
     .style("line-height", "25px")
-    .style("width", "290px")
-    .style("height", "159px")
+    .style("width", "350px")
+    .style("height", "200px")
     .style("align-self", "start");
 
-  const tooltip = tooltipContainer.append("div")
+  const tooltip = tooltipContainer
+    .attr("id", "tooltip")
+    .append("div")
     .style("padding", "4px")
     .style("margin", "0px 0px 0px 4px")
     .style("border", "1px solid black")
     .style("border-radius", "2px 0px 0px 2px")
     .style("background-color", "white")
-    .style("height", "151px")
+    .style("height", "190px")
     .style("font-size", "17px");
 
   // add instructions
-  parentGridContainer.append("div")
-  const instructions = tooltipContainer.append("div")
+  parentGridContainer.append("div");
+  const instructions = tooltipContainer
+    .append("div")
     .attr("id", "helpTooltip")
     .style("padding-left", "10px")
     .style("padding-top", "5px")
@@ -390,7 +431,9 @@ async function stripPlotsMain(inputXlsxPath) {
     .style("margin-top", "38px")
     .style("width", "500px")
     .style("opacity", 0)
-    .html("By default, the strip plot shows ESI+ data sorted by the mean log Response Factor (RF)<br><br>RF = abundance/concentration<br><br><b>Features</b><br><ul><li>Hovering over a point will enlarge it and populate a tooltip in the top right with data about that point</li><li>Clicking the 🔃 button will toggle between sorting by retention time and by median log RF</li><li>Clicking the \"+\" button will populate the plot with ESI+ data</li><li>Clicking the \"-\" button will populate the plot with ESI- data</li><li>Ctrl+Scroll to zoom</li><li>Click+Drag to pan</li><li>Ctrl+Space will reset the figure after zooming and or panning</li> </ul>");
+    .html(
+      'By default, the strip plot shows ESI+ data sorted by the mean log Response Factor (RF)<br><br>RF = abundance/concentration<br><br><b>Features</b><br><ul><li>Hovering over a point will enlarge it and populate a tooltip in the top right with data about that point</li><li>Clicking the 🔃 button will toggle between sorting by retention time and by median log RF</li><li>Clicking the "+" button will populate the plot with ESI+ data</li><li>Clicking the "-" button will populate the plot with ESI- data</li><li>Ctrl+Scroll to zoom</li><li>Click+Drag to pan</li><li>Ctrl+Space will reset the figure after zooming and or panning</li> </ul>'
+    );
 
   // make plots
   let showMode = "+";
@@ -398,7 +441,13 @@ async function stripPlotsMain(inputXlsxPath) {
   var helpTooltipClicked = false;
   makeStripPlot(data, sortedBy, showMode, true);
 
-  function makeStripPlot(data, sortedBy, showMode = "both", firstPass = false, zoom) {
+  function makeStripPlot(
+    data,
+    sortedBy,
+    showMode = "both",
+    firstPass = false,
+    zoom
+  ) {
     // destroy existing svg
     svgGridContainer.selectAll("svg").remove();
 
@@ -414,32 +463,35 @@ async function stripPlotsMain(inputXlsxPath) {
 
     let nChems = nChemsPerPlot;
     if (showMode !== "both") {
-      nChems = data.filter(d => d["Chemical Name"].includes(`(ESI${showMode})`)).length;
+      nChems = data.filter((d) =>
+        d["Chemical Name"].includes(`(ESI${showMode})`)
+      ).length;
     }
     // now construct the SVG
     svgIDs.forEach((svgID, iPlot) => {
-
-      const margin = { top: 50, right: 20, bottom: 0, left: 250 }
+      const margin = { top: 50, right: 20, bottom: 0, left: 250 };
       const svgWidth = 750;
       const svgHeight = nChems * 35;
       let svg;
-      svg = svgGridContainer.append("svg")
+      svg = svgGridContainer
+        .append("svg")
         .attr("width", svgWidth)
         .attr("height", svgHeight)
         .attr("id", svgID)
         .style("overflow", "hidden")
         .style("box-shadow", "0 0 6px rgba(0,0,0,0.2)");
-        // svg = d3.select(`#${svgID}`)
-        //   .attr("height", svgHeight);
+      // svg = d3.select(`#${svgID}`)
+      //   .attr("height", svgHeight);
 
       // handle zoom functionality
-      var zoom = d3.zoom()
+      var zoom = d3
+        .zoom()
         .scaleExtent([0.5, 3])
-        .filter(function(event) {
+        .filter(function (event) {
           // Disable zoom on scroll unless ctrl is pressed
-          return event.ctrlKey || (!event.button && event.type !== 'wheel');
+          return event.ctrlKey || (!event.button && event.type !== "wheel");
         })
-        .wheelDelta(function(event) {
+        .wheelDelta(function (event) {
           // Adjust zoom speed
           return -event.deltaY * (event.ctrlKey ? 0.003 : 0.05);
         });
@@ -448,7 +500,10 @@ async function stripPlotsMain(inputXlsxPath) {
       d3.select("body").on("keydown", (event) => {
         if (event.ctrlKey && event.code === "Space") {
           event.preventDefault();
-          d3.select(`#svg0`).transition().duration(750).call(zoom.transform, d3.zoomIdentity);
+          d3.select(`#svg0`)
+            .transition()
+            .duration(750)
+            .call(zoom.transform, d3.zoomIdentity);
         }
       });
 
@@ -462,74 +517,92 @@ async function stripPlotsMain(inputXlsxPath) {
 
       zoom.on("zoom", zoomed);
 
-      svg.on("dblclick.zoom", null)
+      svg.on("dblclick.zoom", null);
 
       // get unique chemical names and define x and y scales
-      const chemicalNames = [...new Set(pointsData.map(d => d.chemical))].slice(iPlot*nChemsPerPlot, (iPlot+1)*nChemsPerPlot);
+      const chemicalNames = [
+        ...new Set(pointsData.map((d) => d.chemical)),
+      ].slice(iPlot * nChemsPerPlot, (iPlot + 1) * nChemsPerPlot);
 
       // y-scale, each chemical gets its own row
       const esiRegex = /\(ESI/;
-      const yScale = d3.scaleBand()
-        .domain(chemicalNames)//.map(d => d.replace(/\(ESI/, "(")))
+      const yScale = d3
+        .scaleBand()
+        .domain(chemicalNames) //.map(d => d.replace(/\(ESI/, "(")))
         .range([margin.top, svgHeight - margin.top - margin.bottom])
         .padding(0.5);
 
       // x-scale, for log RF values
-      const [ xMin, xMax ] = d3.extent(pointsData, d => d.logRF);
-      const xTickMax = Math.floor(xMax) +1;
+      const [xMin, xMax] = d3.extent(pointsData, (d) => d.logRF);
+      const xTickMax = Math.floor(xMax) + 1;
       const xTicks = [];
-      for (let i = 0; i <= xTickMax+1; i++) {
+      for (let i = 0; i <= xTickMax + 1; i++) {
         xTicks.push(i);
       }
-      const xScale = d3.scaleLinear()
+      const xScale = d3
+        .scaleLinear()
         .domain([-0.5, xTickMax])
         .range([margin.left, svgWidth - margin.right]);
 
       // draw axes
-      const xAxisTop = g.append("g")
+      const xAxisTop = g
+        .append("g")
         .attr("transform", `translate(0, ${margin.top})`)
-        .call(d3.axisTop(xScale).tickValues(xTicks.slice(0,-1)).tickSizeOuter(0).tickFormat(d3.format("d")))
+        .call(
+          d3
+            .axisTop(xScale)
+            .tickValues(xTicks.slice(0, -1))
+            .tickSizeOuter(0)
+            .tickFormat(d3.format("d"))
+        )
         .selectAll("text")
         .style("font-size", "14px");
 
-      const yAxis = g.append("g")
+      const yAxis = g
+        .append("g")
         .attr("transform", `translate(${margin.left}, 0)`)
         .call(d3.axisLeft(yScale).tickSizeOuter(0))
         .selectAll("text")
         .style("font-size", "14px");
 
       // add bottom and right axes
-      const xAxisBottom = g.append("g")
-        .attr("transform", `translate(0, ${svgHeight - margin.bottom - margin.top})`)
-        .call(d3.axisBottom(xScale).tickSize(0).tickFormat(""))
+      const xAxisBottom = g
+        .append("g")
+        .attr(
+          "transform",
+          `translate(0, ${svgHeight - margin.bottom - margin.top})`
+        )
+        .call(d3.axisBottom(xScale).tickSize(0).tickFormat(""));
 
-      const yAxisRight = g.append("g")
+      const yAxisRight = g
+        .append("g")
         .attr("transform", `translate(${svgWidth - margin.right}, 0)`)
-        .call(d3.axisRight(yScale).tickSize(0).tickFormat(""))
+        .call(d3.axisRight(yScale).tickSize(0).tickFormat(""));
 
       // add grid lines
-      const gridGroup = g.append("g")
-        .attr("class", "grid-lines");
-      
-      gridGroup.selectAll(".y-grid")
+      const gridGroup = g.append("g").attr("class", "grid-lines");
+
+      gridGroup
+        .selectAll(".y-grid")
         .data(yScale.domain())
         .enter()
         .append("line")
         .attr("class", "y-grid")
         .attr("x1", margin.left)
         .attr("x2", svgWidth - margin.right)
-        .attr("y1", d => yScale(d) + yScale.bandwidth() / 2)
-        .attr("y2", d => yScale(d) + yScale.bandwidth() / 2)
+        .attr("y1", (d) => yScale(d) + yScale.bandwidth() / 2)
+        .attr("y2", (d) => yScale(d) + yScale.bandwidth() / 2)
         .attr("stroke", "#ddd")
         .attr("stroke-width", 1);
 
-      gridGroup.selectAll(".x-grid")
+      gridGroup
+        .selectAll(".x-grid")
         .data(xTicks.slice(0, xTicks.length - 2))
         .enter()
         .append("line")
         .attr("class", "x-grid")
-        .attr("x1", d => xScale(d))
-        .attr("x2", d => xScale(d))
+        .attr("x1", (d) => xScale(d))
+        .attr("x2", (d) => xScale(d))
         .attr("y1", margin.top)
         .attr("y2", svgHeight - margin.top - margin.bottom)
         .attr("stroke", "#ddd")
@@ -543,35 +616,52 @@ async function stripPlotsMain(inputXlsxPath) {
         .style("font-size", "16px")
         .style("font-weight", "bold")
         .text("Log RF");
-      
+
       // add points
-      const subsetData = pointsData.filter(d => chemicalNames.includes(d.chemical));
+      const subsetData = pointsData.filter((d) =>
+        chemicalNames.includes(d.chemical)
+      );
       const yBW = yScale.bandwidth();
       g.selectAll("circle")
         .data(subsetData)
-        .enter().append("circle")
+        .enter()
+        .append("circle")
         .attr("class", "stripCircle")
-        .attr("cx", d => xScale(d.logRF))
-        .attr("cy", d => yScale(d.chemical) + yBW / 2)// + randomNumRange(-yBW/2, yBW/2)) // .replace(/\(ESI/, "(") //center in band then add random
+        .attr("cx", (d) => xScale(d.logRF))
+        .attr("cy", (d) => yScale(d.chemical) + yBW / 2) // + randomNumRange(-yBW/2, yBW/2)) // .replace(/\(ESI/, "(") //center in band then add random
         .attr("r", 6)
-        .style("fill", d => d.color)
+        .style("fill", (d) => d.color)
         .style("stroke-width", 1)
         .style("stroke", "black")
         .style("opacity", 0.6)
-        .on("mouseover", function(event, d) {
-          d3.selectAll("circle.stripCircle").transition().duration(300).attr("r", 6);
+        .on("mouseover", function (event, d) {
+          d3.selectAll("circle.stripCircle")
+            .transition()
+            .duration(300)
+            .attr("r", 6);
           d3.select(this).transition().duration(300).attr("r", 12);
           const c = d.color;
-          tooltipContainer.transition().duration(300).style("opacity", 1).style("background-color", c);
-          tooltip.html(`<b>Chemical:</b> ${d.chemical.split(" (")[0]}<br><b>Ionization Mode:</b> ${d.mode}<br><b>Feature ID:</b> ${d.featureId}<br><b>Sample Name:</b> ${d.sampleName}<br><b>Retention Time:</b> ${d.retentionTime}min<br><b>Log RF:</b> ${d.logRF.toFixed(2)}`);
-        })
+          tooltip.html(
+            `<b>Chemical:</b> ${
+              d.chemical.split(" (")[0]
+            }<br><b>Ionization Mode:</b> ${d.mode}<br><b>Feature ID:</b> ${
+              d.featureId
+            }<br><b>Sample Name:</b> ${
+              d.sampleName
+            }<br><b>Retention Time:</b> ${
+              d.retentionTime
+            }min<br><b>Log RF:</b> ${d.logRF.toFixed(2)}`
+          );
+          tooltipContainer
+            .transition()
+            .duration(300)
+            .style("opacity", 1)
+            .style("background-color", c);
+        });
     });
     return zoom;
   }
-
 }
 
-const inputXlsxPath = "./data/qNTA_Surrogate_Detection_Statistics_File_WW2DW.xlsx";
+const inputXlsxPath = "./data/Example_NTA_NTA_WebApp_qNTA.xlsx";
 stripPlotsMain(inputXlsxPath);
-
-
