@@ -1139,9 +1139,12 @@ d3.csv(csv_path).then(function(data) {
                   passedReplicate = true;
               } else {
                   countData[`${threshID}`]["counts"]["occ"]["underRep"] += 1;
-                  if (pass_hierarchy['underRep'] > pass_hierarchy[max_pass]) {
-                    max_pass = 'underRep';
-                  }
+                  // if (pass_hierarchy['underRep'] > pass_hierarchy[max_pass]) {
+                  //   max_pass = 'underRep';
+                  // }
+                  // if (!isBlankSample && pass_hierarchy['underRep'] > pass_hierarchy[max_pass]) {
+                  //   max_pass = 'underRep';
+                  // }
               }
           } else {
             if (Number(row[sample_rep_header]) >= countData[`${threshID}`]["threshold"]["rep"]) {
@@ -1151,54 +1154,18 @@ d3.csv(csv_path).then(function(data) {
               countData[`${threshID}`]["counts"]["occ"]["underRep"] += 1;
               if (pass_hierarchy['underRep'] > pass_hierarchy[max_pass]) {
                 max_pass = 'underRep';
-              }              
+              }
+              // if (!isBlankSample && pass_hierarchy['underRep'] > pass_hierarchy[max_pass]) {
+              //   max_pass = 'underRep';
+              // }            
             }
           }
-          
-          // // Only evaluate CV and MRL if replicate threshold is passed
-          // if (passedReplicate) {  // Evaluate CV and MRL only if replicate threshold is passed
-          //   var sample_cv_header = "CV " + sample_name;
-          //   var mrl_threshold_header = `MRL (${countData[threshID]['threshold']['mrl']}x)`;
-          //   var sample_mean_header = "Mean " + sample_name;
-
-          //   if (Number(row[sample_cv_header]) <= countData[`${threshID}`]["threshold"]["cv"]) {
-          //     countData[`${threshID}`]["counts"]["occ"]["underCV"] += 1;
-          //     if ((Number(row[sample_mean_header]) >= Number(row[mrl_threshold_header]) && passedBlankRep) || (!passedBlankRep && Number(row[sample_mean_header]) >= 0)) {
-          //       countData[`${threshID}`]["counts"]["occ"]["underCVOverMRL"] += 1;
-          //       max_pass = 'underCVOverMRL';
-          //     } else {
-          //       countData[`${threshID}`]["counts"]["occ"]["underCVUnderMRL"] += 1;
-          //       if (pass_hierarchy['underCVUnderMRL'] > pass_hierarchy[max_pass]) {
-          //           max_pass = 'underCVUnderMRL';
-          //       }
-          //     }
-          //   } else {
-          //     countData[`${threshID}`]["counts"]["occ"]["overCV"] += 1;
-          //     if ((Number(row[sample_mean_header]) >= Number(row[mrl_threshold_header]) && passedBlankRep) || (!passedBlankRep && Number(row[sample_mean_header]) >= 0)) {
-          //       countData[`${threshID}`]["counts"]["occ"]["overCVOverMRL"] += 1;
-          //       if (pass_hierarchy['overCVOverMRL'] > pass_hierarchy[max_pass]) {
-          //         max_pass = 'overCVOverMRL';
-          //       }
-          //     } else {
-          //       countData[`${threshID}`]["counts"]["occ"]["overCVUnderMRL"] += 1;
-          //       if (pass_hierarchy['overCVUnderMRL'] > pass_hierarchy[max_pass]) {
-          //         max_pass = 'overCVUnderMRL';
-          //       }
-          //     }
-          //   }
-          // }
-
-          // if (Number(row[sample_rep_header]) >= countData[`${threshID}`]["threshold"]["rep"]) {
-            
-          //   // we pass the replicate threshold
-          //   // countData[`${threshID}`]["counts"]["occ"]["overRep"] += 1;
-          //   passedReplicate = true;
 
           if (passedReplicate) {  // Evaluate CV and MRL only if replicate threshold is passed
             // now we check the CV threshold
             var sample_cv_header = "CV " + sample_name;
-            // AC added
-            var isBlankSample = ["MB", "Mb", "mb", "BLANK", "Blank", "blank", "BLK", "Blk"].some(blankStr => sample_name.includes(blankStr));
+            // // AC added
+            // var isBlankSample = ["MB", "Mb", "mb", "BLANK", "Blank", "blank", "BLK", "Blk"].some(blankStr => sample_name.includes(blankStr));
 
             // AC added
             // if (Number(row[sample_cv_header]) <= countData[`${threshID}`]["threshold"]["cv"]) {
@@ -1249,7 +1216,12 @@ d3.csv(csv_path).then(function(data) {
           countData[`${threshID}`]["counts"]["occ"]["missing"] += 1
         }
       }
+    // // AC Debug - console log out the features that fail replicate
+    // if (max_pass = 'underRep') {
+    //   console.log(row)
+    // }      
     } // END OF FEATURE
+
 
     return countData, max_pass
 

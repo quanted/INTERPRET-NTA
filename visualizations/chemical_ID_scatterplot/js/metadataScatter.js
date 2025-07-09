@@ -67,14 +67,14 @@ async function readCSV(filePath) {
  * @param {Object[]} csvDataRaw The raw data pulled directly from the CSV.
  * @returns {Object[]} The cleaned CSV data containing only the desired fields.
  */
-function cleanRawCsvData(csvDataRaw) {
+function cleanRawCsvData(csvDataRaw, hasMS2Score) {
   const csvDataClean = [];
   for (let row of csvDataRaw) {
     const cleanRow = {};
     cleanRow["Feature ID"] = Number(row["Feature ID"]);
     cleanRow["Ionization Mode"] = row["Ionization Mode"];
     cleanRow["DTXCID"] = row["DTXCID"];
-    cleanRow["MS2 Score"] = Number(row["MS2 quotient score"]);
+    cleanRow["MS2 Score"] = hasMS2Score ? Number(row["MS2 quotient score"]) : null; // Handle absence
     cleanRow["Hazard Score"] = Number(row["Hazard Score"]);
     cleanRow["Median Abundance"] = Number(row["Median blanksub mean feature abundance"]);
     cleanRow["Metadata Score"] = Number(row["Structure_total_norm"]);
@@ -181,6 +181,10 @@ async function metadataScatterMain(csvPath) {
   // clean raw CSV data, only keeping desired fields
   let csvDataClean = cleanRawCsvData(csvDataRaw);
   csvDataRaw = null; // garbage collection
+  
+  // Check if "MS2 quotient score" is present in the data
+  const hasMS2Score = csvDataClean.some(row => row.hasOwnProperty("MS2 quotient score"));
+
 
   // sort data on final occurrence count, secondarily on feature id
   const csvDataSorted = sortByOccCountThenFeatID(csvDataClean);
@@ -194,7 +198,7 @@ async function metadataScatterMain(csvPath) {
   let csvData = newCSV[0];
 
   let xAxisField = "Metadata Score";
-  let yAxisField = "MS2 Score";
+  let yAxisField = hasMS2Score ? "MS2 Score" : "Metadata Score"; // Fallback if MS2 Score isn't available
   let colorField = "Hazard Score";
   let sizeField = "Median Abundance";
 
@@ -324,24 +328,46 @@ async function metadataScatterMain(csvPath) {
     .style("text-align", "center")
     .style("gap", "10px");
 
+  // ulX.selectAll("li")
+  //   .data(fields)
+  //   .enter()
+  //   .append("li")
+  //   .text(d => d)
+  //   .style("padding", "5px 10px")
+  //   .style("cursor", "pointer")
+  //   .style("background-color", d => (d === xAxisField ? "#d3d3d3" : "#f0f0f0"))
+  //   .style("border", "1px solid #ccc")
+  //   .style("border-radius", "5px")
+  //   .style("height", "fit-content")
+  //   .on("click", function (event, d) {
+  //     xAxisField = d;
+  //     ulX.selectAll("li")
+  //       .style("background-color", d => (d === xAxisField ? "#d3d3d3" : "#f0f0f0"));
+  //     d3.select(this).style("background-color", "#d3d3d3");
+  //     updateScatterplot(csvData);
+  //   });
+  
+    // Axis selectors for X and Y with conditional styling
   ulX.selectAll("li")
-    .data(fields)
-    .enter()
-    .append("li")
-    .text(d => d)
-    .style("padding", "5px 10px")
-    .style("cursor", "pointer")
-    .style("background-color", d => (d === xAxisField ? "#d3d3d3" : "#f0f0f0"))
-    .style("border", "1px solid #ccc")
-    .style("border-radius", "5px")
-    .style("height", "fit-content")
-    .on("click", function (event, d) {
-      xAxisField = d;
-      ulX.selectAll("li")
-        .style("background-color", d => (d === xAxisField ? "#d3d3d3" : "#f0f0f0"));
-      d3.select(this).style("background-color", "#d3d3d3");
-      updateScatterplot(csvData);
-    });
+  .data(fields)
+  .enter()
+  .append("li")
+  .text(d => d)
+  .style("padding", "5px 10px")
+  .style("cursor", "pointer")
+  .style("background-color", d => (d === xAxisField ? "#d3d3d3" : "#f0f0f0"))
+  .style("border", "1px solid #ccc")
+  .style("border-radius", "5px")
+  .style("height", "fit-content")
+  .style("pointer-events", d => (d === "MS2 Score" && !hasMS2Score ? "none" : "auto"))
+  .style("opacity", d => (d === "MS2 Score" && !hasMS2Score ? "0.5" : "1"))
+  .on("click", function (event, d) {
+    xAxisField = d;
+    ulX.selectAll("li")
+      .style("background-color", d => (d === xAxisField ? "#d3d3d3" : "#f0f0f0"));
+    d3.select(this).style("background-color", "#d3d3d3");
+    updateScatterplot(csvData);
+  });
   
   // Now for Y axis
   const ulY = d3.select("div#metadataScatterContainer")
@@ -354,24 +380,45 @@ async function metadataScatterMain(csvPath) {
     .style("text-align", "center")
     .style("gap", "10px");
 
+  // ulY.selectAll("li")
+  //   .data(fields)
+  //   .enter()
+  //   .append("li")
+  //   .text(d => d)
+  //   .style("padding", "5px 10px")
+  //   .style("cursor", "pointer")
+  //   .style("background-color", d => (d === yAxisField ? "#d3d3d3" : "#f0f0f0"))
+  //   .style("border", "1px solid #ccc")
+  //   .style("border-radius", "5px")
+  //   .style("height", "fit-content")
+  //   .on("click", function (event, d) {
+  //     yAxisField = d;
+  //     ulY.selectAll("li")
+  //       .style("background-color", d => (d === yAxisField ? "#d3d3d3" : "#f0f0f0"));
+  //     d3.select(this).style("background-color", "#d3d3d3");
+  //     updateScatterplot(csvData);
+  //   });
+
   ulY.selectAll("li")
-    .data(fields)
-    .enter()
-    .append("li")
-    .text(d => d)
-    .style("padding", "5px 10px")
-    .style("cursor", "pointer")
-    .style("background-color", d => (d === yAxisField ? "#d3d3d3" : "#f0f0f0"))
-    .style("border", "1px solid #ccc")
-    .style("border-radius", "5px")
-    .style("height", "fit-content")
-    .on("click", function (event, d) {
-      yAxisField = d;
-      ulY.selectAll("li")
-        .style("background-color", d => (d === yAxisField ? "#d3d3d3" : "#f0f0f0"));
-      d3.select(this).style("background-color", "#d3d3d3");
-      updateScatterplot(csvData);
-    });
+  .data(fields)
+  .enter()
+  .append("li")
+  .text(d => d)
+  .style("padding", "5px 10px")
+  .style("cursor", "pointer")
+  .style("background-color", d => (d === yAxisField ? "#d3d3d3" : "#f0f0f0"))
+  .style("border", "1px solid #ccc")
+  .style("border-radius", "5px")
+  .style("height", "fit-content")
+  .style("pointer-events", d => (d === "MS2 Score" && !hasMS2Score ? "none" : "auto"))
+  .style("opacity", d => (d === "MS2 Score" && !hasMS2Score ? "0.5" : "1"))
+  .on("click", function (event, d) {
+    yAxisField = d;
+    ulY.selectAll("li")
+      .style("background-color", d => (d === yAxisField ? "#d3d3d3" : "#f0f0f0"));
+    d3.select(this).style("background-color", "#d3d3d3");
+    updateScatterplot(csvData);
+  });
 
   // setup container for size and color legends
   const legendContainer = d3.select("div#metadataScatterContainer")
@@ -430,13 +477,15 @@ async function metadataScatterMain(csvPath) {
     .style("background-color", d => (d === colorField ? "#d3d3d3" : "#f0f0f0"))
     .style("border", "1px solid #ccc")
     .style("border-radius", "5px")
+    .style("pointer-events", d => (d === "MS2 Score" && !hasMS2Score ? "none" : "auto"))
+    .style("opacity", d => (d === "MS2 Score" && !hasMS2Score ? "0.5" : "1"))
     .on("click", function (event, d) {
       colorField = d;
       ulColor.selectAll("li")
         .style("background-color", d => (d === colorField ? "#d3d3d3" : "#f0f0f0"));
       d3.select(this).style("background-color", "#d3d3d3");
       updateScatterplot(csvData);
-    });
+  });
 
   // Add size legend below color legend
   const sizeLegendContainer = legendContainer
@@ -498,13 +547,15 @@ async function metadataScatterMain(csvPath) {
     .style("background-color", d => (d === sizeField ? "#d3d3d3" : "#f0f0f0"))
     .style("border", "1px solid #ccc")
     .style("border-radius", "5px")
+    .style("pointer-events", d => (d === "MS2 Score" && !hasMS2Score ? "none" : "auto"))
+    .style("opacity", d => (d === "MS2 Score" && !hasMS2Score ? "0.5" : "1"))
     .on("click", function (event, d) {
       sizeField = d;
       ulSize.selectAll("li")
         .style("background-color", d => (d === sizeField ? "#d3d3d3" : "#f0f0f0"));
       d3.select(this).style("background-color", "#d3d3d3");
       updateScatterplot(csvData);
-    });
+  });
 
   // Add scatterplot points
   svg.selectAll("circle")
@@ -517,13 +568,27 @@ async function metadataScatterMain(csvPath) {
     .attr("fill", d => colorScale(d[colorField]))
     .attr("stroke", "black")
     .attr("opacity", 0.7)
+    // .on("mouseover", function (event, d) {
+    //   tooltip.style("visibility", "visible")
+    //     .html(`
+    //       <strong>Feature ID:</strong> ${d["Feature ID"]}<br>
+    //       <strong>Ionization Mode:</strong> ${d["Ionization Mode"]}<br>
+    //       <strong>DTXCID:</strong> ${d["DTXCID"]}<br>
+    //       <strong>MS2 Score:</strong> ${d["MS2 Score"]}<br>
+    //       <strong>Hazard Score:</strong> ${d["Hazard Score"].toFixed(2)}<br>
+    //       <strong>Median Abundance:</strong> ${Number(d["Median Abundance"].toFixed(0)).toLocaleString()}<br>
+    //       <strong>Metadata Score:</strong> ${d["Metadata Score"].toFixed(2)}<br>
+    //       <strong>Occurrence Count:</strong> ${d["Occurrence Count"]}
+    //     `);
+    // })
+    // Tooltip logic to conditionally display MS2 Score
     .on("mouseover", function (event, d) {
       tooltip.style("visibility", "visible")
         .html(`
           <strong>Feature ID:</strong> ${d["Feature ID"]}<br>
           <strong>Ionization Mode:</strong> ${d["Ionization Mode"]}<br>
           <strong>DTXCID:</strong> ${d["DTXCID"]}<br>
-          <strong>MS2 Score:</strong> ${d["MS2 Score"]}<br>
+          ${hasMS2Score ? `<strong>MS2 Score:</strong> ${d["MS2 Score"]}<br>` : ""}
           <strong>Hazard Score:</strong> ${d["Hazard Score"].toFixed(2)}<br>
           <strong>Median Abundance:</strong> ${Number(d["Median Abundance"].toFixed(0)).toLocaleString()}<br>
           <strong>Metadata Score:</strong> ${d["Metadata Score"].toFixed(2)}<br>
@@ -786,5 +851,6 @@ async function metadataScatterMain(csvPath) {
   updatePagination();
 }
 
-const csvPath = "./data/WW2DW_data_analysis_file-2025_03_25.csv";
+// const csvPath = "./data/WW2DW_data_analysis_file-2025_03_25.csv";
+const csvPath = "./data/WW2DW_data_analysis_file-2025_03_25_reduced_no_MS2.csv";
 metadataScatterMain(csvPath);
