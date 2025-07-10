@@ -2,10 +2,11 @@ div#metadataScatterContainer {
   display: grid;
   grid-template-areas: 
     "scatterTitle scatterTitle scatterTitle"
+    "filterContainer filterContainer filterContainer"
     "scatterYAxis scatterSVG scatterLegendContainer"
     "null0 scatterXAxis null1";
   grid-template-columns: 150px 600px 250px;
-  grid-template-rows: 60px 600px 200px;
+  grid-template-rows: 60px auto 600px 200px; /* Adjusted to include filterContainer */
   margin: 10px;
 }
 svg#metadataScatterSVG {
@@ -14,9 +15,19 @@ svg#metadataScatterSVG {
   -webkit-user-select: none; /* For Safari */
   -ms-user-select: none; /* For older versions of IE */
 }
+#filterContainer {
+  grid-area: filterContainer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+}
 #xAxisSelector {
   grid-area: scatterXAxis;
+  display: flex;
   align-content: center;
+  justify-content: center;
+  gap: 10px;
 }
 #yAxisSelector {
   grid-area: scatterYAxis;

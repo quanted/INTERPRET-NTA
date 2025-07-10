@@ -202,6 +202,163 @@ async function metadataScatterMain(csvPath) {
   let colorField = "Hazard Score";
   let sizeField = "Median Abundance";
 
+  // Add axis selectors
+  const fields = ["MS2 Score", "Metadata Score", "Hazard Score", "Median Abundance", "Occurrence Count"];
+
+  const filterContainer = d3.select("#metadataScatterContainer")
+      .append("div")
+      .attr("id", "filterContainer");
+
+    // Function to add a new filter
+    function addFilter() {
+      const filter = filterContainer.append("div").attr("class", "filter");
+
+      // Add dropdown for selecting the field to filter by
+      filter.append("label")
+        .attr("for", "filterFieldDropdown")
+        .text("Filter by:");
+
+      const filterFieldDropdown = filter.append("select")
+        .attr("class", "filterFieldDropdown")
+        .style("padding", "5px")
+        .style("border", "1px solid #ccc")
+        .style("border-radius", "5px");
+
+      filterFieldDropdown.selectAll("option")
+        .data(fields)
+        .enter()
+        .append("option")
+        .attr("value", d => d)
+        .text(d => d);
+
+      // Add input field for minimum value
+      filter.append("label")
+        .attr("for", "minValueInput")
+        .text("Minimum value:");
+
+      filter.append("input")
+        .attr("type", "number")
+        .attr("class", "minValueInput")
+        .style("padding", "5px")
+        .style("border", "1px solid #ccc")
+        .style("border-radius", "5px");
+
+      // Add remove button for the filter
+      filter.append("button")
+        .text("Remove Filter")
+        .style("padding", "5px 10px")
+        .style("cursor", "pointer")
+        .style("border", "1px solid #ccc")
+        .style("border-radius", "5px")
+        .on("click", () => {
+          filter.remove();
+        });
+    }
+
+  // Add initial filter
+  addFilter();
+
+  // Button to add more filters
+  filterContainer.append("button")
+    .text("Add Another Filter")
+    .style("padding", "5px 10px")
+    .style("cursor", "pointer")
+    .style("border", "1px solid #ccc")
+    .style("border-radius", "5px")
+    .on("click", addFilter);
+
+  // Add button to apply all filters
+  filterContainer.append("button")
+    .text("Apply Filters")
+    .style("padding", "5px 10px")
+    .style("cursor", "pointer")
+    .style("border", "1px solid #ccc")
+    .style("border-radius", "5px")
+    .on("click", () => {
+      let filteredData = csvData;
+
+      // Apply each filter
+      filterContainer.selectAll(".filter").each(function() {
+        const filterField = d3.select(this).select(".filterFieldDropdown").property("value");
+        const minValue = parseFloat(d3.select(this).select(".minValueInput").property("value"));
+
+        if (!isNaN(minValue)) {
+          filteredData = filteredData.filter(d => d[filterField] >= minValue);
+        }
+      });
+
+      updateScatterplot(filteredData);
+    });
+
+  // // Initial scatterplot rendering
+  // const svg = d3.select("div#metadataScatterContainer")
+  //   .append("svg")
+  //   .attr("id", "metadataScatterSVG")
+  //   .attr("width", 600)
+  //   .attr("height", 600);
+
+  // // Set up scales
+  // const xScale = d3.scaleLinear().range([50, 550]); // Example range
+  // const yScale = d3.scaleLinear().range([550, 50]); // Example range
+  // const colorScale = d3.scaleLinear().range(["white", "red"]);
+  // const sizeScale = d3.scaleSqrt().range([5, 22]);
+
+  // // Add filter container
+  // const filterContainer = d3.select("#metadataScatterContainer")
+  //   .append("div")
+  //   .attr("id", "filterContainer");
+
+  // // Add dropdown for selecting the field to filter by
+  // filterContainer.append("label")
+  //   .attr("for", "filterFieldDropdown")
+  //   .text("Filter by:");
+
+  // const filterFieldDropdown = filterContainer.append("select")
+  //   .attr("id", "filterFieldDropdown")
+  //   .style("padding", "5px")
+  //   .style("border", "1px solid #ccc")
+  //   .style("border-radius", "5px");
+
+  // filterFieldDropdown.selectAll("option")
+  //   .data(fields)
+  //   .enter()
+  //   .append("option")
+  //   .attr("value", d => d)
+  //   .text(d => d);
+
+  // // Add input field for minimum value
+  // filterContainer.append("label")
+  //   .attr("for", "minValueInput")
+  //   .text("Minimum value:");
+
+  // const minValueInput = filterContainer.append("input")
+  //   .attr("type", "number")
+  //   .attr("id", "minValueInput")
+  //   .style("padding", "5px")
+  //   .style("border", "1px solid #ccc")
+  //   .style("border-radius", "5px");
+
+  // // Add button to apply filter
+  // const applyFilterButton = filterContainer.append("button")
+  //   .text("Apply Filter")
+  //   .style("padding", "5px 10px")
+  //   .style("cursor", "pointer")
+  //   .style("border", "1px solid #ccc")
+  //   .style("border-radius", "5px")
+  //   .on("click", () => {
+  //     const selectedField = filterFieldDropdown.property("value");
+  //     const minValue = parseFloat(minValueInput.property("value"));
+
+  //     if (!isNaN(minValue)) {
+  //       const filteredData = csvData.filter(d => d[selectedField] >= minValue);
+  //       updateScatterplot(filteredData);
+  //     }
+  //   });
+
+
+
+
+
   // Create tooltip container
   const tooltip = d3.select("div#metadataScatterContainer")
     .append("div")
@@ -313,9 +470,6 @@ async function metadataScatterMain(csvPath) {
     .attr("class", "y-axis")
     .attr("transform", `translate(${margin.left},0)`)
     .call(d3.axisLeft(yScale).ticks(10));
-
-  // Add axis selectors
-  const fields = ["MS2 Score", "Metadata Score", "Hazard Score", "Median Abundance", "Occurrence Count"];
 
   // first for X axis
   const ulX = d3.select("div#metadataScatterContainer")

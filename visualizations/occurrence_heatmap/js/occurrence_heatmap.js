@@ -645,10 +645,10 @@ async function createOccurrenceHeatmap(
 // }
 
 function loadHeatmap() {
-  const csvPathOccurrence = "./data/20250709_test_file_run/Example_NTA_for_QAQC_visuals.csv";
-  const csvPathParameters = "./data/20250709_test_file_run/Analysis_parameters.csv";
-  // const csvPathOccurrence = "./data/20250709_NTAW807/Method_1_-_HLB_for_QAQC_visuals.csv";
-  // const csvPathParameters = "./data/20250709_NTAW807/Analysis_parameters.csv";
+  // const csvPathOccurrence = "./data/20250709_test_file_run/Example_NTA_for_QAQC_visuals.csv";
+  // const csvPathParameters = "./data/20250709_test_file_run/Analysis_parameters.csv";
+  const csvPathOccurrence = "./data/20250709_NTAW807/Method_1_-_HLB_for_QAQC_visuals.csv";
+  const csvPathParameters = "./data/20250709_NTAW807/Analysis_parameters.csv";
   createOccurrenceHeatmap(csvPathOccurrence, csvPathParameters);
 }
 

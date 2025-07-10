@@ -315,6 +315,13 @@ export function addTitle(canvas, thresholdData, dimsObject, graphMesh) {
   let titleY = dimsObject.actualHeight; // value of 0 sets top to be `height` below graph?? shift up by this amount
   titleY += dimsObject.height / 2 + dimsObject.paddingHeight * 0.8; // shift to top of graph, account for padding
 
+  // // Add an additional offset to move the title further up
+  // const additionalOffset = 100; // Adjust this value as needed
+  // titleY += additionalOffset;
+
+
+
+
   const titleLabel = new CSS2DObject(titleDiv);
   titleLabel.position.set(titleX, titleY, 0);
 
