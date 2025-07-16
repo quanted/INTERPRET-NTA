@@ -178,13 +178,12 @@ async function metadataScatterMain(csvPath) {
   // read in all CSV data
   let csvDataRaw = await readCSV(csvPath);
 
-  // clean raw CSV data, only keeping desired fields
-  let csvDataClean = cleanRawCsvData(csvDataRaw);
-  csvDataRaw = null; // garbage collection
-  
-  // Check if "MS2 quotient score" is present in the data
-  const hasMS2Score = csvDataClean.some(row => row.hasOwnProperty("MS2 quotient score"));
+  // Check if "MS2 quotient score" is present in the raw data
+  const hasMS2Score = csvDataRaw.some(row => row.hasOwnProperty("MS2 quotient score"));
 
+  // clean raw CSV data, only keeping desired fields
+  let csvDataClean = cleanRawCsvData(csvDataRaw, hasMS2Score);
+  csvDataRaw = null; // garbage collection
 
   // sort data on final occurrence count, secondarily on feature id
   const csvDataSorted = sortByOccCountThenFeatID(csvDataClean);
@@ -209,62 +208,59 @@ async function metadataScatterMain(csvPath) {
       .append("div")
       .attr("id", "filterContainer");
 
-    // Function to add a new filter
-    function addFilter() {
-      const filter = filterContainer.append("div").attr("class", "filter");
+  // Function to add a new filter
+  function addFilter() {
+    const filter = filterContainer.append("div").attr("class", "filter");
 
-      // Add dropdown for selecting the field to filter by
-      filter.append("label")
-        .attr("for", "filterFieldDropdown")
-        .text("Filter by:");
+    // Add dropdown for selecting the field to filter by
+    filter.append("label")
+      .attr("for", "filterFieldDropdown")
+      .text("Filter by:");
 
-      const filterFieldDropdown = filter.append("select")
-        .attr("class", "filterFieldDropdown")
-        .style("padding", "5px")
-        .style("border", "1px solid #ccc")
-        .style("border-radius", "5px");
+    const filterFieldDropdown = filter.append("select")
+      .attr("class", "filterFieldDropdown")
+      .style("padding", "5px")
+      .style("border", "1px solid #ccc")
+      .style("border-radius", "5px");
 
-      filterFieldDropdown.selectAll("option")
-        .data(fields)
-        .enter()
-        .append("option")
-        .attr("value", d => d)
-        .text(d => d);
+    filterFieldDropdown.selectAll("option")
+      .data(fields)
+      .enter()
+      .append("option")
+      .attr("value", d => d)
+      .text(d => d);
 
-      // Add input field for minimum value
-      filter.append("label")
-        .attr("for", "minValueInput")
-        .text("Minimum value:");
+    // Add input field for minimum value
+    filter.append("label")
+      .attr("for", "minValueInput")
+      .text("Minimum value:");
 
-      filter.append("input")
-        .attr("type", "number")
-        .attr("class", "minValueInput")
-        .style("padding", "5px")
-        .style("border", "1px solid #ccc")
-        .style("border-radius", "5px");
+    filter.append("input")
+      .attr("type", "number")
+      .attr("class", "minValueInput")
+      .style("padding", "5px")
+      .style("border", "1px solid #ccc")
+      .style("border-radius", "5px");
 
-      // Add remove button for the filter
-      filter.append("button")
-        .text("Remove Filter")
-        .style("padding", "5px 10px")
-        .style("cursor", "pointer")
-        .style("border", "1px solid #ccc")
-        .style("border-radius", "5px")
-        .on("click", () => {
-          filter.remove();
-        });
-    }
-
-  // Add initial filter
-  addFilter();
+    // Add remove button for the filter
+    filter.append("button")
+      .text("Remove Filter")
+      .style("padding", "5px 10px")
+      .style("cursor", "pointer")
+      .style("border", "1px solid #ccc")
+      .style("border-radius", "5px")
+      .on("click", () => {
+        filter.remove();
+      });
+  }
 
   // Button to add more filters
   filterContainer.append("button")
-    .text("Add Another Filter")
+    .text("Add Filter")
     .style("padding", "5px 10px")
     .style("cursor", "pointer")
     .style("border", "1px solid #ccc")
-    .style("border-radius", "5px")
+    .style("border-radius", "5px")  
     .on("click", addFilter);
 
   // Add button to apply all filters
@@ -273,7 +269,7 @@ async function metadataScatterMain(csvPath) {
     .style("padding", "5px 10px")
     .style("cursor", "pointer")
     .style("border", "1px solid #ccc")
-    .style("border-radius", "5px")
+    .style("border-radius", "5px")    
     .on("click", () => {
       let filteredData = csvData;
 
@@ -290,74 +286,8 @@ async function metadataScatterMain(csvPath) {
       updateScatterplot(filteredData);
     });
 
-  // // Initial scatterplot rendering
-  // const svg = d3.select("div#metadataScatterContainer")
-  //   .append("svg")
-  //   .attr("id", "metadataScatterSVG")
-  //   .attr("width", 600)
-  //   .attr("height", 600);
-
-  // // Set up scales
-  // const xScale = d3.scaleLinear().range([50, 550]); // Example range
-  // const yScale = d3.scaleLinear().range([550, 50]); // Example range
-  // const colorScale = d3.scaleLinear().range(["white", "red"]);
-  // const sizeScale = d3.scaleSqrt().range([5, 22]);
-
-  // // Add filter container
-  // const filterContainer = d3.select("#metadataScatterContainer")
-  //   .append("div")
-  //   .attr("id", "filterContainer");
-
-  // // Add dropdown for selecting the field to filter by
-  // filterContainer.append("label")
-  //   .attr("for", "filterFieldDropdown")
-  //   .text("Filter by:");
-
-  // const filterFieldDropdown = filterContainer.append("select")
-  //   .attr("id", "filterFieldDropdown")
-  //   .style("padding", "5px")
-  //   .style("border", "1px solid #ccc")
-  //   .style("border-radius", "5px");
-
-  // filterFieldDropdown.selectAll("option")
-  //   .data(fields)
-  //   .enter()
-  //   .append("option")
-  //   .attr("value", d => d)
-  //   .text(d => d);
-
-  // // Add input field for minimum value
-  // filterContainer.append("label")
-  //   .attr("for", "minValueInput")
-  //   .text("Minimum value:");
-
-  // const minValueInput = filterContainer.append("input")
-  //   .attr("type", "number")
-  //   .attr("id", "minValueInput")
-  //   .style("padding", "5px")
-  //   .style("border", "1px solid #ccc")
-  //   .style("border-radius", "5px");
-
-  // // Add button to apply filter
-  // const applyFilterButton = filterContainer.append("button")
-  //   .text("Apply Filter")
-  //   .style("padding", "5px 10px")
-  //   .style("cursor", "pointer")
-  //   .style("border", "1px solid #ccc")
-  //   .style("border-radius", "5px")
-  //   .on("click", () => {
-  //     const selectedField = filterFieldDropdown.property("value");
-  //     const minValue = parseFloat(minValueInput.property("value"));
-
-  //     if (!isNaN(minValue)) {
-  //       const filteredData = csvData.filter(d => d[selectedField] >= minValue);
-  //       updateScatterplot(filteredData);
-  //     }
-  //   });
-
-
-
-
+  // Add initial filter
+  addFilter();
 
   // Create tooltip container
   const tooltip = d3.select("div#metadataScatterContainer")
@@ -379,13 +309,13 @@ async function metadataScatterMain(csvPath) {
     colorScale.domain([0, d3.max(csvData, d => d[colorField])]);
     sizeScale.domain([0, d3.max(csvData, d => d[sizeField])]);
 
-    // Update gradient legend values
-    gradientMinLabel.text(Math.floor(d3.min(csvData, d => d[colorField])).toLocaleString());
-    gradientMaxLabel.text(Math.ceil(d3.max(csvData, d => d[colorField])).toLocaleString());
+    // // Update gradient legend values
+    // gradientMinLabel.text(Math.floor(d3.min(csvData, d => d[colorField])).toLocaleString());
+    // gradientMaxLabel.text(Math.ceil(d3.max(csvData, d => d[colorField])).toLocaleString());
 
-    // Update size legend circles
-    sizeMinLabel.text(Math.floor(d3.min(csvData, d => d[sizeField])).toLocaleString());
-    sizeMaxLabel.text(Math.ceil(d3.max(csvData, d => d[sizeField])).toLocaleString());
+    // // Update size legend circles
+    // sizeMinLabel.text(Math.floor(d3.min(csvData, d => d[sizeField])).toLocaleString());
+    // sizeMaxLabel.text(Math.ceil(d3.max(csvData, d => d[sizeField])).toLocaleString());
 
     sizeLegendCircles.selectAll("circle")
       .data([d3.max(csvData, d => d[sizeField]), 
@@ -395,10 +325,22 @@ async function metadataScatterMain(csvPath) {
 
     // Update axes
     svg.select(".x-axis")
-      .call(d3.axisBottom(xScale).ticks(10));
+      .call(d3.axisBottom(xScale)
+        .ticks(10)
+        .tickSize(15) // Adjust this value to increase the tick mark length
+      )
+      .style("font-size", "14px") // Adjust the font size here
+      .selectAll("text")
+      .attr("dy", "1em"); // Adjust this value to move the labels further down
 
     svg.select(".y-axis")
-      .call(d3.axisLeft(yScale).ticks(10));
+      .call(d3.axisLeft(yScale)
+        .ticks(10)
+        .tickSize(15) // Adjust this value to increase the tick mark length
+      )
+      .style("font-size", "14px") // Adjust the font size here
+      .selectAll("text")
+      .attr("dx", "-0.1em"); // Adjust this value to move the labels further left
 
     // Update points
     svg.selectAll("circle")
@@ -417,12 +359,21 @@ async function metadataScatterMain(csvPath) {
                 <strong>Feature ID:</strong> ${d["Feature ID"]}<br>
                 <strong>Ionization Mode:</strong> ${d["Ionization Mode"]}<br>
                 <strong>DTXCID:</strong> ${d["DTXCID"]}<br>
-                <strong>MS2 Score:</strong> ${d["MS2 Score"]}<br>
+                ${hasMS2Score ? `<strong>MS2 Score:</strong> ${d["MS2 Score"]}<br>` : ""}
                 <strong>Hazard Score:</strong> ${d["Hazard Score"].toFixed(2)}<br>
                 <strong>Median Abundance:</strong> ${Number(d["Median Abundance"].toFixed(0)).toLocaleString()}<br>
                 <strong>Metadata Score:</strong> ${d["Metadata Score"].toFixed(2)}<br>
                 <strong>Occurrence Count:</strong> ${d["Occurrence Count"]}
               `);
+            // Highlight all circles with the same feature ID
+            d3.selectAll("circle")
+              .style("stroke", "black")
+              .style("stroke-width", "1px");
+            d3.selectAll("circle")
+              .filter(circleData => circleData["Feature ID"] === d["Feature ID"])
+              .raise()
+              .style("stroke", "rgb(0, 0, 255)")
+              .style("stroke-width", "2px");
           })
           .on("mousemove", function (event) {
             tooltip.style("top", `${event.pageY - 50}px`)
@@ -430,6 +381,11 @@ async function metadataScatterMain(csvPath) {
           })
           .on("mouseout", function () {
             tooltip.style("visibility", "hidden");
+
+            // Reset stroke styles
+            d3.selectAll("circle")
+              .style("stroke", "black")
+              .style("stroke-width", "1px");
           }),
         update => update
           // .transition().duration(1000)
@@ -722,19 +678,6 @@ async function metadataScatterMain(csvPath) {
     .attr("fill", d => colorScale(d[colorField]))
     .attr("stroke", "black")
     .attr("opacity", 0.7)
-    // .on("mouseover", function (event, d) {
-    //   tooltip.style("visibility", "visible")
-    //     .html(`
-    //       <strong>Feature ID:</strong> ${d["Feature ID"]}<br>
-    //       <strong>Ionization Mode:</strong> ${d["Ionization Mode"]}<br>
-    //       <strong>DTXCID:</strong> ${d["DTXCID"]}<br>
-    //       <strong>MS2 Score:</strong> ${d["MS2 Score"]}<br>
-    //       <strong>Hazard Score:</strong> ${d["Hazard Score"].toFixed(2)}<br>
-    //       <strong>Median Abundance:</strong> ${Number(d["Median Abundance"].toFixed(0)).toLocaleString()}<br>
-    //       <strong>Metadata Score:</strong> ${d["Metadata Score"].toFixed(2)}<br>
-    //       <strong>Occurrence Count:</strong> ${d["Occurrence Count"]}
-    //     `);
-    // })
     // Tooltip logic to conditionally display MS2 Score
     .on("mouseover", function (event, d) {
       tooltip.style("visibility", "visible")
@@ -748,6 +691,15 @@ async function metadataScatterMain(csvPath) {
           <strong>Metadata Score:</strong> ${d["Metadata Score"].toFixed(2)}<br>
           <strong>Occurrence Count:</strong> ${d["Occurrence Count"]}
         `);
+      // Highlight all circles with the same feature ID
+      d3.selectAll("circle")
+        .style("stroke", "black")
+        .style("stroke-width", "1px");
+      d3.selectAll("circle")
+        .filter(circleData => circleData["Feature ID"] === d["Feature ID"])
+        .raise()
+        .style("stroke", "rgb(0, 0, 255)")
+        .style("stroke-width", "2px");        
     })
     .on("mousemove", function (event) {
       tooltip.style("top", `${event.pageY - 50}px`)
@@ -755,6 +707,11 @@ async function metadataScatterMain(csvPath) {
     })
     .on("mouseout", function () {
       tooltip.style("visibility", "hidden");
+
+      // Reset stroke styles
+      d3.selectAll("circle")
+        .style("stroke", "black")
+        .style("stroke-width", "1px");      
     });
 
   // Add box selection functionality
@@ -1005,6 +962,7 @@ async function metadataScatterMain(csvPath) {
   updatePagination();
 }
 
-// const csvPath = "./data/WW2DW_data_analysis_file-2025_03_25.csv";
-const csvPath = "./data/WW2DW_data_analysis_file-2025_03_25_reduced_no_MS2.csv";
+const csvPath = "./data/WW2DW_data_analysis_file-2025_03_25.csv";
+// const csvPath = "./data/WW2DW_data_analysis_file-2025_03_25_test.csv";
+// const csvPath = "./data/WW2DW_data_analysis_file-2025_03_25_reduced_no_MS2.csv";
 metadataScatterMain(csvPath);
