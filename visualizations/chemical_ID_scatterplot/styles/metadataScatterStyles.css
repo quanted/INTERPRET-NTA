@@ -1,12 +1,13 @@
 div#metadataScatterContainer {
   display: grid;
   grid-template-areas: 
-    "scatterTitle scatterTitle scatterTitle"
-    "filterContainer filterContainer filterContainer"
-    "scatterYAxis scatterSVG scatterLegendContainer"
-    "null0 scatterXAxis null1";
-  grid-template-columns: 150px 600px 250px;
-  grid-template-rows: 60px auto 600px 200px; /* Adjusted to include filterContainer */
+    "scatterTitle scatterTitle scatterTitle scatterTitle"
+    "scatterYAxis scatterSVG scatterLegendContainer additionalScatter"
+    "null0 scatterXAxis null1 null2"
+    "filterContainer filterContainer filterContainer filterContainer"
+    "sampleFilter sampleFilter sampleFilter sampleFilter";
+  grid-template-columns: 150px 600px 250px 600px;
+  grid-template-rows: 60px auto auto auto auto; /* Adjusted to include filterContainer */
   margin: 10px;
 }
 svg#metadataScatterSVG {
@@ -15,17 +16,50 @@ svg#metadataScatterSVG {
   -webkit-user-select: none; /* For Safari */
   -ms-user-select: none; /* For older versions of IE */
 }
-/* #filterContainer {
+div#sampleFilterContainer {
+    grid-area: sampleFilter;
+}
+#sampleFilterOptions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+#sampleFilterOptions > div {
+  display: flex;
+  flex-direction: column;
+}
+
+#sampleFilterOptions > div {
+  display: flex;
+  flex-direction: column;
+}
+
+#filterContainer {
   grid-area: filterContainer;
   display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px;
-} */
-#filterContainer {
+  flex-direction: row; /* Stack buttonContainer and otherElementsContainer vertically */
+  gap: 20px;
+  margin: 20px 0px;
+  border-top: 2px solid #ccc; /* Add top border */
+  border-bottom: 2px solid #ccc; /* Add bottom border */
+  padding-top: 10px;  /* Optional: Add padding to separate content from the border */
+  padding-bottom: 10px; /* Optional: Add padding to separate content from the border */
+}
+
+#buttonContainer {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  flex-direction: column; /* Stack buttons vertically */
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100px;
+}
+
+#otherElementsContainer {
+  display: flex;
+  flex-direction: row; /* Arrange other elements side by side */
+  justify-content: center;
   gap: 20px;
 }
 
@@ -33,8 +67,37 @@ svg#metadataScatterSVG {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  margin:20px;
 }
 
+.filter-button {
+  padding: 5px 10px;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #f0f0f0; /* Optional: Add a background color */
+  transition: background-color 0.3s; /* Optional: Add a transition for hover effects */
+}
+
+.filter-button:hover {
+  background-color: #e0e0e0; /* Optional: Change background on hover */
+}
+
+.filter {
+  margin-bottom: 0px; /* Space between filters */
+  justify-content: center;
+}
+
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* Space between elements in the row */
+  margin-bottom: 10px; /* Space between rows */
+}
+
+#additionalScatterSVG {
+    /* grid-area: additionalScatter; */
+}
 #controlButtons {
   display: flex;
   flex-direction: column;
@@ -79,8 +142,9 @@ svg#metadataScatterSVG {
 }
 
 #paginationContainer {
-  grid-area: scatterXAxis;
-  justify-content: center;
+  grid-area: scatterTitle;
+  justify-content: start;
+  padding: 10px;
 }
 
 #paginationTooltip {
@@ -116,4 +180,9 @@ svg#metadataScatterSVG {
 }
 .clickable-feature-id:hover {
   color: darkblue;
+}
+
+.description {
+  font-weight: bold;
+  margin-bottom: 10px;
 }

@@ -32,15 +32,9 @@ async function createOccurrenceHeatmap(
       MrlMult,
     ] = await dataUtils.getOccurrenceAndParameterData(csvPathOccurrence, csvPathParameters);
 
-    console.log('data1');
-    console.log(fetchedData);
-
   } catch (error) {
     console.error('Error loading data:', error);
   }
-
-  console.log('data2');
-  console.log(fetchedData); // This should now correctly log the fetched data
 
   if (minSample !== null) {
     var minReplicateHitsPercent = minSample;
@@ -55,9 +49,6 @@ async function createOccurrenceHeatmap(
     maxReplicateCvValue,
     MrlMult,
   };
-
-  // console.log('data')
-  // console.log(data)
 
   // get unique sample headers
   const sampleGroups = dataUtils.getUniqueSampleHeaders(fetchedData);

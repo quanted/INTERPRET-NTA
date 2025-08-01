@@ -9,57 +9,74 @@
  * @param {string} filePath Path to the INTERPRET NTA run sequence input CSV.
  * @returns {Object[]} An array of objects, each object corresponding to one row of the csv file.
  */
+
+// async function readCSV(filePath) {
+//   // fetch the file
+//   const response = await fetch(filePath);
+//   const text = await response.text();
+
+//   // Parse the CSV manually
+//   const rows = [];
+//   let currentRow = [];
+//   let currentField = '';
+//   let insideQuotes = false;
+
+//   for (let i = 0; i < text.length; i++) {
+//     const char = text[i];
+//     const nextChar = text[i + 1];
+
+//     if (char === '"') {
+//       if (insideQuotes && nextChar === '"') {
+//         // Handle escaped quotes ("" -> ")
+//         currentField += '"';
+//         i++; // Skip the next quote
+//       } else {
+//         // Toggle the insideQuotes flag
+//         insideQuotes = !insideQuotes;
+//       }
+//     } else if (char === ',' && !insideQuotes) {
+//       // End of a field
+//       currentRow.push(currentField.trim());
+//       currentField = '';
+//     } else if (char === '\n' && !insideQuotes) {
+//       // End of a row
+//       currentRow.push(currentField.trim());
+//       rows.push(currentRow);
+//       currentRow = [];
+//       currentField = '';
+//     } else {
+//       // Add character to the current field
+//       currentField += char;
+//     }
+//   }
+
+//   // Add the last field and row if necessary
+//   if (currentField) currentRow.push(currentField.trim());
+//   if (currentRow.length > 0) rows.push(currentRow);
+
+//   // Extract headers and map rows to objects
+//   const headers = rows.shift();
+//   const jsonData = rows.map(row =>
+//     Object.fromEntries(row.map((val, i) => [headers[i], val]))
+//   );
+
+//   return jsonData;
+// }
+
 async function readCSV(filePath) {
-  // fetch the file
+  // Fetch the file
   const response = await fetch(filePath);
   const text = await response.text();
 
-  // Parse the CSV manually
-  const rows = [];
-  let currentRow = [];
-  let currentField = '';
-  let insideQuotes = false;
-
-  for (let i = 0; i < text.length; i++) {
-    const char = text[i];
-    const nextChar = text[i + 1];
-
-    if (char === '"') {
-      if (insideQuotes && nextChar === '"') {
-        // Handle escaped quotes ("" -> ")
-        currentField += '"';
-        i++; // Skip the next quote
-      } else {
-        // Toggle the insideQuotes flag
-        insideQuotes = !insideQuotes;
-      }
-    } else if (char === ',' && !insideQuotes) {
-      // End of a field
-      currentRow.push(currentField.trim());
-      currentField = '';
-    } else if (char === '\n' && !insideQuotes) {
-      // End of a row
-      currentRow.push(currentField.trim());
-      rows.push(currentRow);
-      currentRow = [];
-      currentField = '';
-    } else {
-      // Add character to the current field
-      currentField += char;
-    }
-  }
-
-  // Add the last field and row if necessary
-  if (currentField) currentRow.push(currentField.trim());
-  if (currentRow.length > 0) rows.push(currentRow);
-
-  // Extract headers and map rows to objects
-  const headers = rows.shift();
-  const jsonData = rows.map(row =>
-    Object.fromEntries(row.map((val, i) => [headers[i], val]))
-  );
-
-  return jsonData;
+  // Use PapaParse to parse the CSV
+  return new Promise((resolve, reject) => {
+    Papa.parse(text, {
+      header: true, // Automatically extract headers
+      dynamicTyping: true, // Convert numeric fields to numbers automatically
+      complete: (results) => resolve(results.data),
+      error: (error) => reject(error),
+    });
+  });
 }
 
 /**
@@ -79,6 +96,13 @@ function cleanRawCsvData(csvDataRaw, hasMS2Score) {
     cleanRow["Median Abundance"] = Number(row["Median blanksub mean feature abundance"]);
     cleanRow["Metadata Score"] = Number(row["Structure_total_norm"]);
     cleanRow["Occurrence Count"] = Number(row["Final Occurrence Count"]);
+
+    // Preserve columns starting with "INTA-Mean"
+    for (const key in row) {
+      if (key.startsWith("INTA-Mean")) {
+        cleanRow[key] = Number(row[key]);
+      }
+    }
 
     csvDataClean.push(cleanRow);
   }
@@ -173,6 +197,13 @@ function getNestedCSVDataBasedOnOcc(csvData, nPoints = 1200) {
   return csvDataNested;
 }
 
+// Function to read the feature IDs from a CSV file
+async function readFeatureIDsFromCSV(file) {
+  const text = await file.text();
+  const featureIDs = text.split('\n').map(id => id.trim()).filter(id => id);
+  return featureIDs.map(Number);
+}
+
 
 async function metadataScatterMain(csvPath) {
   // read in all CSV data
@@ -208,16 +239,30 @@ async function metadataScatterMain(csvPath) {
       .append("div")
       .attr("id", "filterContainer");
 
-  // Function to add a new filter
-  function addFilter() {
-    const filter = filterContainer.append("div").attr("class", "filter");
+  // Create a container for the buttons
+  const buttonContainer = filterContainer.append("div")
+    .attr("id", "buttonContainer")
+    .style("display", "flex")
+    .style("flex-direction", "column"); // Stack buttons vertically
 
-    // Add dropdown for selecting the field to filter by
-    filter.append("label")
+  // Create a container for other elements
+  const otherElementsContainer = filterContainer.append("div")
+    .attr("id", "otherElementsContainer")
+    .style("display", "flex")
+    .style("flex-direction", "row"); // Arrange other elements side by side
+  
+    // Function to add a new filter
+  function addFilter() {
+    const filter = otherElementsContainer.append("div").attr("class", "filter");
+
+    // First row: "Filter by:" and dropdown
+    const filterFieldRow = filter.append("div").attr("class", "filter-row");
+
+    filterFieldRow.append("label")
       .attr("for", "filterFieldDropdown")
       .text("Filter by:");
 
-    const filterFieldDropdown = filter.append("select")
+    const filterFieldDropdown = filterFieldRow.append("select")
       .attr("class", "filterFieldDropdown")
       .style("padding", "5px")
       .style("border", "1px solid #ccc")
@@ -230,51 +275,114 @@ async function metadataScatterMain(csvPath) {
       .attr("value", d => d)
       .text(d => d);
 
-    // Add input field for minimum value
-    filter.append("label")
+    // Second row: "Minimum value" and input field
+    const minValueRow = filter.append("div").attr("class", "filter-row");
+
+    minValueRow.append("label")
       .attr("for", "minValueInput")
       .text("Minimum value:");
 
-    filter.append("input")
+    minValueRow.append("input")
       .attr("type", "number")
       .attr("class", "minValueInput")
       .style("padding", "5px")
       .style("border", "1px solid #ccc")
       .style("border-radius", "5px");
 
-    // Add remove button for the filter
-    filter.append("button")
+    // Third row: Remove filter button
+    const removeButtonRow = filter.append("div").attr("class", "filter-row");
+
+    removeButtonRow.append("button")
       .text("Remove Filter")
-      .style("padding", "5px 10px")
-      .style("cursor", "pointer")
-      .style("border", "1px solid #ccc")
-      .style("border-radius", "5px")
+      .attr("class", "filter-button")
       .on("click", () => {
         filter.remove();
       });
   }
+  // // Function to add a new filter
+  // function addFilter() {
+  //   const filter = filterContainer.append("div").attr("class", "filter");
+
+  //   // Add dropdown for selecting the field to filter by
+  //   filter.append("label")
+  //     .attr("for", "filterFieldDropdown")
+  //     .text("Filter by:");
+
+  //   const filterFieldDropdown = filter.append("select")
+  //     .attr("class", "filterFieldDropdown")
+  //     .style("padding", "5px")
+  //     .style("border", "1px solid #ccc")
+  //     .style("border-radius", "5px");
+
+  //   filterFieldDropdown.selectAll("option")
+  //     .data(fields)
+  //     .enter()
+  //     .append("option")
+  //     .attr("value", d => d)
+  //     .text(d => d);
+
+  //   // Add input field for minimum value
+  //   filter.append("label")
+  //     .attr("for", "minValueInput")
+  //     .text("Minimum value:");
+
+  //   filter.append("input")
+  //     .attr("type", "number")
+  //     .attr("class", "minValueInput")
+  //     .style("padding", "5px")
+  //     .style("border", "1px solid #ccc")
+  //     .style("border-radius", "5px");
+
+  //   // Add remove button for the filter
+  //   filter.append("button")
+  //     .text("Remove Filter")
+  //     .attr("class", "filter-button")
+  //     .on("click", () => {
+  //       filter.remove();
+  //     });
+  // }
+
+  // // Button to add more filters
+  // filterContainer.append("button")
+  //   .text("Add Filter")
+  //   .attr("class", "filter-button")
+  //   .on("click", addFilter);
+
+  // // Add button to apply all filters
+  // filterContainer.append("button")
+  //   .text("Apply Filters")
+  //   .attr("class", "filter-button") 
+  //   .on("click", () => {
+  //     let filteredData = csvData;
+
+  //     // Apply each filter
+  //     filterContainer.selectAll(".filter").each(function() {
+  //       const filterField = d3.select(this).select(".filterFieldDropdown").property("value");
+  //       const minValue = parseFloat(d3.select(this).select(".minValueInput").property("value"));
+
+  //       if (!isNaN(minValue)) {
+  //         filteredData = filteredData.filter(d => d[filterField] >= minValue);
+  //       }
+  //     });
+
+  //     updateScatterplot(filteredData);
+  //   });
 
   // Button to add more filters
-  filterContainer.append("button")
+  buttonContainer.append("button")
     .text("Add Filter")
-    .style("padding", "5px 10px")
-    .style("cursor", "pointer")
-    .style("border", "1px solid #ccc")
-    .style("border-radius", "5px")  
+    .attr("class", "filter-button")
     .on("click", addFilter);
 
   // Add button to apply all filters
-  filterContainer.append("button")
+  buttonContainer.append("button")
     .text("Apply Filters")
-    .style("padding", "5px 10px")
-    .style("cursor", "pointer")
-    .style("border", "1px solid #ccc")
-    .style("border-radius", "5px")    
+    .attr("class", "filter-button")
     .on("click", () => {
       let filteredData = csvData;
 
       // Apply each filter
-      filterContainer.selectAll(".filter").each(function() {
+      otherElementsContainer.selectAll(".filter").each(function() {
         const filterField = d3.select(this).select(".filterFieldDropdown").property("value");
         const minValue = parseFloat(d3.select(this).select(".minValueInput").property("value"));
 
@@ -302,7 +410,100 @@ async function metadataScatterMain(csvPath) {
     .style("box-shadow", "0px 4px 6px rgba(0, 0, 0, 0.1)")
     .style("font-size", "15px");
 
+  // Extract "INTA-Mean" columns from headers
+  const intaMeanColumns = csvDataClean.reduce((columns, row) => {
+    for (const key in row) {
+      if (key.startsWith("INTA-Mean") && !columns.includes(key)) {
+        columns.push(key);
+      }
+    }
+    return columns;
+  }, []).map(column => column.replace("INTA-Mean ", "").trim());
+
+  // console.log(intaMeanColumns); 
+
+
+  // Add "Use Sample Filtering" checkbox
+  const sampleFilterContainer = d3.select("#metadataScatterContainer")
+    .append("div")
+    .attr("id", "sampleFilterContainer")
+    .style("margin-top", "10px");
+
+  sampleFilterContainer.append("input")
+    .attr("type", "checkbox")
+    .attr("id", "useSampleFilterCheckbox")
+    .style("margin-right", "5px")
+    .on("change", function() {
+      const checked = d3.select(this).property("checked");
+      d3.select("#sampleFilterOptions").style("display", checked ? "flex" : "none");
+    });
+
+  sampleFilterContainer.append("label")
+    .attr("for", "useSampleFilterCheckbox")
+    .text("Use Sample Filtering");
+
+  // Container for sample filter options
+  const sampleFilterOptions = sampleFilterContainer.append("div")
+    .attr("id", "sampleFilterOptions")
+    .style("display", "none")
+    .style("margin-top", "10px")
+    .style("flex-wrap", "wrap");
+
+  // Group checkboxes into columns
+  const columns = Math.ceil(intaMeanColumns.length / 3);
+  for (let i = 0; i < columns; i++) {
+    const columnContainer = sampleFilterOptions.append("div")
+      .style("display", "flex")
+      .style("flex-direction", "column")
+      .style("margin-right", "20px");
+
+    intaMeanColumns.slice(i * 3, i * 3 + 3).forEach(column => {
+      const checkboxContainer = columnContainer.append("div")
+        .style("margin-bottom", "5px");
+
+      checkboxContainer.append("input")
+        .attr("type", "checkbox")
+        .attr("class", "sampleFilterCheckbox")
+        .attr("value", column)
+        .style("margin-right", "5px")
+        .on("change", function() {
+          // Update scatterplot when any checkbox changes
+          updateScatterplot(csvData);
+        });
+
+      checkboxContainer.append("label")
+        .text(column);
+    });
+  }
+
+  // Function to filter data based on sample filtering
+  function applySampleFiltering(data) {
+    const checkedColumns = sampleFilterOptions.selectAll(".sampleFilterCheckbox")
+      .filter(function() { return d3.select(this).property("checked"); })
+      .nodes()
+      .map(node => "INTA-Mean " + node.value);
+
+    if (checkedColumns.length > 0) {
+      return data.filter(row => checkedColumns.every(column => {
+        const value = Number(row[column]);
+        return !isNaN(value) && value > 0;
+      }));
+    }
+    return data;
+  }
+
+  function filterScatterplotByFeatureIDs(featureIDs) {
+    const filteredData = originalCsvData.filter(d => featureIDs.includes(d["Feature ID"]));
+    updateScatterplot(filteredData);
+  }
+
+
   function updateScatterplot(csvData, resetStrokes = false) {
+
+    const filteredData = d3.select("#useSampleFilterCheckbox").property("checked")
+      ? applySampleFiltering(csvData)
+      : csvData;
+
     // Update scales based on the current data
     xScale.domain(d3.extent(csvData, d => d[xAxisField]));
     yScale.domain(d3.extent(csvData, d => d[yAxisField]));
@@ -344,7 +545,7 @@ async function metadataScatterMain(csvPath) {
 
     // Update points
     svg.selectAll("circle")
-      .data(csvData)
+      .data(filteredData)
       .join(
         enter => enter.append("circle")
           .attr("cx", d => xScale(d[xAxisField]))
@@ -399,16 +600,122 @@ async function metadataScatterMain(csvPath) {
       );
   }
 
+  // Store the original data for reset purposes
+  originalCsvData = [...csvData];
+
   // Set up SVG dimensions
   const width = 600;
   const height = 600;
   const margin = { top: 50, right: 50, bottom: 50, left: 50 };
 
-  const svg = d3.select("div#metadataScatterContainer")
+  // const svg = d3.select("div#metadataScatterContainer")
+  //   .append("svg")
+  //   .attr("id", "metadataScatterSVG")
+  //   .attr("width", width)
+  //   .attr("height", height);
+
+  // // Create a new SVG for the additional scatterplot
+  // const svgAdditional = d3.select("div#metadataScatterContainer")
+  //   .append("svg")
+  //   .attr("id", "additionalScatterSVG")
+  //   .attr("width", width)
+  //   .attr("height", height)
+  //   .style("margin-left", "20px");
+
+
+
+  // // Create a container for both SVGs with flex display
+  // const svgContainer = d3.select("#metadataScatterContainer")
+  //   .append("div")
+  //   .attr("id", "svgContainer")
+  //   .style("display", "flex")
+  //   .style("gap", "20px")
+  //   .style("width", `${2 * width + 40}px`);
+
+  // const svg = svgContainer
+  //   .append("svg")
+  //   .attr("id", "metadataScatterSVG")
+  //   .attr("width", width)
+  //   .attr("height", height);
+
+  // // Create a new SVG for the additional scatterplot
+  // const svgAdditional = svgContainer
+  //   .append("svg")
+  //   .attr("id", "additionalScatterSVG")
+  //   .attr("width", width)
+  //   .attr("height", height);
+
+  // Create a container for the original elements
+  const originalContainer = d3.select("#metadataScatterContainer")
+    .append("div")
+    .attr("id", "originalContainer")
+    .style("display", "block"); // Ensure all elements are stacked vertically
+
+  const svg = originalContainer
     .append("svg")
     .attr("id", "metadataScatterSVG")
     .attr("width", width)
     .attr("height", height);
+
+  // Create a separate container for the additional scatterplot
+  const additionalContainer = d3.select("#metadataScatterContainer")
+    .append("div")
+    .attr("id", "additionalContainer")
+    .style("display", "block")
+    .style("margin-left", "20px"); // Add margin to separate from the original content
+
+  const svgAdditional = additionalContainer
+    .append("svg")
+    .attr("id", "additionalScatterSVG")
+    .attr("width", width)
+    .attr("height", height);
+
+
+
+  // Function to update the additional scatterplot
+  function updateAdditionalScatterplot(featureID) {
+    // Filter data for the selected feature ID
+    const filteredData = csvData.filter(d => d["Feature ID"] === featureID);
+
+    // Update scales based on filtered data
+    xScale.domain(d3.extent(filteredData, d => d[xAxisField]));
+    yScale.domain(d3.extent(filteredData, d => d[yAxisField]));
+
+    // Update axes for the additional scatterplot
+    svgAdditional.select(".x-axis")
+      .call(d3.axisBottom(xScale).ticks(10));
+
+    svgAdditional.select(".y-axis")
+      .call(d3.axisLeft(yScale).ticks(10));
+
+    // Update points in the additional scatterplot
+    svgAdditional.selectAll("circle")
+      .data(filteredData)
+      .join(
+        enter => enter.append("circle")
+          .attr("cx", d => xScale(d[xAxisField]))
+          .attr("cy", d => yScale(d[yAxisField]))
+          .attr("r", d => sizeScale(d[sizeField]))
+          .attr("fill", d => colorScale(d[colorField]))
+          .attr("stroke", "black")
+          .attr("opacity", 0.7),
+        update => update
+          .attr("cx", d => xScale(d[xAxisField]))
+          .attr("cy", d => yScale(d[yAxisField]))
+          .attr("r", d => sizeScale(d[sizeField]))
+          .attr("fill", d => colorScale(d[colorField])),
+        exit => exit.remove()
+      );
+  }
+
+  // Add axes to the additional scatterplot
+  svgAdditional.append("g")
+    .attr("class", "x-axis")
+    .attr("transform", `translate(0,${height - margin.bottom})`);
+
+  svgAdditional.append("g")
+    .attr("class", "y-axis")
+    .attr("transform", `translate(${margin.left},0)`);
 
   // Set up scales with fixed ranges
   const xScale = d3.scaleLinear().range([margin.left, width - margin.right]);
@@ -678,6 +985,10 @@ async function metadataScatterMain(csvPath) {
     .attr("fill", d => colorScale(d[colorField]))
     .attr("stroke", "black")
     .attr("opacity", 0.7)
+    .on("click", function (event, d) {
+      // Update the additional scatterplot with the clicked feature ID
+      updateAdditionalScatterplot(d["Feature ID"]);
+    })
     // Tooltip logic to conditionally display MS2 Score
     .on("mouseover", function (event, d) {
       tooltip.style("visibility", "visible")
@@ -918,6 +1229,47 @@ async function metadataScatterMain(csvPath) {
         .style("stroke-width", "2px");
     });
 
+  // Add file input and upload button for feature IDs
+  const uploadContainer = paginationContainer.append("div")
+    .style("display", "flex")
+    .style("align-items", "center")
+    .style("gap", "10px");
+
+  uploadContainer.append("input")
+    .attr("type", "file")
+    .attr("id", "featureIDFileInput")
+    .style("display", "none")
+    .on("change", async function(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const featureIDs = await readFeatureIDsFromCSV(file);
+        filterScatterplotByFeatureIDs(featureIDs);
+      }
+    });
+
+  uploadContainer.append("button")
+    .text("Upload Feature IDs CSV")
+    .style("padding", "5px 10px")
+    .style("cursor", "pointer")
+    .style("border", "1px solid #ccc")
+    .style("border-radius", "5px")
+    .on("click", function() {
+      document.getElementById("featureIDFileInput").click();
+    });
+
+  // Add reset button to revert to the original dataset
+  paginationContainer.append("button")
+    .text("Reset")
+    .style("padding", "5px 10px")
+    .style("cursor", "pointer")
+    .style("border", "1px solid #ccc")
+    .style("border-radius", "5px")
+    .on("click", function() {
+      // Revert to the original dataset and update the scatterplot
+      csvData = originalCsvData;
+      updateScatterplot(csvData, true); // Reset strokes when resetting
+    });
+
   // Add tooltip for pagination
   const paginationTooltip = paginationContainer
     .append("div")
@@ -957,12 +1309,13 @@ async function metadataScatterMain(csvPath) {
   .on("mouseout", function () {
     paginationTooltip.style("visibility", "hidden");
   });
-
+  
   // Initialize the scatterplot with the first page
   updatePagination();
+
 }
 
-const csvPath = "./data/WW2DW_data_analysis_file-2025_03_25.csv";
-// const csvPath = "./data/WW2DW_data_analysis_file-2025_03_25_test.csv";
+// const csvPath = "./data/WW2DW_data_analysis_file-2025_03_25.csv";
+const csvPath = "./data/WW2DW_chemical_results_with_decision_documentation.csv";
 // const csvPath = "./data/WW2DW_data_analysis_file-2025_03_25_reduced_no_MS2.csv";
 metadataScatterMain(csvPath);
