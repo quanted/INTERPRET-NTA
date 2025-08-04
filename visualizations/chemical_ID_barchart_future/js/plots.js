@@ -311,7 +311,7 @@ function addHazardLegend(){
     gradRect.addEventListener("mouseover", function(event) {
       tooltip.style.display = "block";
       tooltip.innerHTML = `
-      <p><b>Hazard Score</b> (<i>0-1</i>): A composite of the average hazard score (<b>low</b> to <b>very high</b> hazard values are converted to <b>1</b> through <b>4</b>, respectively) 
+      <p><b>Hazard Score</b> (<i>0-12</i>): A composite of the average hazard score (<b>low</b> to <b>very high</b> hazard values are converted to <b>1</b> through <b>4</b>, respectively) 
       multiplied by the average quality score (<b><i>in silico</i></b> to <b><i>in vivo</i></b> authority values are converted to <b>1</b> through <b>3</b>, respectively).</p>
       <br>
       <p id="hazard-equation">
