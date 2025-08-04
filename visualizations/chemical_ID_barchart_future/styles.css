@@ -174,6 +174,61 @@
   z-index: 10;
 }
 
+.tripod-tooltip {
+  position: absolute;
+  display: none;
+  background-color: white;
+  border: 1px solid black;
+  border-radius: 5px;
+  padding: 20px;
+  z-index: 1000;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+  width: 300px;
+}
+
+.tripod-tooltip p {
+  margin: 0; /* Remove default margin */
+  padding: 2px 0; /* Uniform top and bottom padding */
+}
+
+#hazard-equation,
+#completeness-equation {
+    text-align: center;
+    font-family: 'Arial', sans-serif; /* Use the same font as the other text */
+    font-size: 1em; /* Ensure the font size is consistent */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.equation-part {
+    font-family: 'Arial', sans-serif; /* Use the same font as the other text */
+}
+
+.fraction {
+    display: inline-block;
+    text-align: center;
+    margin-right: 20px; /* Space between fraction and label */
+}
+
+.numerator {
+    border-bottom: 1px solid black;
+    display: block;
+    margin-bottom: 5px;
+    padding: 0 10px;
+}
+
+.denominator {
+    display: block;
+    padding: 0 10px;
+}
+
+.equation-label {
+    display: flex;
+    flex-direction: column;
+    text-align: center; /* Align text to the left */
+}
+
 #tripod-gradient-rect-hazard{
   left: 80px;
 }

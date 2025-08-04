@@ -293,6 +293,57 @@ function addHazardLegend(){
   gradRect.setAttribute("fill", 'url(#tripod-Gradient1)')
 
   gradientSVG.appendChild(gradRect)
+
+  // Tooltip setup for tripod-rect1
+  document.addEventListener("DOMContentLoaded", function() {
+    const tooltip = document.createElement("div");
+    tooltip.id = "tripod-rect1-tooltip";
+    tooltip.className = "tripod-tooltip";
+    tooltip.style.position = "absolute";
+    tooltip.style.display = "none";
+    tooltip.style.backgroundColor = "white";
+    tooltip.style.border = "1px solid black";
+    tooltip.style.borderRadius = "5px";
+    tooltip.style.padding = "10px";
+    tooltip.style.zIndex = "1000";
+    document.body.appendChild(tooltip);
+
+    gradRect.addEventListener("mouseover", function(event) {
+      tooltip.style.display = "block";
+      tooltip.innerHTML = `
+      <p><b>Hazard Score</b> (<i>0-1</i>): A composite of the average hazard score (<b>low</b> to <b>very high</b> hazard values are converted to <b>1</b> through <b>4</b>, respectively) 
+      multiplied by the average quality score (<b><i>in silico</i></b> to <b><i>in vivo</i></b> authority values are converted to <b>1</b> through <b>3</b>, respectively).</p>
+      <br>
+      <p id="hazard-equation">
+        <b>Hazard Score</b> = <span class="equation-part">Average Hazard Score</span> &times; 
+        <span class="equation-part">Average Quality Score</span>
+      </p>
+      <br><br>
+      <p><b>Hazard Completeness Score</b> (<i>Color</i>): A metric of data availability used to calculate the hazard score.</p>
+      <br>
+      <div id="completeness-equation">
+        <div class="equation-label">
+          <b>Hazard Completeness Score</b>
+        </div>
+        <span style="margin-right: 5px;">=</span>
+        <div class="fraction">
+          <span class="numerator"># of endpoints with data</span>
+          <span class="denominator"># of total endpoints</span>
+        </div>
+        
+      </div>
+    `;
+    });
+
+    gradRect.addEventListener("mousemove", function(event) {
+      tooltip.style.left = event.pageX + 10 + "px";
+      tooltip.style.top = event.pageY + 10 + "px";
+    });
+
+    gradRect.addEventListener("mouseleave", function() {
+      tooltip.style.display = "none";
+    });
+  });
 }
 
 //Creates the white-to-blue gradient for the MS2 amenability score legend
@@ -1542,7 +1593,7 @@ function makeLegend(){
   const legendData = d3.stack()
     .keys(keysToInclude)(subGroupData).sort((a, b) => a.key.localeCompare(b.key));    
 // Add the legend  
-  const legendsvg = makeSvgElement(800, 200, 'metadata-legendbox', d3.select("#metadata-legend"));
+  const legendsvg = makeSvgElement(450, 200, 'metadata-legendbox', d3.select("#metadata-legend"));
   legendsvg.attr('id', 'metadata-legendbox')
   var legend = legendsvg.append('g')
     .attr('class', 'metadata-legend')
@@ -2604,4 +2655,3 @@ const dataPath = "./data/short_test_amen.csv";
 // const dataPath = "./data/WW2DW_Data_Analysis_file_5_with_MS2.csv";
 // const dataPath = "./data/WW2DW_Data_Analysis_file_5_without_MS2.csv";
 generatePlots(dataPath);
-
