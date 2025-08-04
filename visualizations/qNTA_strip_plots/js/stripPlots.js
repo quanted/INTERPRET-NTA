@@ -124,8 +124,10 @@ function cleanData(data) {
   data.forEach((row) => {
     const groupName = row["Surrogate Group"];
     const logRFs = logRFValues[groupName];
-    const medianLogRF = d3.median(logRFs);
-    row["Median Log RF"] = medianLogRF;
+    if (logRFs !== undefined && Array.isArray(logRFs)) {
+      const medianLogRF = d3.median(logRFs);
+      row["Median Log RF"] = medianLogRF;
+    }
   });
 
   return data;

@@ -104,7 +104,7 @@ function getRFValues(data) {
   const rfValues = [];
   data.forEach((d) => {
     Object.entries(d).forEach(([key, value]) => {
-      if (key.startsWith("RF ")) {
+      if (key.startsWith("RF ") && value > 0) {
         rfValues.push(value);
       }
     });
@@ -160,12 +160,12 @@ async function histogramMain(inputXlsxPath) {
   let data = await readInterpretOutputXLSX(inputXlsxPath);
 
   const dataPos = data.filter((d) => {
-    if (d["Ionization Mode"] === "ESI+") {
+    if (d["Ionization Mode"].includes("ESI+")) {
       return d;
     }
   });
   const dataNeg = data.filter((d) => {
-    if (d["Ionization Mode"] === "ESI-") {
+    if (d["Ionization Mode"].includes("ESI-")) {
       return d;
     }
   });
@@ -365,7 +365,7 @@ async function histogramMain(inputXlsxPath) {
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
 
-  const x = d3.scaleLinear().domain([-5, 5]).range([20, width]);
+  const x = d3.scaleLinear().domain([-5.0, 5.0]).range([20, width]);
 
   const y = d3.scaleLinear().range([height, 0]);
 
