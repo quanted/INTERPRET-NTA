@@ -409,6 +409,7 @@ function cleanData(data) {
     "Chemical Name",
     "Ionization Mode",
     "Retention Time",
+    "Surrogate Group",
   ];
 
   // remove any unwanted columns from our data
@@ -427,9 +428,27 @@ function cleanData(data) {
 
       // We need to append the ionization mode to the chemical name
       if (colName === "Chemical Name") {
-        row[colName] = `${row[colName]} (${row["Ionization Mode"]})`;
+        if (row[colName].startsWith("[")) {
+          row[colName] = row[colName].slice(1, -1).replaceAll("'", "");
+        }
+        const ionizationModeIndex = row["Ionization Mode"].includes("[")
+          ? row["Ionization Mode"].toUpperCase().search("E")
+          : -1;
+        const ionization =
+          0 <= ionizationModeIndex
+            ? row["Ionization Mode"].slice(
+                ionizationModeIndex,
+                ionizationModeIndex + 4
+              )
+            : row["Ionization Mode"];
+
+        row[colName] = `${row[colName]} (${ionization})`;
+        row["Surrogate Group"] = `${row["Surrogate Group"]} (${ionization})`;
         return;
       }
+
+      if (colName === "Feature ID" && typeof row[colName] === "string")
+        row[colName] = row[colName].replace("[", "").replace("]", "");
 
       // if blank subtracted mean OR concentration, go ahead and take the log
       if (colName.startsWith(concentrationHeaderSuffix)) {
@@ -468,6 +487,7 @@ function getPointData(data, uniqueSampleNames, qaqcData = []) {
     "Chemical Name",
     "Ionization Mode",
     "Retention Time",
+    "Surrogate Group",
   ];
 
   const pointData = [];
@@ -597,7 +617,7 @@ function calculatePredictionIntervals(
  * @returns {object[]} The data for plotting points of a single chemical.
  */
 function getPlottingDataForChem(data, chemName) {
-  return data.filter((d) => d["Chemical Name"] === chemName);
+  return data.filter((d) => d["Surrogate Group"] === chemName);
 }
 
 /**
@@ -1247,8 +1267,8 @@ async function calCurvesMain(inputXlsxPath) {
   // get unique chemical names
   const chemNames = [];
   pointData.forEach((row) => {
-    if (!chemNames.includes(row["Chemical Name"])) {
-      chemNames.push(row["Chemical Name"]);
+    if (!chemNames.includes(row["Surrogate Group"])) {
+      chemNames.push(row["Surrogate Group"]);
     }
   });
   let chemNamesToggled = chemNames;

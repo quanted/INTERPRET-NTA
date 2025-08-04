@@ -61,6 +61,7 @@ function cleanData(data) {
     "Chemical Name",
     "Ionization Mode",
     "Retention Time",
+    "Surrogate Group",
   ];
   const logRFValues = {};
 
@@ -72,35 +73,61 @@ function cleanData(data) {
         return;
       }
 
-      // We need to append the ionization mode to the chemical name
-      if (colName === "Chemical Name") {
-        row[colName] = `${row[colName]} (${row["Ionization Mode"]})`;
+      // Update Surrogate Group to include ionization mode.
+      if (colName === "Surrogate Group") {
+        const ionizationModeIndex = row["Ionization Mode"].includes("[")
+          ? row["Ionization Mode"].toUpperCase().search("E")
+          : -1;
+        const ionization =
+          0 <= ionizationModeIndex
+            ? row["Ionization Mode"].slice(
+                ionizationModeIndex,
+                ionizationModeIndex + 4
+              )
+            : row["Ionization Mode"];
+        row[colName] = `${row[colName]} (${ionization})`;
+        return;
       }
 
+      // We clean up chemical name for multiple chemicals.
+      if (colName === "Chemical Name") {
+        if (row[colName].startsWith("[")) {
+          row[colName] = row[colName].slice(1, -1).replaceAll("'", "");
+        }
+        return;
+      }
+
+      // We need to clean up Feature ID field when multiple listed
+      if (colName === "Feature ID" && typeof row[colName] === "string") {
+        row[colName] = row[colName].replace("[", "").replace("]", "");
+        return;
+      }
       // if we have an RF value, add a log key-value pair and remove the original RF value
       if (colName.startsWith("RF ")) {
         const logColName = `log ${colName}`;
         if (Number(value) <= 0) {
           return;
         }
-        row[logColName] = Math.log(value);
+        row[logColName] = Math.log10(value);
         delete row[colName];
 
         // collect log RF values for median calculation
-        if (!logRFValues[row["Chemical Name"]]) {
-          logRFValues[row["Chemical Name"]] = [];
+        if (!logRFValues[row["Surrogate Group"]]) {
+          logRFValues[row["Surrogate Group"]] = [];
         }
-        logRFValues[row["Chemical Name"]].push(row[logColName]);
+        logRFValues[row["Surrogate Group"]].push(row[logColName]);
       }
     });
   });
 
   // calculate median log RF values and add to each row
   data.forEach((row) => {
-    const chemicalName = row["Chemical Name"];
-    const logRFs = logRFValues[chemicalName];
-    const medianLogRF = d3.median(logRFs);
-    row["Median Log RF"] = medianLogRF;
+    const groupName = row["Surrogate Group"];
+    const logRFs = logRFValues[groupName];
+    if (logRFs !== undefined && Array.isArray(logRFs)) {
+      const medianLogRF = d3.median(logRFs);
+      row["Median Log RF"] = medianLogRF;
+    }
   });
 
   return data;
@@ -122,11 +149,11 @@ function getPointsData(data, nChemsPerPlot, showMode = "both") {
   data.forEach((d) => {
     // filter on showMode (+ or - or both)
     if (showMode === "+") {
-      if (d["Chemical Name"].includes("(ESI-)")) {
+      if (d["Surrogate Group"].includes("(ESI-)")) {
         return;
       }
     } else if (showMode === "-") {
-      if (d["Chemical Name"].includes("(ESI+)")) {
+      if (d["Surrogate Group"].includes("(ESI+)")) {
         return;
       }
     }
@@ -146,14 +173,37 @@ function getPointsData(data, nChemsPerPlot, showMode = "both") {
           i++;
         }
 
+        const mode = d["Ionization Mode"].includes("[")
+          ? d["Ionization Mode"].slice(
+              d["Ionization Mode"].toUpperCase().search("E"),
+              d["Ionization Mode"].toUpperCase().search("E") + 4
+            )
+          : d["Ionization Mode"];
+
+        const retentionTime =
+          typeof d["Retention Time"] === "string" &&
+          d["Retention Time"].includes("[")
+            ? d["Retention Time"]
+                .replace("[", "")
+                .replace("]", "")
+                .replaceAll("'", "")
+                .split(",")
+                .map((rt) =>
+                  typeof rt === "string"
+                    ? parseFloat(rt.trim()).toFixed(2)
+                    : rt.toFixed(2)
+                )
+                .toString()
+            : d["Retention Time"].toFixed(2);
         // construct the data that will be bound to our scatter plot point
         const datum = {
           chemical: d["Chemical Name"],
+          group: d["Surrogate Group"],
           logRF: value,
           featureId: d["Feature ID"],
-          sampleName: sampleName,
-          mode: d["Ionization Mode"],
-          retentionTime: d["Retention Time"].toFixed(2),
+          sampleName,
+          mode,
+          retentionTime,
           color: colors[i % 7],
         };
 
@@ -439,15 +489,9 @@ async function stripPlotsMain(inputXlsxPath) {
   let showMode = "+";
   var sortedBy = "meanRF";
   var helpTooltipClicked = false;
-  makeStripPlot(data, sortedBy, showMode, true);
+  makeStripPlot(data, sortedBy, showMode, false);
 
-  function makeStripPlot(
-    data,
-    sortedBy,
-    showMode = "both",
-    firstPass = false,
-    zoom
-  ) {
+  function makeStripPlot(data, sortedBy, showMode = "both", zoom) {
     // destroy existing svg
     svgGridContainer.selectAll("svg").remove();
 
@@ -464,7 +508,7 @@ async function stripPlotsMain(inputXlsxPath) {
     let nChems = nChemsPerPlot;
     if (showMode !== "both") {
       nChems = data.filter((d) =>
-        d["Chemical Name"].includes(`(ESI${showMode})`)
+        d["Surrogate Group"].includes(`(ESI${showMode})`)
       ).length;
     }
     // now construct the SVG
@@ -520,9 +564,10 @@ async function stripPlotsMain(inputXlsxPath) {
       svg.on("dblclick.zoom", null);
 
       // get unique chemical names and define x and y scales
-      const chemicalNames = [
-        ...new Set(pointsData.map((d) => d.chemical)),
-      ].slice(iPlot * nChemsPerPlot, (iPlot + 1) * nChemsPerPlot);
+      const chemicalNames = [...new Set(pointsData.map((d) => d.group))].slice(
+        iPlot * nChemsPerPlot,
+        (iPlot + 1) * nChemsPerPlot
+      );
 
       // y-scale, each chemical gets its own row
       const esiRegex = /\(ESI/;
@@ -535,13 +580,14 @@ async function stripPlotsMain(inputXlsxPath) {
       // x-scale, for log RF values
       const [xMin, xMax] = d3.extent(pointsData, (d) => d.logRF);
       const xTickMax = Math.floor(xMax) + 1;
+      const xTickMin = Math.floor(xMin);
       const xTicks = [];
-      for (let i = 0; i <= xTickMax + 1; i++) {
+      for (let i = xTickMin; i <= xTickMax + 1; i++) {
         xTicks.push(i);
       }
       const xScale = d3
         .scaleLinear()
-        .domain([-0.5, xTickMax])
+        .domain([xTickMin, xTickMax])
         .range([margin.left, svgWidth - margin.right]);
 
       // draw axes
@@ -619,7 +665,7 @@ async function stripPlotsMain(inputXlsxPath) {
 
       // add points
       const subsetData = pointsData.filter((d) =>
-        chemicalNames.includes(d.chemical)
+        chemicalNames.includes(d.group)
       );
       const yBW = yScale.bandwidth();
       g.selectAll("circle")
@@ -628,7 +674,7 @@ async function stripPlotsMain(inputXlsxPath) {
         .append("circle")
         .attr("class", "stripCircle")
         .attr("cx", (d) => xScale(d.logRF))
-        .attr("cy", (d) => yScale(d.chemical) + yBW / 2) // + randomNumRange(-yBW/2, yBW/2)) // .replace(/\(ESI/, "(") //center in band then add random
+        .attr("cy", (d) => yScale(d.group) + yBW / 2) // + randomNumRange(-yBW/2, yBW/2)) // .replace(/\(ESI/, "(") //center in band then add random
         .attr("r", 6)
         .style("fill", (d) => d.color)
         .style("stroke-width", 1)
@@ -642,11 +688,9 @@ async function stripPlotsMain(inputXlsxPath) {
           d3.select(this).transition().duration(300).attr("r", 12);
           const c = d.color;
           tooltip.html(
-            `<b>Chemical:</b> ${
-              d.chemical.split(" (")[0]
-            }<br><b>Ionization Mode:</b> ${d.mode}<br><b>Feature ID:</b> ${
-              d.featureId
-            }<br><b>Sample Name:</b> ${
+            `<b>Chemical:</b> ${d.chemical}<br><b>Ionization Mode:</b> ${
+              d.mode
+            }<br><b>Feature ID:</b> ${d.featureId}<br><b>Sample Name:</b> ${
               d.sampleName
             }<br><b>Retention Time:</b> ${
               d.retentionTime
@@ -662,6 +706,5 @@ async function stripPlotsMain(inputXlsxPath) {
     return zoom;
   }
 }
-
 const inputXlsxPath = "./data/Example_NTA_NTA_WebApp_qNTA.xlsx";
 stripPlotsMain(inputXlsxPath);
