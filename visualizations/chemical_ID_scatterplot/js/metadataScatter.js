@@ -3,7 +3,6 @@
  * @typedef {d3.Selection<HTMLElement, unknown, null, undefined>} D3Selection
  */
 
-
 /**
  * Returns the sequence data from the CSV for Interpret NTA.
  * @param {string} filePath Path to the INTERPRET NTA run sequence input CSV.
@@ -89,17 +88,22 @@ function cleanRawCsvData(csvDataRaw, hasMS2Score) {
   for (let row of csvDataRaw) {
     const cleanRow = {};
     cleanRow["Feature ID"] = Number(row["Feature ID"]);
-    cleanRow["Ionization Mode"] = row["Ionization Mode"];
-    cleanRow["DTXCID"] = row["DTXCID"];
-    cleanRow["MS2 Score"] = hasMS2Score ? Number(row["MS2 quotient score"]) : null; // Handle absence
+    cleanRow["Ionization Mode"] = row["Ionization Mode"]; // DNE
+    cleanRow["DTXCID"] = row["DTXCID_INDIVIDUAL_COMPONENT"];
+    cleanRow["MS2 Score"] = hasMS2Score
+      ? Number(row["MS2 quotient score"])
+      : null; // Handle absence
     cleanRow["Hazard Score"] = Number(row["Hazard Score"]);
-    cleanRow["Median Abundance"] = Number(row["Median blanksub mean feature abundance"]);
-    cleanRow["Metadata Score"] = Number(row["Structure_total_norm"]);
-    cleanRow["Occurrence Count"] = Number(row["Final Occurrence Count"]);
+    cleanRow["Median Abundance"] = Number(
+      row["Median blanksub mean feature abundance"]
+    );
+    cleanRow["Metadata Score"] = Number(row["STRUCTURE_TOTAL_NORM"]);
+    cleanRow["Occurrence Count"] = Number(row["Final Occurrence Percentage"]);
 
     // Preserve columns starting with "INTA-Mean"
     for (const key in row) {
       if (key.startsWith("INTA-Mean")) {
+        // DNE
         cleanRow[key] = Number(row[key]);
       }
     }
@@ -119,7 +123,7 @@ function sortByOccCountThenFeatID(csvData) {
 
     // if occ count is the same, compare by feature id (secondary sort)
     if (a["Feature ID"] < b["Feature ID"]) {
-      return -1; 
+      return -1;
     }
     if (a["Feature ID"] > b["Feature ID"]) {
       return 1;
@@ -136,7 +140,7 @@ function getNestedCSVData(csvData, n = 200) {
   let currentFeatureID;
   for (let row of csvData) {
     const thisFeatureID = row["Feature ID"];
-    
+
     // Keep track of new feature IDs
     if (currentFeatureID !== thisFeatureID) {
       currentFeatureID = thisFeatureID;
@@ -165,11 +169,14 @@ function getNestedCSVDataBasedOnOcc(csvData, nPoints = 1200) {
 
     // If the feature ID changes, check if adding the current feature's points exceeds nPoints
     if (currentFeatureID !== thisFeatureID) {
-
       if (pointsInCurrentArr > nPoints) {
-        const currentFeaturePoints = currentArr.filter(d => d["Feature ID"] === currentFeatureID);
-        const previousPoints = currentArr.filter(d => d["Feature ID"] !== currentFeatureID)
-        csvDataNested.push(previousPoints)
+        const currentFeaturePoints = currentArr.filter(
+          (d) => d["Feature ID"] === currentFeatureID
+        );
+        const previousPoints = currentArr.filter(
+          (d) => d["Feature ID"] !== currentFeatureID
+        );
+        csvDataNested.push(previousPoints);
         // If the current feature itself exceeds nPoints, split it
         if (currentFeaturePoints.length > nPoints) {
           csvDataNested.push(currentFeaturePoints);
@@ -200,17 +207,21 @@ function getNestedCSVDataBasedOnOcc(csvData, nPoints = 1200) {
 // Function to read the feature IDs from a CSV file
 async function readFeatureIDsFromCSV(file) {
   const text = await file.text();
-  const featureIDs = text.split('\n').map(id => id.trim()).filter(id => id);
+  const featureIDs = text
+    .split("\n")
+    .map((id) => id.trim())
+    .filter((id) => id);
   return featureIDs.map(Number);
 }
-
 
 async function metadataScatterMain(csvPath) {
   // read in all CSV data
   let csvDataRaw = await readCSV(csvPath);
 
   // Check if "MS2 quotient score" is present in the raw data
-  const hasMS2Score = csvDataRaw.some(row => row.hasOwnProperty("MS2 quotient score"));
+  const hasMS2Score = csvDataRaw.some((row) =>
+    row.hasOwnProperty("MS2 quotient score")
+  );
 
   // clean raw CSV data, only keeping desired fields
   let csvDataClean = cleanRawCsvData(csvDataRaw, hasMS2Score);
@@ -224,7 +235,7 @@ async function metadataScatterMain(csvPath) {
   // const csvDataNested = getNestedCSVData(csvDataClean, 80);
   const csvDataNested = getNestedCSVDataBasedOnOcc(csvDataClean, 22000);
 
-  let newCSV = csvDataNested.sort((a, b) => a.length - b.length)
+  let newCSV = csvDataNested.sort((a, b) => a.length - b.length);
   let csvData = newCSV[0];
 
   let xAxisField = "Metadata Score";
@@ -233,56 +244,70 @@ async function metadataScatterMain(csvPath) {
   let sizeField = "Median Abundance";
 
   // Add axis selectors
-  const fields = ["MS2 Score", "Metadata Score", "Hazard Score", "Median Abundance", "Occurrence Count"];
+  const fields = [
+    "MS2 Score",
+    "Metadata Score",
+    "Hazard Score",
+    "Median Abundance",
+    "Occurrence Count",
+  ];
 
-  const filterContainer = d3.select("#metadataScatterContainer")
-      .append("div")
-      .attr("id", "filterContainer");
+  const filterContainer = d3
+    .select("#metadataScatterContainer")
+    .append("div")
+    .attr("id", "filterContainer");
 
   // Create a container for the buttons
-  const buttonContainer = filterContainer.append("div")
+  const buttonContainer = filterContainer
+    .append("div")
     .attr("id", "buttonContainer")
     .style("display", "flex")
     .style("flex-direction", "column"); // Stack buttons vertically
 
   // Create a container for other elements
-  const otherElementsContainer = filterContainer.append("div")
+  const otherElementsContainer = filterContainer
+    .append("div")
     .attr("id", "otherElementsContainer")
     .style("display", "flex")
     .style("flex-direction", "row"); // Arrange other elements side by side
-  
-    // Function to add a new filter
+
+  // Function to add a new filter
   function addFilter() {
     const filter = otherElementsContainer.append("div").attr("class", "filter");
 
     // First row: "Filter by:" and dropdown
     const filterFieldRow = filter.append("div").attr("class", "filter-row");
 
-    filterFieldRow.append("label")
+    filterFieldRow
+      .append("label")
       .attr("for", "filterFieldDropdown")
       .text("Filter by:");
 
-    const filterFieldDropdown = filterFieldRow.append("select")
+    const filterFieldDropdown = filterFieldRow
+      .append("select")
       .attr("class", "filterFieldDropdown")
       .style("padding", "5px")
       .style("border", "1px solid #ccc")
       .style("border-radius", "5px");
 
-    filterFieldDropdown.selectAll("option")
+    filterFieldDropdown
+      .selectAll("option")
       .data(fields)
       .enter()
       .append("option")
-      .attr("value", d => d)
-      .text(d => d);
+      .attr("value", (d) => d)
+      .text((d) => d);
 
     // Second row: "Minimum value" and input field
     const minValueRow = filter.append("div").attr("class", "filter-row");
 
-    minValueRow.append("label")
+    minValueRow
+      .append("label")
       .attr("for", "minValueInput")
       .text("Minimum value:");
 
-    minValueRow.append("input")
+    minValueRow
+      .append("input")
       .attr("type", "number")
       .attr("class", "minValueInput")
       .style("padding", "5px")
@@ -292,7 +317,8 @@ async function metadataScatterMain(csvPath) {
     // Third row: Remove filter button
     const removeButtonRow = filter.append("div").attr("class", "filter-row");
 
-    removeButtonRow.append("button")
+    removeButtonRow
+      .append("button")
       .text("Remove Filter")
       .attr("class", "filter-button")
       .on("click", () => {
@@ -351,7 +377,7 @@ async function metadataScatterMain(csvPath) {
   // // Add button to apply all filters
   // filterContainer.append("button")
   //   .text("Apply Filters")
-  //   .attr("class", "filter-button") 
+  //   .attr("class", "filter-button")
   //   .on("click", () => {
   //     let filteredData = csvData;
 
@@ -369,25 +395,32 @@ async function metadataScatterMain(csvPath) {
   //   });
 
   // Button to add more filters
-  buttonContainer.append("button")
+  buttonContainer
+    .append("button")
     .text("Add Filter")
     .attr("class", "filter-button")
     .on("click", addFilter);
 
   // Add button to apply all filters
-  buttonContainer.append("button")
+  buttonContainer
+    .append("button")
     .text("Apply Filters")
     .attr("class", "filter-button")
     .on("click", () => {
       let filteredData = csvData;
 
       // Apply each filter
-      otherElementsContainer.selectAll(".filter").each(function() {
-        const filterField = d3.select(this).select(".filterFieldDropdown").property("value");
-        const minValue = parseFloat(d3.select(this).select(".minValueInput").property("value"));
+      otherElementsContainer.selectAll(".filter").each(function () {
+        const filterField = d3
+          .select(this)
+          .select(".filterFieldDropdown")
+          .property("value");
+        const minValue = parseFloat(
+          d3.select(this).select(".minValueInput").property("value")
+        );
 
         if (!isNaN(minValue)) {
-          filteredData = filteredData.filter(d => d[filterField] >= minValue);
+          filteredData = filteredData.filter((d) => d[filterField] >= minValue);
         }
       });
 
@@ -398,7 +431,8 @@ async function metadataScatterMain(csvPath) {
   addFilter();
 
   // Create tooltip container
-  const tooltip = d3.select("div#metadataScatterContainer")
+  const tooltip = d3
+    .select("div#metadataScatterContainer")
     .append("div")
     .attr("id", "scatterTooltip")
     .style("position", "absolute")
@@ -411,39 +445,47 @@ async function metadataScatterMain(csvPath) {
     .style("font-size", "15px");
 
   // Extract "INTA-Mean" columns from headers
-  const intaMeanColumns = csvDataClean.reduce((columns, row) => {
-    for (const key in row) {
-      if (key.startsWith("INTA-Mean") && !columns.includes(key)) {
-        columns.push(key);
+  const intaMeanColumns = csvDataClean
+    .reduce((columns, row) => {
+      for (const key in row) {
+        if (key.startsWith("INTA-Mean") && !columns.includes(key)) {
+          columns.push(key);
+        }
       }
-    }
-    return columns;
-  }, []).map(column => column.replace("INTA-Mean ", "").trim());
+      return columns;
+    }, [])
+    .map((column) => column.replace("INTA-Mean ", "").trim());
 
-  // console.log(intaMeanColumns); 
-
+  // console.log(intaMeanColumns);
 
   // Add "Use Sample Filtering" checkbox
-  const sampleFilterContainer = d3.select("#metadataScatterContainer")
+  const sampleFilterContainer = d3
+    .select("#metadataScatterContainer")
     .append("div")
     .attr("id", "sampleFilterContainer")
     .style("margin-top", "10px");
 
-  sampleFilterContainer.append("input")
+  sampleFilterContainer
+    .append("input")
     .attr("type", "checkbox")
     .attr("id", "useSampleFilterCheckbox")
     .style("margin-right", "5px")
-    .on("change", function() {
+    .on("change", function () {
       const checked = d3.select(this).property("checked");
-      d3.select("#sampleFilterOptions").style("display", checked ? "flex" : "none");
+      d3.select("#sampleFilterOptions").style(
+        "display",
+        checked ? "flex" : "none"
+      );
     });
 
-  sampleFilterContainer.append("label")
+  sampleFilterContainer
+    .append("label")
     .attr("for", "useSampleFilterCheckbox")
     .text("Use Sample Filtering");
 
   // Container for sample filter options
-  const sampleFilterOptions = sampleFilterContainer.append("div")
+  const sampleFilterOptions = sampleFilterContainer
+    .append("div")
     .attr("id", "sampleFilterOptions")
     .style("display", "none")
     .style("margin-top", "10px")
@@ -452,63 +494,72 @@ async function metadataScatterMain(csvPath) {
   // Group checkboxes into columns
   const columns = Math.ceil(intaMeanColumns.length / 3);
   for (let i = 0; i < columns; i++) {
-    const columnContainer = sampleFilterOptions.append("div")
+    const columnContainer = sampleFilterOptions
+      .append("div")
       .style("display", "flex")
       .style("flex-direction", "column")
       .style("margin-right", "20px");
 
-    intaMeanColumns.slice(i * 3, i * 3 + 3).forEach(column => {
-      const checkboxContainer = columnContainer.append("div")
+    intaMeanColumns.slice(i * 3, i * 3 + 3).forEach((column) => {
+      const checkboxContainer = columnContainer
+        .append("div")
         .style("margin-bottom", "5px");
 
-      checkboxContainer.append("input")
+      checkboxContainer
+        .append("input")
         .attr("type", "checkbox")
         .attr("class", "sampleFilterCheckbox")
         .attr("value", column)
         .style("margin-right", "5px")
-        .on("change", function() {
+        .on("change", function () {
           // Update scatterplot when any checkbox changes
           updateScatterplot(csvData);
         });
 
-      checkboxContainer.append("label")
-        .text(column);
+      checkboxContainer.append("label").text(column);
     });
   }
 
   // Function to filter data based on sample filtering
   function applySampleFiltering(data) {
-    const checkedColumns = sampleFilterOptions.selectAll(".sampleFilterCheckbox")
-      .filter(function() { return d3.select(this).property("checked"); })
+    const checkedColumns = sampleFilterOptions
+      .selectAll(".sampleFilterCheckbox")
+      .filter(function () {
+        return d3.select(this).property("checked");
+      })
       .nodes()
-      .map(node => "INTA-Mean " + node.value);
+      .map((node) => "INTA-Mean " + node.value);
 
     if (checkedColumns.length > 0) {
-      return data.filter(row => checkedColumns.every(column => {
-        const value = Number(row[column]);
-        return !isNaN(value) && value > 0;
-      }));
+      return data.filter((row) =>
+        checkedColumns.every((column) => {
+          const value = Number(row[column]);
+          return !isNaN(value) && value > 0;
+        })
+      );
     }
     return data;
   }
 
   function filterScatterplotByFeatureIDs(featureIDs) {
-    const filteredData = originalCsvData.filter(d => featureIDs.includes(d["Feature ID"]));
+    const filteredData = originalCsvData.filter((d) =>
+      featureIDs.includes(d["Feature ID"])
+    );
     updateScatterplot(filteredData);
   }
 
-
   function updateScatterplot(csvData, resetStrokes = false) {
-
-    const filteredData = d3.select("#useSampleFilterCheckbox").property("checked")
+    const filteredData = d3
+      .select("#useSampleFilterCheckbox")
+      .property("checked")
       ? applySampleFiltering(csvData)
       : csvData;
 
     // Update scales based on the current data
-    xScale.domain(d3.extent(csvData, d => d[xAxisField]));
-    yScale.domain(d3.extent(csvData, d => d[yAxisField]));
-    colorScale.domain([0, d3.max(csvData, d => d[colorField])]);
-    sizeScale.domain([0, d3.max(csvData, d => d[sizeField])]);
+    xScale.domain(d3.extent(csvData, (d) => d[xAxisField]));
+    yScale.domain(d3.extent(csvData, (d) => d[yAxisField]));
+    colorScale.domain([0, d3.max(csvData, (d) => d[colorField])]);
+    sizeScale.domain([0, d3.max(csvData, (d) => d[sizeField])]);
 
     // // Update gradient legend values
     // gradientMinLabel.text(Math.floor(d3.min(csvData, d => d[colorField])).toLocaleString());
@@ -518,85 +569,106 @@ async function metadataScatterMain(csvPath) {
     // sizeMinLabel.text(Math.floor(d3.min(csvData, d => d[sizeField])).toLocaleString());
     // sizeMaxLabel.text(Math.ceil(d3.max(csvData, d => d[sizeField])).toLocaleString());
 
-    sizeLegendCircles.selectAll("circle")
-      .data([d3.max(csvData, d => d[sizeField]), 
-             (d3.min(csvData, d => d[sizeField]) + d3.max(csvData, d => d[sizeField])) / 2, 
-             d3.min(csvData, d => d[sizeField])])
-      .attr("r", d => sizeScale(d));
+    sizeLegendCircles
+      .selectAll("circle")
+      .data([
+        d3.max(csvData, (d) => d[sizeField]),
+        (d3.min(csvData, (d) => d[sizeField]) +
+          d3.max(csvData, (d) => d[sizeField])) /
+          2,
+        d3.min(csvData, (d) => d[sizeField]),
+      ])
+      .attr("r", (d) => sizeScale(d));
 
     // Update axes
-    svg.select(".x-axis")
-      .call(d3.axisBottom(xScale)
-        .ticks(10)
-        .tickSize(15) // Adjust this value to increase the tick mark length
+    svg
+      .select(".x-axis")
+      .call(
+        d3.axisBottom(xScale).ticks(10).tickSize(15) // Adjust this value to increase the tick mark length
       )
       .style("font-size", "14px") // Adjust the font size here
       .selectAll("text")
       .attr("dy", "1em"); // Adjust this value to move the labels further down
 
-    svg.select(".y-axis")
-      .call(d3.axisLeft(yScale)
-        .ticks(10)
-        .tickSize(15) // Adjust this value to increase the tick mark length
+    svg
+      .select(".y-axis")
+      .call(
+        d3.axisLeft(yScale).ticks(10).tickSize(15) // Adjust this value to increase the tick mark length
       )
       .style("font-size", "14px") // Adjust the font size here
       .selectAll("text")
       .attr("dx", "-0.1em"); // Adjust this value to move the labels further left
 
     // Update points
-    svg.selectAll("circle")
+    svg
+      .selectAll("circle")
       .data(filteredData)
       .join(
-        enter => enter.append("circle")
-          .attr("cx", d => xScale(d[xAxisField]))
-          .attr("cy", d => yScale(d[yAxisField]))
-          .attr("r", d => sizeScale(d[sizeField]))
-          .attr("fill", d => colorScale(d[colorField]))
-          .attr("stroke", "black")
-          .attr("opacity", 0.7)
-          .on("mouseover", function (event, d) {
-            tooltip.style("visibility", "visible")
-              .html(`
+        (enter) =>
+          enter
+            .append("circle")
+            .attr("cx", (d) => xScale(d[xAxisField]))
+            .attr("cy", (d) => yScale(d[yAxisField]))
+            .attr("r", (d) => sizeScale(d[sizeField]))
+            .attr("fill", (d) => colorScale(d[colorField]))
+            .attr("stroke", "black")
+            .attr("opacity", 0.7)
+            .on("mouseover", function (event, d) {
+              tooltip.style("visibility", "visible").html(`
                 <strong>Feature ID:</strong> ${d["Feature ID"]}<br>
                 <strong>Ionization Mode:</strong> ${d["Ionization Mode"]}<br>
                 <strong>DTXCID:</strong> ${d["DTXCID"]}<br>
-                ${hasMS2Score ? `<strong>MS2 Score:</strong> ${d["MS2 Score"]}<br>` : ""}
-                <strong>Hazard Score:</strong> ${d["Hazard Score"].toFixed(2)}<br>
-                <strong>Median Abundance:</strong> ${Number(d["Median Abundance"].toFixed(0)).toLocaleString()}<br>
-                <strong>Metadata Score:</strong> ${d["Metadata Score"].toFixed(2)}<br>
+                ${
+                  hasMS2Score
+                    ? `<strong>MS2 Score:</strong> ${d["MS2 Score"]}<br>`
+                    : ""
+                }
+                <strong>Hazard Score:</strong> ${d["Hazard Score"].toFixed(
+                  2
+                )}<br>
+                <strong>Median Abundance:</strong> ${Number(
+                  d["Median Abundance"].toFixed(0)
+                ).toLocaleString()}<br>
+                <strong>Metadata Score:</strong> ${d["Metadata Score"].toFixed(
+                  2
+                )}<br>
                 <strong>Occurrence Count:</strong> ${d["Occurrence Count"]}
               `);
-            // Highlight all circles with the same feature ID
-            d3.selectAll("circle")
-              .style("stroke", "black")
-              .style("stroke-width", "1px");
-            d3.selectAll("circle")
-              .filter(circleData => circleData["Feature ID"] === d["Feature ID"])
-              .raise()
-              .style("stroke", "rgb(0, 0, 255)")
-              .style("stroke-width", "2px");
-          })
-          .on("mousemove", function (event) {
-            tooltip.style("top", `${event.pageY - 50}px`)
-              .style("left", `${event.pageX + 20}px`);
-          })
-          .on("mouseout", function () {
-            tooltip.style("visibility", "hidden");
+              // Highlight all circles with the same feature ID
+              d3.selectAll("circle")
+                .style("stroke", "black")
+                .style("stroke-width", "1px");
+              d3.selectAll("circle")
+                .filter(
+                  (circleData) => circleData["Feature ID"] === d["Feature ID"]
+                )
+                .raise()
+                .style("stroke", "rgb(0, 0, 255)")
+                .style("stroke-width", "2px");
+            })
+            .on("mousemove", function (event) {
+              tooltip
+                .style("top", `${event.pageY - 50}px`)
+                .style("left", `${event.pageX + 20}px`);
+            })
+            .on("mouseout", function () {
+              tooltip.style("visibility", "hidden");
 
-            // Reset stroke styles
-            d3.selectAll("circle")
-              .style("stroke", "black")
-              .style("stroke-width", "1px");
-          }),
-        update => update
-          // .transition().duration(1000)
-          .attr("cx", d => xScale(d[xAxisField]))
-          .attr("cy", d => yScale(d[yAxisField]))
-          .attr("r", d => sizeScale(d[sizeField]))
-          .attr("fill", d => colorScale(d[colorField]))
-          .style("stroke", resetStrokes ? "black" : null)
-          .style("stroke-width", resetStrokes ? "1px" : null),
-        exit => exit.remove()
+              // Reset stroke styles
+              d3.selectAll("circle")
+                .style("stroke", "black")
+                .style("stroke-width", "1px");
+            }),
+        (update) =>
+          update
+            // .transition().duration(1000)
+            .attr("cx", (d) => xScale(d[xAxisField]))
+            .attr("cy", (d) => yScale(d[yAxisField]))
+            .attr("r", (d) => sizeScale(d[sizeField]))
+            .attr("fill", (d) => colorScale(d[colorField]))
+            .style("stroke", resetStrokes ? "black" : null)
+            .style("stroke-width", resetStrokes ? "1px" : null),
+        (exit) => exit.remove()
       );
   }
 
@@ -622,8 +694,6 @@ async function metadataScatterMain(csvPath) {
   //   .attr("height", height)
   //   .style("margin-left", "20px");
 
-
-
   // // Create a container for both SVGs with flex display
   // const svgContainer = d3.select("#metadataScatterContainer")
   //   .append("div")
@@ -646,7 +716,8 @@ async function metadataScatterMain(csvPath) {
   //   .attr("height", height);
 
   // Create a container for the original elements
-  const originalContainer = d3.select("#metadataScatterContainer")
+  const originalContainer = d3
+    .select("#metadataScatterContainer")
     .append("div")
     .attr("id", "originalContainer")
     .style("display", "block"); // Ensure all elements are stacked vertically
@@ -658,7 +729,8 @@ async function metadataScatterMain(csvPath) {
     .attr("height", height);
 
   // Create a separate container for the additional scatterplot
-  const additionalContainer = d3.select("#metadataScatterContainer")
+  const additionalContainer = d3
+    .select("#metadataScatterContainer")
     .append("div")
     .attr("id", "additionalContainer")
     .style("display", "block")
@@ -670,50 +742,52 @@ async function metadataScatterMain(csvPath) {
     .attr("width", width)
     .attr("height", height);
 
-
-
   // Function to update the additional scatterplot
   function updateAdditionalScatterplot(featureID) {
     // Filter data for the selected feature ID
-    const filteredData = csvData.filter(d => d["Feature ID"] === featureID);
+    const filteredData = csvData.filter((d) => d["Feature ID"] === featureID);
 
     // Update scales based on filtered data
-    xScale.domain(d3.extent(filteredData, d => d[xAxisField]));
-    yScale.domain(d3.extent(filteredData, d => d[yAxisField]));
+    xScale.domain(d3.extent(filteredData, (d) => d[xAxisField]));
+    yScale.domain(d3.extent(filteredData, (d) => d[yAxisField]));
 
     // Update axes for the additional scatterplot
-    svgAdditional.select(".x-axis")
-      .call(d3.axisBottom(xScale).ticks(10));
+    svgAdditional.select(".x-axis").call(d3.axisBottom(xScale).ticks(10));
 
-    svgAdditional.select(".y-axis")
-      .call(d3.axisLeft(yScale).ticks(10));
+    svgAdditional.select(".y-axis").call(d3.axisLeft(yScale).ticks(10));
 
     // Update points in the additional scatterplot
-    svgAdditional.selectAll("circle")
+    svgAdditional
+      .selectAll("circle")
       .data(filteredData)
       .join(
-        enter => enter.append("circle")
-          .attr("cx", d => xScale(d[xAxisField]))
-          .attr("cy", d => yScale(d[yAxisField]))
-          .attr("r", d => sizeScale(d[sizeField]))
-          .attr("fill", d => colorScale(d[colorField]))
-          .attr("stroke", "black")
-          .attr("opacity", 0.7),
-        update => update
-          .attr("cx", d => xScale(d[xAxisField]))
-          .attr("cy", d => yScale(d[yAxisField]))
-          .attr("r", d => sizeScale(d[sizeField]))
-          .attr("fill", d => colorScale(d[colorField])),
-        exit => exit.remove()
+        (enter) =>
+          enter
+            .append("circle")
+            .attr("cx", (d) => xScale(d[xAxisField]))
+            .attr("cy", (d) => yScale(d[yAxisField]))
+            .attr("r", (d) => sizeScale(d[sizeField]))
+            .attr("fill", (d) => colorScale(d[colorField]))
+            .attr("stroke", "black")
+            .attr("opacity", 0.7),
+        (update) =>
+          update
+            .attr("cx", (d) => xScale(d[xAxisField]))
+            .attr("cy", (d) => yScale(d[yAxisField]))
+            .attr("r", (d) => sizeScale(d[sizeField]))
+            .attr("fill", (d) => colorScale(d[colorField])),
+        (exit) => exit.remove()
       );
   }
 
   // Add axes to the additional scatterplot
-  svgAdditional.append("g")
+  svgAdditional
+    .append("g")
     .attr("class", "x-axis")
     .attr("transform", `translate(0,${height - margin.bottom})`);
 
-  svgAdditional.append("g")
+  svgAdditional
+    .append("g")
     .attr("class", "y-axis")
     .attr("transform", `translate(${margin.left},0)`);
 
@@ -724,18 +798,21 @@ async function metadataScatterMain(csvPath) {
   const sizeScale = d3.scaleSqrt().range([5, 22]);
 
   // Add axes
-  svg.append("g")
+  svg
+    .append("g")
     .attr("class", "x-axis")
     .attr("transform", `translate(0,${height - margin.bottom})`)
     .call(d3.axisBottom(xScale).ticks(10));
 
-  svg.append("g")
+  svg
+    .append("g")
     .attr("class", "y-axis")
     .attr("transform", `translate(${margin.left},0)`)
     .call(d3.axisLeft(yScale).ticks(10));
 
   // first for X axis
-  const ulX = d3.select("div#metadataScatterContainer")
+  const ulX = d3
+    .select("div#metadataScatterContainer")
     .append("ul")
     .attr("id", "xAxisSelector")
     .style("list-style", "none")
@@ -763,31 +840,40 @@ async function metadataScatterMain(csvPath) {
   //     d3.select(this).style("background-color", "#d3d3d3");
   //     updateScatterplot(csvData);
   //   });
-  
-    // Axis selectors for X and Y with conditional styling
-  ulX.selectAll("li")
-  .data(fields)
-  .enter()
-  .append("li")
-  .text(d => d)
-  .style("padding", "5px 10px")
-  .style("cursor", "pointer")
-  .style("background-color", d => (d === xAxisField ? "#d3d3d3" : "#f0f0f0"))
-  .style("border", "1px solid #ccc")
-  .style("border-radius", "5px")
-  .style("height", "fit-content")
-  .style("pointer-events", d => (d === "MS2 Score" && !hasMS2Score ? "none" : "auto"))
-  .style("opacity", d => (d === "MS2 Score" && !hasMS2Score ? "0.5" : "1"))
-  .on("click", function (event, d) {
-    xAxisField = d;
-    ulX.selectAll("li")
-      .style("background-color", d => (d === xAxisField ? "#d3d3d3" : "#f0f0f0"));
-    d3.select(this).style("background-color", "#d3d3d3");
-    updateScatterplot(csvData);
-  });
-  
+
+  // Axis selectors for X and Y with conditional styling
+  ulX
+    .selectAll("li")
+    .data(fields)
+    .enter()
+    .append("li")
+    .text((d) => d)
+    .style("padding", "5px 10px")
+    .style("cursor", "pointer")
+    .style("background-color", (d) =>
+      d === xAxisField ? "#d3d3d3" : "#f0f0f0"
+    )
+    .style("border", "1px solid #ccc")
+    .style("border-radius", "5px")
+    .style("height", "fit-content")
+    .style("pointer-events", (d) =>
+      d === "MS2 Score" && !hasMS2Score ? "none" : "auto"
+    )
+    .style("opacity", (d) => (d === "MS2 Score" && !hasMS2Score ? "0.5" : "1"))
+    .on("click", function (event, d) {
+      xAxisField = d;
+      ulX
+        .selectAll("li")
+        .style("background-color", (d) =>
+          d === xAxisField ? "#d3d3d3" : "#f0f0f0"
+        );
+      d3.select(this).style("background-color", "#d3d3d3");
+      updateScatterplot(csvData);
+    });
+
   // Now for Y axis
-  const ulY = d3.select("div#metadataScatterContainer")
+  const ulY = d3
+    .select("div#metadataScatterContainer")
     .append("ul")
     .attr("id", "yAxisSelector")
     .style("list-style", "none")
@@ -816,29 +902,38 @@ async function metadataScatterMain(csvPath) {
   //     updateScatterplot(csvData);
   //   });
 
-  ulY.selectAll("li")
-  .data(fields)
-  .enter()
-  .append("li")
-  .text(d => d)
-  .style("padding", "5px 10px")
-  .style("cursor", "pointer")
-  .style("background-color", d => (d === yAxisField ? "#d3d3d3" : "#f0f0f0"))
-  .style("border", "1px solid #ccc")
-  .style("border-radius", "5px")
-  .style("height", "fit-content")
-  .style("pointer-events", d => (d === "MS2 Score" && !hasMS2Score ? "none" : "auto"))
-  .style("opacity", d => (d === "MS2 Score" && !hasMS2Score ? "0.5" : "1"))
-  .on("click", function (event, d) {
-    yAxisField = d;
-    ulY.selectAll("li")
-      .style("background-color", d => (d === yAxisField ? "#d3d3d3" : "#f0f0f0"));
-    d3.select(this).style("background-color", "#d3d3d3");
-    updateScatterplot(csvData);
-  });
+  ulY
+    .selectAll("li")
+    .data(fields)
+    .enter()
+    .append("li")
+    .text((d) => d)
+    .style("padding", "5px 10px")
+    .style("cursor", "pointer")
+    .style("background-color", (d) =>
+      d === yAxisField ? "#d3d3d3" : "#f0f0f0"
+    )
+    .style("border", "1px solid #ccc")
+    .style("border-radius", "5px")
+    .style("height", "fit-content")
+    .style("pointer-events", (d) =>
+      d === "MS2 Score" && !hasMS2Score ? "none" : "auto"
+    )
+    .style("opacity", (d) => (d === "MS2 Score" && !hasMS2Score ? "0.5" : "1"))
+    .on("click", function (event, d) {
+      yAxisField = d;
+      ulY
+        .selectAll("li")
+        .style("background-color", (d) =>
+          d === yAxisField ? "#d3d3d3" : "#f0f0f0"
+        );
+      d3.select(this).style("background-color", "#d3d3d3");
+      updateScatterplot(csvData);
+    });
 
   // setup container for size and color legends
-  const legendContainer = d3.select("div#metadataScatterContainer")
+  const legendContainer = d3
+    .select("div#metadataScatterContainer")
     .append("div")
     .attr("id", "scatterLegendContainer");
 
@@ -861,9 +956,10 @@ async function metadataScatterMain(csvPath) {
   const gradientMaxLabel = gradientContainer
     .append("span")
     .style("font-size", "15px")
-    .text(d3.max(csvData, d => d[colorField]).toLocaleString());
+    .text(d3.max(csvData, (d) => d[colorField]).toLocaleString());
 
-  gradientContainer.append("div")
+  gradientContainer
+    .append("div")
     .style("width", "20px")
     .style("height", "260px")
     .style("background", "linear-gradient(to top, white, red)");
@@ -871,7 +967,7 @@ async function metadataScatterMain(csvPath) {
   const gradientMinLabel = gradientContainer
     .append("span")
     .style("font-size", "15px")
-    .text(d3.min(csvData, d => d[colorField]).toLocaleString());
+    .text(d3.min(csvData, (d) => d[colorField]).toLocaleString());
 
   // Add color legend selector
   const ulColor = colorLegendContainer
@@ -884,25 +980,33 @@ async function metadataScatterMain(csvPath) {
     .style("flex-direction", "column")
     .style("gap", "5px");
 
-  ulColor.selectAll("li")
+  ulColor
+    .selectAll("li")
     .data(fields)
     .enter()
     .append("li")
-    .text(d => d)
+    .text((d) => d)
     .style("padding", "5px 10px")
     .style("cursor", "pointer")
-    .style("background-color", d => (d === colorField ? "#d3d3d3" : "#f0f0f0"))
+    .style("background-color", (d) =>
+      d === colorField ? "#d3d3d3" : "#f0f0f0"
+    )
     .style("border", "1px solid #ccc")
     .style("border-radius", "5px")
-    .style("pointer-events", d => (d === "MS2 Score" && !hasMS2Score ? "none" : "auto"))
-    .style("opacity", d => (d === "MS2 Score" && !hasMS2Score ? "0.5" : "1"))
+    .style("pointer-events", (d) =>
+      d === "MS2 Score" && !hasMS2Score ? "none" : "auto"
+    )
+    .style("opacity", (d) => (d === "MS2 Score" && !hasMS2Score ? "0.5" : "1"))
     .on("click", function (event, d) {
       colorField = d;
-      ulColor.selectAll("li")
-        .style("background-color", d => (d === colorField ? "#d3d3d3" : "#f0f0f0"));
+      ulColor
+        .selectAll("li")
+        .style("background-color", (d) =>
+          d === colorField ? "#d3d3d3" : "#f0f0f0"
+        );
       d3.select(this).style("background-color", "#d3d3d3");
       updateScatterplot(csvData);
-  });
+    });
 
   // Add size legend below color legend
   const sizeLegendContainer = legendContainer
@@ -921,12 +1025,17 @@ async function metadataScatterMain(csvPath) {
   const sizeMaxLabel = sizeLegendCircles
     .append("span")
     .style("font-size", "15px")
-    .text(Math.ceil(d3.max(csvData, d => d[sizeField])).toLocaleString());
+    .text(Math.ceil(d3.max(csvData, (d) => d[sizeField])).toLocaleString());
 
-  sizeLegendCircles.selectAll("circle")
-    .data([d3.max(csvData, d => d[sizeField]), 
-           (d3.min(csvData, d => d[sizeField]) + d3.max(csvData, d => d[sizeField])) / 2, 
-           d3.min(csvData, d => d[sizeField])])
+  sizeLegendCircles
+    .selectAll("circle")
+    .data([
+      d3.max(csvData, (d) => d[sizeField]),
+      (d3.min(csvData, (d) => d[sizeField]) +
+        d3.max(csvData, (d) => d[sizeField])) /
+        2,
+      d3.min(csvData, (d) => d[sizeField]),
+    ])
     .enter()
     .append("svg")
     .attr("width", "50px")
@@ -934,7 +1043,7 @@ async function metadataScatterMain(csvPath) {
     .append("circle")
     .attr("cx", 25)
     .attr("cy", 25)
-    .attr("r", d => sizeScale(d))
+    .attr("r", (d) => sizeScale(d))
     .attr("fill", "gray")
     .attr("stroke", "black")
     .attr("id", (d, i) => `sizeCircle${i}`);
@@ -942,7 +1051,7 @@ async function metadataScatterMain(csvPath) {
   const sizeMinLabel = sizeLegendCircles
     .append("span")
     .style("font-size", "15px")
-    .text(Math.floor(d3.min(csvData, d => d[sizeField])).toLocaleString());
+    .text(Math.floor(d3.min(csvData, (d) => d[sizeField])).toLocaleString());
 
   // Add size legend selector
   const ulSize = sizeLegendContainer
@@ -954,35 +1063,42 @@ async function metadataScatterMain(csvPath) {
     .style("display", "flex")
     .style("gap", "10px");
 
-  ulSize.selectAll("li")
+  ulSize
+    .selectAll("li")
     .data(fields)
     .enter()
     .append("li")
-    .text(d => d)
+    .text((d) => d)
     .style("padding", "5px 10px")
     .style("cursor", "pointer")
-    .style("background-color", d => (d === sizeField ? "#d3d3d3" : "#f0f0f0"))
+    .style("background-color", (d) => (d === sizeField ? "#d3d3d3" : "#f0f0f0"))
     .style("border", "1px solid #ccc")
     .style("border-radius", "5px")
-    .style("pointer-events", d => (d === "MS2 Score" && !hasMS2Score ? "none" : "auto"))
-    .style("opacity", d => (d === "MS2 Score" && !hasMS2Score ? "0.5" : "1"))
+    .style("pointer-events", (d) =>
+      d === "MS2 Score" && !hasMS2Score ? "none" : "auto"
+    )
+    .style("opacity", (d) => (d === "MS2 Score" && !hasMS2Score ? "0.5" : "1"))
     .on("click", function (event, d) {
       sizeField = d;
-      ulSize.selectAll("li")
-        .style("background-color", d => (d === sizeField ? "#d3d3d3" : "#f0f0f0"));
+      ulSize
+        .selectAll("li")
+        .style("background-color", (d) =>
+          d === sizeField ? "#d3d3d3" : "#f0f0f0"
+        );
       d3.select(this).style("background-color", "#d3d3d3");
       updateScatterplot(csvData);
-  });
+    });
 
   // Add scatterplot points
-  svg.selectAll("circle")
+  svg
+    .selectAll("circle")
     .data(csvData)
     .enter()
     .append("circle")
-    .attr("cx", d => xScale(d[xAxisField]))
-    .attr("cy", d => yScale(d[yAxisField]))
-    .attr("r", d => sizeScale(d[sizeField]))
-    .attr("fill", d => colorScale(d[colorField]))
+    .attr("cx", (d) => xScale(d[xAxisField]))
+    .attr("cy", (d) => yScale(d[yAxisField]))
+    .attr("r", (d) => sizeScale(d[sizeField]))
+    .attr("fill", (d) => colorScale(d[colorField]))
     .attr("stroke", "black")
     .attr("opacity", 0.7)
     .on("click", function (event, d) {
@@ -991,14 +1107,19 @@ async function metadataScatterMain(csvPath) {
     })
     // Tooltip logic to conditionally display MS2 Score
     .on("mouseover", function (event, d) {
-      tooltip.style("visibility", "visible")
-        .html(`
+      tooltip.style("visibility", "visible").html(`
           <strong>Feature ID:</strong> ${d["Feature ID"]}<br>
           <strong>Ionization Mode:</strong> ${d["Ionization Mode"]}<br>
           <strong>DTXCID:</strong> ${d["DTXCID"]}<br>
-          ${hasMS2Score ? `<strong>MS2 Score:</strong> ${d["MS2 Score"]}<br>` : ""}
+          ${
+            hasMS2Score
+              ? `<strong>MS2 Score:</strong> ${d["MS2 Score"]}<br>`
+              : ""
+          }
           <strong>Hazard Score:</strong> ${d["Hazard Score"].toFixed(2)}<br>
-          <strong>Median Abundance:</strong> ${Number(d["Median Abundance"].toFixed(0)).toLocaleString()}<br>
+          <strong>Median Abundance:</strong> ${Number(
+            d["Median Abundance"].toFixed(0)
+          ).toLocaleString()}<br>
           <strong>Metadata Score:</strong> ${d["Metadata Score"].toFixed(2)}<br>
           <strong>Occurrence Count:</strong> ${d["Occurrence Count"]}
         `);
@@ -1007,13 +1128,14 @@ async function metadataScatterMain(csvPath) {
         .style("stroke", "black")
         .style("stroke-width", "1px");
       d3.selectAll("circle")
-        .filter(circleData => circleData["Feature ID"] === d["Feature ID"])
+        .filter((circleData) => circleData["Feature ID"] === d["Feature ID"])
         .raise()
         .style("stroke", "rgb(0, 0, 255)")
-        .style("stroke-width", "2px");        
+        .style("stroke-width", "2px");
     })
     .on("mousemove", function (event) {
-      tooltip.style("top", `${event.pageY - 50}px`)
+      tooltip
+        .style("top", `${event.pageY - 50}px`)
         .style("left", `${event.pageX + 20}px`);
     })
     .on("mouseout", function () {
@@ -1022,13 +1144,14 @@ async function metadataScatterMain(csvPath) {
       // Reset stroke styles
       d3.selectAll("circle")
         .style("stroke", "black")
-        .style("stroke-width", "1px");      
+        .style("stroke-width", "1px");
     });
 
   // Add box selection functionality
   let isDrawing = false;
   let startX, startY;
-  const selectionBox = svg.append("rect")
+  const selectionBox = svg
+    .append("rect")
     .attr("id", "selectionBox")
     .attr("fill", "rgba(0, 0, 255, 0.1)")
     .attr("stroke", "blue")
@@ -1072,16 +1195,30 @@ async function metadataScatterMain(csvPath) {
     const boxWidth = +selectionBox.attr("width");
     const boxHeight = +selectionBox.attr("height");
 
-    const selectedPoints = csvData.filter(d => {
+    const selectedPoints = csvData.filter((d) => {
       const cx = xScale(d[xAxisField]);
       const cy = yScale(d[yAxisField]);
-      return cx >= boxX && cx <= boxX + boxWidth && cy >= boxY && cy <= boxY + boxHeight;
+      return (
+        cx >= boxX &&
+        cx <= boxX + boxWidth &&
+        cy >= boxY &&
+        cy <= boxY + boxHeight
+      );
     });
 
-    const uniqueFeatureIDs = [...new Set(selectedPoints.map(d => d["Feature ID"]))];
+    const uniqueFeatureIDs = [
+      ...new Set(selectedPoints.map((d) => d["Feature ID"])),
+    ];
 
     // Update the box selection tooltip with clickable Feature IDs
-    boxSelectionTooltip.html(`<strong>Selected Feature IDs:</strong> ${uniqueFeatureIDs.map(id => `<span class="clickable-feature-id" data-id="${id}">${id}</span>`).join(", ")}`);
+    boxSelectionTooltip.html(
+      `<strong>Selected Feature IDs:</strong> ${uniqueFeatureIDs
+        .map(
+          (id) =>
+            `<span class="clickable-feature-id" data-id="${id}">${id}</span>`
+        )
+        .join(", ")}`
+    );
 
     // Add click behavior to feature IDs in the tooltip
     d3.selectAll(".clickable-feature-id")
@@ -1099,7 +1236,7 @@ async function metadataScatterMain(csvPath) {
           .style("stroke", "black")
           .style("stroke-width", "1px");
         d3.selectAll("circle")
-          .filter(d => d["Feature ID"] === selectedFeatureID)
+          .filter((d) => d["Feature ID"] === selectedFeatureID)
           .raise()
           // .transition().duration(500)
           .style("stroke", "rgb(0, 0, 255)")
@@ -1128,28 +1265,32 @@ async function metadataScatterMain(csvPath) {
     dropdown.property("value", currentPage);
 
     // Update feature ID dropdown
-    const uniqueFeatureIDs = [...new Set(csvData.map(d => d["Feature ID"]))];
-    featureDropdown.selectAll("option")
+    const uniqueFeatureIDs = [...new Set(csvData.map((d) => d["Feature ID"]))];
+    featureDropdown
+      .selectAll("option")
       .data(uniqueFeatureIDs)
       .join(
-        enter => enter.append("option")
-          .attr("value", d => d)
-          .text(d => `${d}`),
-        update => update
-          .attr("value", d => d)
-          .text(d => `${d}`),
-        exit => exit.remove()
+        (enter) =>
+          enter
+            .append("option")
+            .attr("value", (d) => d)
+            .text((d) => `${d}`),
+        (update) => update.attr("value", (d) => d).text((d) => `${d}`),
+        (exit) => exit.remove()
       );
 
     // Update tooltip for the current page
-    paginationTooltip.html(`<strong>Feature IDs:</strong> ${uniqueFeatureIDs.join(", ")}`);
+    paginationTooltip.html(
+      `<strong>Feature IDs:</strong> ${uniqueFeatureIDs.join(", ")}`
+    );
 
     // Reset the box selection tooltip
     boxSelectionTooltip.html("<strong>Selected Feature IDs:</strong> None");
   }
 
   // Create pagination container
-  const paginationContainer = d3.select("div#metadataScatterContainer")
+  const paginationContainer = d3
+    .select("div#metadataScatterContainer")
     .append("div")
     .attr("id", "paginationContainer")
     .style("grid-area", "scatterTitle")
@@ -1159,7 +1300,8 @@ async function metadataScatterMain(csvPath) {
     .style("margin-top", "10px");
 
   // Add previous button
-  paginationContainer.append("button")
+  paginationContainer
+    .append("button")
     .attr("id", "prevPageButton")
     .text("Previous")
     .style("padding", "5px 10px")
@@ -1174,7 +1316,8 @@ async function metadataScatterMain(csvPath) {
     });
 
   // Add dropdown for page selection
-  const dropdown = paginationContainer.append("select")
+  const dropdown = paginationContainer
+    .append("select")
     .attr("id", "pageDropdown")
     .style("padding", "5px")
     .style("border", "1px solid #ccc")
@@ -1184,7 +1327,8 @@ async function metadataScatterMain(csvPath) {
       updatePagination();
     });
 
-  dropdown.selectAll("option")
+  dropdown
+    .selectAll("option")
     .data(newCSV)
     .enter()
     .append("option")
@@ -1192,7 +1336,8 @@ async function metadataScatterMain(csvPath) {
     .text((d, i) => `Page ${i + 1}`);
 
   // Add next button
-  paginationContainer.append("button")
+  paginationContainer
+    .append("button")
     .attr("id", "nextPageButton")
     .text("Next")
     .style("padding", "5px 10px")
@@ -1207,10 +1352,12 @@ async function metadataScatterMain(csvPath) {
     });
 
   // Add feature ID dropdown
-  paginationContainer.append("div")
+  paginationContainer
+    .append("div")
     .style("margin-left", "20px")
-    .html("<b>Highlight Feature:</b> ")
-  const featureDropdown = paginationContainer.append("select")
+    .html("<b>Highlight Feature:</b> ");
+  const featureDropdown = paginationContainer
+    .append("select")
     .attr("id", "featureDropdown")
     .style("padding", "5px")
     .style("border", "1px solid #ccc")
@@ -1222,7 +1369,7 @@ async function metadataScatterMain(csvPath) {
         .style("stroke", "black")
         .style("stroke-width", "1px");
       d3.selectAll("circle")
-        .filter(d => d["Feature ID"] === selectedFeatureID)
+        .filter((d) => d["Feature ID"] === selectedFeatureID)
         .raise()
         // .transition().duration(500)
         .style("stroke", "rgb(0, 0, 255)")
@@ -1230,16 +1377,18 @@ async function metadataScatterMain(csvPath) {
     });
 
   // Add file input and upload button for feature IDs
-  const uploadContainer = paginationContainer.append("div")
+  const uploadContainer = paginationContainer
+    .append("div")
     .style("display", "flex")
     .style("align-items", "center")
     .style("gap", "10px");
 
-  uploadContainer.append("input")
+  uploadContainer
+    .append("input")
     .attr("type", "file")
     .attr("id", "featureIDFileInput")
     .style("display", "none")
-    .on("change", async function(event) {
+    .on("change", async function (event) {
       const file = event.target.files[0];
       if (file) {
         const featureIDs = await readFeatureIDsFromCSV(file);
@@ -1247,24 +1396,26 @@ async function metadataScatterMain(csvPath) {
       }
     });
 
-  uploadContainer.append("button")
+  uploadContainer
+    .append("button")
     .text("Upload Feature IDs CSV")
     .style("padding", "5px 10px")
     .style("cursor", "pointer")
     .style("border", "1px solid #ccc")
     .style("border-radius", "5px")
-    .on("click", function() {
+    .on("click", function () {
       document.getElementById("featureIDFileInput").click();
     });
 
   // Add reset button to revert to the original dataset
-  paginationContainer.append("button")
+  paginationContainer
+    .append("button")
     .text("Reset")
     .style("padding", "5px 10px")
     .style("cursor", "pointer")
     .style("border", "1px solid #ccc")
     .style("border-radius", "5px")
-    .on("click", function() {
+    .on("click", function () {
       // Revert to the original dataset and update the scatterplot
       csvData = originalCsvData;
       updateScatterplot(csvData, true); // Reset strokes when resetting
@@ -1297,25 +1448,30 @@ async function metadataScatterMain(csvPath) {
     .html("<strong>Selected Feature IDs:</strong> None");
 
   // Add hover functionality to dropdown
-  dropdown.on("mouseover", function () {
-    const uniqueFeatureIDs = [...new Set(newCSV[currentPage].map(d => d["Feature ID"]))];
-    paginationTooltip.style("visibility", "visible")
-      .html(`<strong>Feature IDs:</strong> ${uniqueFeatureIDs.join(", ")}`);
-  })
-  .on("mousemove", function (event) {
-    paginationTooltip.style("top", `${event.pageY + 10}px`)
-      .style("left", `${event.pageX + 10}px`);
-  })
-  .on("mouseout", function () {
-    paginationTooltip.style("visibility", "hidden");
-  });
-  
+  dropdown
+    .on("mouseover", function () {
+      const uniqueFeatureIDs = [
+        ...new Set(newCSV[currentPage].map((d) => d["Feature ID"])),
+      ];
+      paginationTooltip
+        .style("visibility", "visible")
+        .html(`<strong>Feature IDs:</strong> ${uniqueFeatureIDs.join(", ")}`);
+    })
+    .on("mousemove", function (event) {
+      paginationTooltip
+        .style("top", `${event.pageY + 10}px`)
+        .style("left", `${event.pageX + 10}px`);
+    })
+    .on("mouseout", function () {
+      paginationTooltip.style("visibility", "hidden");
+    });
+
   // Initialize the scatterplot with the first page
   updatePagination();
-
 }
 
 // const csvPath = "./data/WW2DW_data_analysis_file-2025_03_25.csv";
-const csvPath = "./data/WW2DW_chemical_results_with_decision_documentation.csv";
+const csvPath = "./data/Example_NTA_hazard_metadata.csv";
+// const csvPath = "./data/WW2DW_chemical_results_with_decision_documentation.csv";
 // const csvPath = "./data/WW2DW_data_analysis_file-2025_03_25_reduced_no_MS2.csv";
 metadataScatterMain(csvPath);
