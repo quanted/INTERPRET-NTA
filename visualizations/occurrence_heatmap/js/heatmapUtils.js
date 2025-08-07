@@ -289,14 +289,15 @@ export function setCellColorAndPos(
  */
 export function addTitle(canvas, thresholdData, dimsObject, graphMesh) {
   // create and style div
-  const titleDiv = document.createElement("div");
-  titleDiv.style.whiteSpace = "pre";
+  // const titleDiv = document.createElement("div");
+  const titleDiv = document.getElementById("heatmap-title");
+  // titleDiv.style.whiteSpace = "pre";
   titleDiv.className = "title";
-  titleDiv.style.color = "black";
-  titleDiv.style.fontSize = "30px";
-  titleDiv.style.backgroundColor = "transparent";
-  titleDiv.style.width = "auto";
-  titleDiv.style.display = "inline-block";
+  // titleDiv.style.color = "black";
+  // titleDiv.style.fontSize = "30px";
+  // titleDiv.style.backgroundColor = "transparent";
+  // titleDiv.style.width = "auto";
+  // titleDiv.style.display = "inline-block";
 
   // add the innerHTML
   titleDiv.innerHTML = `Occurrence Heatmap\n`;
@@ -308,26 +309,19 @@ export function addTitle(canvas, thresholdData, dimsObject, graphMesh) {
   // set the position
   const canvRect = canvas.getBoundingClientRect();
 
-  let titleX =
-    -(dimsObject.actualWidth / 2) + canvRect.left + dimsObject.paddingWidth; // shift to left of graph
-  titleX += dimsObject.width / 2; // center to the actual graph
+  // let titleX =
+  //   -(dimsObject.actualWidth / 2) + canvRect.left + dimsObject.paddingWidth; // shift to left of graph
+  // titleX += dimsObject.width / 2; // center to the actual graph
 
-  let titleY = dimsObject.actualHeight; // value of 0 sets top to be `height` below graph?? shift up by this amount
-  titleY += dimsObject.height / 2 + dimsObject.paddingHeight * 0.8; // shift to top of graph, account for padding
+  // let titleY = dimsObject.actualHeight; // value of 0 sets top to be `height` below graph?? shift up by this amount
+  // titleY += dimsObject.height / 2 + dimsObject.paddingHeight * 0.8; // shift to top of graph, account for padding
 
-  // // Add an additional offset to move the title further up
-  // const additionalOffset = 100; // Adjust this value as needed
-  // titleY += additionalOffset;
+  // const titleLabel = new CSS2DObject(titleDiv);
+  // titleLabel.position.set(titleX, titleY, 0);
 
-
-
-
-  const titleLabel = new CSS2DObject(titleDiv);
-  titleLabel.position.set(titleX, titleY, 0);
-
-  // add to mesh
-  graphMesh.add(titleLabel);
-  titleLabel.layers.set(0);
+  // // add to mesh
+  // graphMesh.add(titleLabel);
+  // titleLabel.layers.set(0);
 }
 
 /**

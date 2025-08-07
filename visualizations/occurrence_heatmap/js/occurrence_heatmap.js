@@ -116,7 +116,7 @@ async function createOccurrenceHeatmap(
     const margin = { top: 75, right: 0, bottom: 75, left: 0 };
     const width = 1300 - margin.left - margin.right;
     const height = 725 - margin.top - margin.bottom;
-    const paddingHeight = 100;
+    const paddingHeight = 160;
     const paddingWidth = 100;
     const actualWidth = width + paddingWidth * 2;
     const actualHeight = height + paddingHeight * 2;
@@ -147,6 +147,10 @@ async function createOccurrenceHeatmap(
       orbitControls,
       scene,
     ] = heatmapUtils.setTheScene("heatmap", dimsObject);
+
+    // Set the width of #heatmap-title to match the width of #heatmap
+    const heatmapTitle = document.getElementById("heatmap-title");
+    heatmapTitle.style.width = canvas.offsetWidth + "px";
 
     // set renderer bg color
     renderer.setClearColor(0xffffff, 1);
@@ -643,7 +647,11 @@ function loadHeatmap() {
   createOccurrenceHeatmap(csvPathOccurrence, csvPathParameters);
 }
 
-loadHeatmap();
+// loadHeatmap();
+document.addEventListener("DOMContentLoaded", () => {
+  // Call your function here
+  loadHeatmap();
+});
 
 ///// uncomment these lines and the button in index.html to create heatmap on button click
 // document.getElementById("loadDataBtn").addEventListener('click', () => {

@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Occurrence Heatmap</title>
+    <link rel="stylesheet" href="./styles/occurrenceHeatmapStyles.css">
   </head>
 
   <style>
@@ -37,11 +38,13 @@
   </style>
 
   <body>
+    
+    <div id="heatmap-title"></div>
     <br />
-    <div id="heatmap-container" style="top: 80px; margin-top: 60px">
+    <!-- <div id="heatmap-container" style="top: 80px; margin-top: 60px"> -->
+    <div id="heatmap-container">
       <canvas id="heatmap"></canvas>
     </div>
-
     <!-- Tween.js for animations -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
     <script type="importmap">
