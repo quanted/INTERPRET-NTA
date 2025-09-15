@@ -251,7 +251,8 @@ async function metadataScatterMain(csvPath) {
 
   // get a nested array that groups together feature IDs in blocks of n=200
   // const csvDataNested = getNestedCSVData(csvDataClean, 80);
-  const csvDataNested = getNestedCSVDataBasedOnOcc(csvDataClean, 22000);
+  // const csvDataNested = getNestedCSVDataBasedOnOcc(csvDataClean, 22000);
+  const csvDataNested = getNestedCSVDataBasedOnOcc(csvDataClean, 5000);
 
   // Log data after pagination
   console.log("Data after pagination (first page):", csvDataNested[0].slice(0, 10)); // Log first 10 entries of the first page
@@ -548,13 +549,13 @@ async function metadataScatterMain(csvPath) {
     colorScale.domain([0, d3.max(csvData, d => d[colorField])]);
     sizeScale.domain([0, d3.max(csvData, d => d[sizeField])]);
 
-    // // Update gradient legend values
-    // gradientMinLabel.text(Math.floor(d3.min(csvData, d => d[colorField])).toLocaleString());
-    // gradientMaxLabel.text(Math.ceil(d3.max(csvData, d => d[colorField])).toLocaleString());
+    // Update gradient legend values
+    gradientMinLabel.text(Math.floor(d3.min(csvData, d => d[colorField])).toLocaleString());
+    gradientMaxLabel.text(Math.ceil(d3.max(csvData, d => d[colorField])).toLocaleString());
 
-    // // Update size legend circles
-    // sizeMinLabel.text(Math.floor(d3.min(csvData, d => d[sizeField])).toLocaleString());
-    // sizeMaxLabel.text(Math.ceil(d3.max(csvData, d => d[sizeField])).toLocaleString());
+    // Update size legend circles
+    sizeMinLabel.text(Math.floor(d3.min(csvData, d => d[sizeField])).toLocaleString());
+    sizeMaxLabel.text(Math.ceil(d3.max(csvData, d => d[sizeField])).toLocaleString());
 
     sizeLegendCircles.selectAll("circle")
       .data([d3.max(csvData, d => d[sizeField]), 
