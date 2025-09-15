@@ -129,6 +129,25 @@ function sortByOccCountThenFeatID(csvData) {
   return csvData;
 }
 
+// function sortByFeatureID(csvData) {
+//   csvData.sort((a, b) => {
+//     if (a["Feature ID"] < b["Feature ID"]) {
+//       return -1;
+//     }
+//     if (a["Feature ID"] > b["Feature ID"]) {
+//       return 1;
+//     }
+//     return 0;
+//   });
+
+//   return csvData;
+// }
+
+function sortByFeatureID(csvData) {
+  csvData.sort((a, b) => a["Feature ID"] - b["Feature ID"]);
+  return csvData;
+}
+
 function getNestedCSVData(csvData, n = 200) {
   const csvDataNested = [];
   let currentArr = [];
@@ -216,15 +235,34 @@ async function metadataScatterMain(csvPath) {
   let csvDataClean = cleanRawCsvData(csvDataRaw, hasMS2Score);
   csvDataRaw = null; // garbage collection
 
-  // sort data on final occurrence count, secondarily on feature id
-  const csvDataSorted = sortByOccCountThenFeatID(csvDataClean);
+  // // sort data on final occurrence count, secondarily on feature id
+  // const csvDataSorted = sortByOccCountThenFeatID(csvDataClean);
+
+  // Log data before sorting
+  console.log("Data before sorting by Feature ID:", csvDataClean.slice(0, 10)); // Log first 10 entries
+
+  // sort data on feature id
+  const csvDataSorted = sortByFeatureID(csvDataClean);
+
+  // Log data after sorting
+  console.log("Data after sorting by Feature ID:", csvDataSorted.slice(0, 10)); // Log first 10 entries
+
   // csvDataClean = null;
 
   // get a nested array that groups together feature IDs in blocks of n=200
   // const csvDataNested = getNestedCSVData(csvDataClean, 80);
   const csvDataNested = getNestedCSVDataBasedOnOcc(csvDataClean, 22000);
 
-  let newCSV = csvDataNested.sort((a, b) => a.length - b.length)
+  // Log data after pagination
+  console.log("Data after pagination (first page):", csvDataNested[0].slice(0, 10)); // Log first 10 entries of the first page
+
+
+  // let newCSV = csvDataNested.sort((a, b) => a.length - b.length)
+  let newCSV = csvDataNested;
+
+  console.log("Pages sorted by length:", newCSV.map(page => page.length)); // Log lengths of pages
+
+  
   let csvData = newCSV[0];
 
   let xAxisField = "Metadata Score";
