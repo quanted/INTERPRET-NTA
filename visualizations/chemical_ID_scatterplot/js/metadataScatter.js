@@ -727,6 +727,25 @@ async function metadataScatterMain(csvPath) {
     svgAdditional.select(".y-axis")
       .call(d3.axisLeft(yScale).ticks(10));
 
+    // // Update points in the additional scatterplot
+    // svgAdditional.selectAll("circle")
+    //   .data(filteredData)
+    //   .join(
+    //     enter => enter.append("circle")
+    //       .attr("cx", d => xScale(d[xAxisField]))
+    //       .attr("cy", d => yScale(d[yAxisField]))
+    //       .attr("r", d => sizeScale(d[sizeField]))
+    //       .attr("fill", d => colorScale(d[colorField]))
+    //       .attr("stroke", "black")
+    //       .attr("opacity", 0.7),
+    //     update => update
+    //       .attr("cx", d => xScale(d[xAxisField]))
+    //       .attr("cy", d => yScale(d[yAxisField]))
+    //       .attr("r", d => sizeScale(d[sizeField]))
+    //       .attr("fill", d => colorScale(d[colorField])),
+    //     exit => exit.remove()
+    //   );
+
     // Update points in the additional scatterplot
     svgAdditional.selectAll("circle")
       .data(filteredData)
@@ -737,7 +756,41 @@ async function metadataScatterMain(csvPath) {
           .attr("r", d => sizeScale(d[sizeField]))
           .attr("fill", d => colorScale(d[colorField]))
           .attr("stroke", "black")
-          .attr("opacity", 0.7),
+          .attr("opacity", 0.7)
+          .on("mouseover", function (event, d) {
+            tooltip.style("visibility", "visible")
+              .html(`
+                <strong>Feature ID:</strong> ${d["Feature ID"]}<br>
+                <strong>Ionization Mode:</strong> ${d["Ionization Mode"]}<br>
+                <strong>DTXCID:</strong> ${d["DTXCID"]}<br>
+                ${hasMS2Score ? `<strong>MS2 Score:</strong> ${d["MS2 Score"]}<br>` : ""}
+                <strong>Hazard Score:</strong> ${d["Hazard Score"].toFixed(2)}<br>
+                <strong>Median Abundance:</strong> ${Number(d["Median Abundance"].toFixed(0)).toLocaleString()}<br>
+                <strong>Metadata Score:</strong> ${d["Metadata Score"].toFixed(2)}<br>
+                <strong>Occurrence Count:</strong> ${d["Occurrence Count"]}
+              `);
+            // // Highlight all circles with the same feature ID
+            // d3.selectAll("circle")
+            //   .style("stroke", "black")
+            //   .style("stroke-width", "1px");
+            // d3.selectAll("circle")
+            //   .filter(circleData => circleData["Feature ID"] === d["Feature ID"])
+            //   .raise()
+            //   .style("stroke", "rgb(0, 0, 255)")
+            //   .style("stroke-width", "2px");
+          })
+          .on("mousemove", function (event) {
+            tooltip.style("top", `${event.pageY - 50}px`)
+              .style("left", `${event.pageX + 20}px`);
+          })
+          .on("mouseout", function () {
+            tooltip.style("visibility", "hidden");
+
+            // Reset stroke styles
+            d3.selectAll("circle")
+              .style("stroke", "black")
+              .style("stroke-width", "1px");
+          }),
         update => update
           .attr("cx", d => xScale(d[xAxisField]))
           .attr("cy", d => yScale(d[yAxisField]))
@@ -1267,6 +1320,42 @@ async function metadataScatterMain(csvPath) {
         .style("stroke", "rgb(0, 0, 255)")
         .style("stroke-width", "2px");
     });
+
+  // Add the input field for selecting a feature
+  const featureInputContainer = paginationContainer.append("div")
+    .style("margin-left", "20px");
+
+  featureInputContainer.append("label")
+    .attr("for", "featureNumberInput")
+    .text("Select Feature:")
+    .style("margin-right", "5px")
+    .style("font-weight", "bold");
+
+  const featureNumberInput = featureInputContainer.append("input")
+    .attr("type", "number")
+    .attr("id", "featureNumberInput")
+    .style("padding", "5px")
+    .style("border", "1px solid #ccc")
+    .style("border-radius", "5px")
+    .on("change", function () {
+      const selectedFeatureID = +this.value;
+      updateFeatureSelection(selectedFeatureID);
+    });
+
+  // Function to update feature selection
+  function updateFeatureSelection(selectedFeatureID) {
+    d3.selectAll("circle")
+      .style("stroke", "black")
+      .style("stroke-width", "1px");
+    d3.selectAll("circle")
+      .filter(d => d["Feature ID"] === selectedFeatureID)
+      .raise()
+      .style("stroke", "rgb(0, 0, 255)")
+      .style("stroke-width", "2px");
+
+    // Update the additional scatterplot with the selected feature ID
+    updateAdditionalScatterplot(selectedFeatureID);
+  }
 
   // Add file input and upload button for feature IDs
   const uploadContainer = paginationContainer.append("div")
