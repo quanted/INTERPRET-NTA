@@ -1185,6 +1185,9 @@ async function metadataScatterMain(csvPath) {
         // Update the dropdown menu to show the selected feature ID
         featureDropdown.property("value", selectedFeatureID);
 
+        // Update the additional scatterplot with the clicked feature ID
+        updateAdditionalScatterplot(selectedFeatureID);
+
         // Highlight the selected feature in the scatterplot
         d3.selectAll("circle")
           // .transition().duration(500)
