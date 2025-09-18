@@ -363,6 +363,11 @@ async function metadataScatterMain(csvPath) {
     updateScatterplot(filteredData);
   }
 
+  // Define a transformation function for occurrence count
+  function transformOccurrenceCount(count) {
+    // Example: Apply a linear transformation with a multiplier
+    return count * 5; // Adjust this multiplier to achieve the desired size range
+  }
 
   function updateScatterplot(csvData, resetStrokes = false) {
 
@@ -382,7 +387,17 @@ async function metadataScatterMain(csvPath) {
     mainXScale.domain(d3.extent(filteredData, d => d[xAxisField]));
     mainYScale.domain(d3.extent(filteredData, d => d[yAxisField]));
     mainColorScale.domain([0, d3.max(filteredData, d => d[colorField])]);
-    mainSizeScale.domain([0, d3.max(filteredData, d => d[sizeField])]);
+
+    // mainSizeScale.domain([0, d3.max(filteredData, d => d[sizeField])]);
+    // Conditionally transform occurrence count for size scale
+    if (sizeField === "Occurrence Count") {
+      mainSizeScale.domain([
+        transformOccurrenceCount(d3.min(filteredData, d => d[sizeField])),
+        transformOccurrenceCount(d3.max(filteredData, d => d[sizeField]))
+      ]);
+    } else {
+      mainSizeScale.domain([d3.min(filteredData, d => d[sizeField]), d3.max(filteredData, d => d[sizeField])]);
+    }
     
     // Update gradient legend values
     gradientMinLabel.text(Math.floor(d3.min(csvData, d => d[colorField])).toLocaleString());
@@ -392,10 +407,26 @@ async function metadataScatterMain(csvPath) {
     sizeMinLabel.text(Math.floor(d3.min(csvData, d => d[sizeField])).toLocaleString());
     sizeMaxLabel.text(Math.ceil(d3.max(csvData, d => d[sizeField])).toLocaleString());
 
+    // Update size legend circles and labels
+    const sizeLegendValues = sizeField === "Occurrence Count"
+      ? [transformOccurrenceCount(d3.max(filteredData, d => d[sizeField])),
+        transformOccurrenceCount((d3.min(filteredData, d => d[sizeField]) + d3.max(filteredData, d => d[sizeField])) / 2),
+        transformOccurrenceCount(d3.min(filteredData, d => d[sizeField]))]
+      : [d3.max(filteredData, d => d[sizeField]),
+        (d3.min(filteredData, d => d[sizeField]) + d3.max(filteredData, d => d[sizeField])) / 2,
+        d3.min(filteredData, d => d[sizeField])];
+
+    // sizeMaxLabel.text(Math.ceil(sizeLegendValues[0]).toLocaleString());
+    // sizeMinLabel.text(Math.floor(sizeLegendValues[2]).toLocaleString());
+
+    // sizeLegendCircles.selectAll("circle")
+    //   .data([d3.max(csvData, d => d[sizeField]), 
+    //          (d3.min(csvData, d => d[sizeField]) + d3.max(csvData, d => d[sizeField])) / 2, 
+    //          d3.min(csvData, d => d[sizeField])])
+    //   .attr("r", d => mainSizeScale(d));
+
     sizeLegendCircles.selectAll("circle")
-      .data([d3.max(csvData, d => d[sizeField]), 
-             (d3.min(csvData, d => d[sizeField]) + d3.max(csvData, d => d[sizeField])) / 2, 
-             d3.min(csvData, d => d[sizeField])])
+      .data(sizeLegendValues)
       .attr("r", d => mainSizeScale(d));
 
     // Update axes
@@ -424,7 +455,8 @@ async function metadataScatterMain(csvPath) {
         enter => enter.append("circle")
           .attr("cx", d => mainXScale(d[xAxisField]))
           .attr("cy", d => mainYScale(d[yAxisField]))
-          .attr("r", d => mainSizeScale(d[sizeField]))
+          // .attr("r", d => mainSizeScale(d[sizeField]))
+          .attr("r", d => sizeField === "Occurrence Count" ? mainSizeScale(transformOccurrenceCount(d[sizeField])) : mainSizeScale(d[sizeField]))
           .attr("fill", d => mainColorScale(d[colorField]))
           .attr("stroke", "black")
           .attr("opacity", 0.7)
@@ -470,7 +502,8 @@ async function metadataScatterMain(csvPath) {
           // .transition().duration(1000)
           .attr("cx", d => mainXScale(d[xAxisField]))
           .attr("cy", d => mainYScale(d[yAxisField]))
-          .attr("r", d => mainSizeScale(d[sizeField]))
+          // .attr("r", d => mainSizeScale(d[sizeField]))
+          .attr("r", d => sizeField === "Occurrence Count" ? mainSizeScale(transformOccurrenceCount(d[sizeField])) : mainSizeScale(d[sizeField]))
           .attr("fill", d => mainColorScale(d[colorField]))
           .style("stroke", resetStrokes ? "black" : null)
           .style("stroke-width", resetStrokes ? "1px" : null),
@@ -552,7 +585,15 @@ async function metadataScatterMain(csvPath) {
 
     // // Update size scale for the individual scatterplot
     // sizeScale.domain([0, d3.max(filteredData, d => d[sizeField])]);
-
+    // Conditionally transform occurrence count for size scale
+    if (sizeField === "Occurrence Count") {
+      mainSizeScale.domain([
+        transformOccurrenceCount(d3.min(filteredData, d => d[sizeField])),
+        transformOccurrenceCount(d3.max(filteredData, d => d[sizeField]))
+      ]);
+    } else {
+      mainSizeScale.domain([d3.min(filteredData, d => d[sizeField]), d3.max(filteredData, d => d[sizeField])]);
+    }
     // Update axes for the additional scatterplot
     // svgAdditional.select(".x-axis")
     //   .call(d3.axisBottom(xScale).ticks(10));
@@ -572,7 +613,8 @@ async function metadataScatterMain(csvPath) {
         enter => enter.append("circle")
           .attr("cx", d => individualXScale(d[xAxisField]))
           .attr("cy", d => individualYScale(d[yAxisField]))
-          .attr("r", d => mainSizeScale(d[sizeField]))
+          // .attr("r", d => mainSizeScale(d[sizeField]))
+          .attr("r", d => sizeField === "Occurrence Count" ? mainSizeScale(transformOccurrenceCount(d[sizeField])) : mainSizeScale(d[sizeField]))
           .attr("fill", d => mainColorScale(d[colorField]))
           .attr("stroke", "black")
           .attr("opacity", 0.7)
@@ -619,7 +661,8 @@ async function metadataScatterMain(csvPath) {
         update => update
           .attr("cx", d => individualXScale(d[xAxisField]))
           .attr("cy", d => individualYScale(d[yAxisField]))
-          .attr("r", d => mainSizeScale(d[sizeField]))
+          // .attr("r", d => mainSizeScale(d[sizeField]))
+          .attr("r", d => sizeField === "Occurrence Count" ? mainSizeScale(transformOccurrenceCount(d[sizeField])) : mainSizeScale(d[sizeField]))
           .attr("fill", d => mainColorScale(d[colorField])),
         exit => exit.remove()
       );
