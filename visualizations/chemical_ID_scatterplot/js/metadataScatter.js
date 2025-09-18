@@ -3,7 +3,6 @@
  * @typedef {d3.Selection<HTMLElement, unknown, null, undefined>} D3Selection
  */
 
-
 /**
  * Returns the sequence data from the CSV for Interpret NTA.
  * @param {string} filePath Path to the INTERPRET NTA run sequence input CSV.
@@ -147,14 +146,6 @@ async function metadataScatterMain(csvPath) {
   // sort data on feature id
   const csvDataSorted = sortByFeatureID(csvDataClean);
 
-  // // get a nested array that groups together feature IDs in blocks of n=200
-  // const csvDataNested = getNestedCSVDataBasedOnOcc(csvDataSorted, 5000);
-
-  // // let newCSV = csvDataNested.sort((a, b) => a.length - b.length)
-  // let newCSV = csvDataNested;
-  
-  // let csvData = newCSV[0];
-
   // Use the entire cleaned and sorted dataset for visualization
   let csvData = csvDataSorted;
 
@@ -229,8 +220,7 @@ async function metadataScatterMain(csvPath) {
       .on("click", () => {
         filter.remove();
       });
-  }
-  
+  }  
 
   // Button to add more filters
   buttonContainer.append("button")
@@ -243,7 +233,7 @@ async function metadataScatterMain(csvPath) {
     .text("Apply Filters")
     .attr("class", "filter-button")
     .on("click", () => {
-      let filteredData = csvData;
+      // let filteredData = csvData;
 
       // Apply each filter
       otherElementsContainer.selectAll(".filter").each(function() {
@@ -283,9 +273,6 @@ async function metadataScatterMain(csvPath) {
     }
     return columns;
   }, []).map(column => column.replace("INTA-Mean ", "").trim());
-
-  // console.log(intaMeanColumns); 
-
 
   // Add "Use Sample Filtering" checkbox
   const sampleFilterContainer = d3.select("#metadataScatterContainer")
@@ -356,13 +343,28 @@ async function metadataScatterMain(csvPath) {
     return data;
   }
 
+  let filteredData; // Declare filteredData globally
+
   function filterScatterplotByFeatureIDs(featureIDs) {
-    const filteredData = originalCsvData.filter(d => featureIDs.includes(d["Feature ID"]));
+
+    // Log the state of the original data before filtering
+    console.log(`Before filtering, original data has ${originalCsvData.length} data points.`);
+
+    // const filteredData = originalCsvData.filter(d => featureIDs.includes(d["Feature ID"]));
+    // Filter the data and update the global variable
+    filteredData = originalCsvData.filter(d => featureIDs.includes(d["Feature ID"]));
+    
+    // Log the state of the data after filtering
+    console.log(`After filtering by feature IDs, data has ${filteredData.length} data points.`);
+
     updateScatterplot(filteredData);
   }
 
 
   function updateScatterplot(csvData, resetStrokes = false) {
+
+    // Debugging message to log the size of the filteredData
+    console.log(`updateScatterplot called with ${csvData.length} data points.`);
 
     const filteredData = d3.select("#useSampleFilterCheckbox").property("checked")
       ? applySampleFiltering(csvData)
@@ -560,25 +562,6 @@ async function metadataScatterMain(csvPath) {
     svgAdditional.select(".y-axis")
       .call(d3.axisLeft(individualYScale).ticks(10));
 
-    // // Update points in the additional scatterplot
-    // svgAdditional.selectAll("circle")
-    //   .data(filteredData)
-    //   .join(
-    //     enter => enter.append("circle")
-    //       .attr("cx", d => xScale(d[xAxisField]))
-    //       .attr("cy", d => yScale(d[yAxisField]))
-    //       .attr("r", d => sizeScale(d[sizeField]))
-    //       .attr("fill", d => colorScale(d[colorField]))
-    //       .attr("stroke", "black")
-    //       .attr("opacity", 0.7),
-    //     update => update
-    //       .attr("cx", d => xScale(d[xAxisField]))
-    //       .attr("cy", d => yScale(d[yAxisField]))
-    //       .attr("r", d => sizeScale(d[sizeField]))
-    //       .attr("fill", d => colorScale(d[colorField])),
-    //     exit => exit.remove()
-    //   );
-
     // Update points in the additional scatterplot
     svgAdditional.selectAll("circle")
       .data(filteredData)
@@ -740,7 +723,7 @@ async function metadataScatterMain(csvPath) {
     ulX.selectAll("li")
       .style("background-color", d => (d === xAxisField ? "#d3d3d3" : "#f0f0f0"));
     d3.select(this).style("background-color", "#d3d3d3");
-    updateScatterplot(csvData);
+    updateScatterplot(filteredData);
   });
   
   // Now for Y axis
@@ -772,7 +755,7 @@ async function metadataScatterMain(csvPath) {
     ulY.selectAll("li")
       .style("background-color", d => (d === yAxisField ? "#d3d3d3" : "#f0f0f0"));
     d3.select(this).style("background-color", "#d3d3d3");
-    updateScatterplot(csvData);
+    updateScatterplot(filteredData);
   });
 
   // setup container for size and color legends
@@ -839,7 +822,7 @@ async function metadataScatterMain(csvPath) {
       ulColor.selectAll("li")
         .style("background-color", d => (d === colorField ? "#d3d3d3" : "#f0f0f0"));
       d3.select(this).style("background-color", "#d3d3d3");
-      updateScatterplot(csvData);
+      updateScatterplot(filteredData);
   });
 
   // Add size legend below color legend
@@ -909,7 +892,7 @@ async function metadataScatterMain(csvPath) {
       ulSize.selectAll("li")
         .style("background-color", d => (d === sizeField ? "#d3d3d3" : "#f0f0f0"));
       d3.select(this).style("background-color", "#d3d3d3");
-      updateScatterplot(csvData);
+      updateScatterplot(filteredData);
   });
 
   // // Add scatterplot points
@@ -1010,12 +993,6 @@ async function metadataScatterMain(csvPath) {
     const boxWidth = +selectionBox.attr("width");
     const boxHeight = +selectionBox.attr("height");
 
-    // const selectedPoints = csvData.filter(d => {
-    //   const cx = xScale(d[xAxisField]);
-    //   const cy = yScale(d[yAxisField]);
-    //   return cx >= boxX && cx <= boxX + boxWidth && cy >= boxY && cy <= boxY + boxHeight;
-    // });
-
     // Filter only the currently displayed features
     const displayedData = d3.selectAll("circle").data();
 
@@ -1036,9 +1013,6 @@ async function metadataScatterMain(csvPath) {
       .style("color", "blue")
       .on("click", function () {
         const selectedFeatureID = +d3.select(this).attr("data-id");
-
-        // // Update the dropdown menu to show the selected feature ID
-        // featureDropdown.property("value", selectedFeatureID);
 
         // Update the additional scatterplot with the clicked feature ID
         updateAdditionalScatterplot(selectedFeatureID);
@@ -1108,77 +1082,6 @@ async function metadataScatterMain(csvPath) {
     .style("gap", "10px")
     .style("margin-top", "10px");
 
-  // // Add previous button
-  // paginationContainer.append("button")
-  //   .attr("id", "prevPageButton")
-  //   .text("Previous")
-  //   .style("padding", "5px 10px")
-  //   .style("cursor", "pointer")
-  //   .style("border", "1px solid #ccc")
-  //   .style("border-radius", "5px")
-  //   .on("click", () => {
-  //     if (currentPage > 0) {
-  //       currentPage--;
-  //       updatePagination();
-  //     }
-  //   });
-
-  // // Add dropdown for page selection
-  // const dropdown = paginationContainer.append("select")
-  //   .attr("id", "pageDropdown")
-  //   .style("padding", "5px")
-  //   .style("border", "1px solid #ccc")
-  //   .style("border-radius", "5px")
-  //   .on("change", function () {
-  //     currentPage = +this.value;
-  //     updatePagination();
-  //   });
-
-  // dropdown.selectAll("option")
-  //   .data(newCSV)
-  //   .enter()
-  //   .append("option")
-  //   .attr("value", (d, i) => i)
-  //   .text((d, i) => `Page ${i + 1}`);
-
-  // // Add next button
-  // paginationContainer.append("button")
-  //   .attr("id", "nextPageButton")
-  //   .text("Next")
-  //   .style("padding", "5px 10px")
-  //   .style("cursor", "pointer")
-  //   .style("border", "1px solid #ccc")
-  //   .style("border-radius", "5px")
-  //   .on("click", () => {
-  //     if (currentPage < newCSV.length - 1) {
-  //       currentPage++;
-  //       updatePagination();
-  //     }
-  //   });
-
-  // // Add feature ID dropdown
-  // paginationContainer.append("div")
-  //   .style("margin-left", "20px")
-  //   .html("<b>Highlight Feature:</b> ")
-  // const featureDropdown = paginationContainer.append("select")
-  //   .attr("id", "featureDropdown")
-  //   .style("padding", "5px")
-  //   .style("border", "1px solid #ccc")
-  //   .style("border-radius", "5px")
-  //   .on("change", function () {
-  //     const selectedFeatureID = +this.value;
-  //     d3.selectAll("circle")
-  //       // .transition().duration(500)
-  //       .style("stroke", "black")
-  //       .style("stroke-width", "1px");
-  //     d3.selectAll("circle")
-  //       .filter(d => d["Feature ID"] === selectedFeatureID)
-  //       .raise()
-  //       // .transition().duration(500)
-  //       .style("stroke", "rgb(0, 0, 255)")
-  //       .style("stroke-width", "2px");
-  //   });
-
   // Add the input field for selecting a feature
   const featureInputContainer = paginationContainer.append("div")
     .style("margin-left", "20px");
@@ -1237,16 +1140,6 @@ async function metadataScatterMain(csvPath) {
       }
     });
 
-  // uploadContainer.append("button")
-  //   .text("Upload Feature IDs CSV")
-  //   .style("padding", "5px 10px")
-  //   .style("cursor", "pointer")
-  //   .style("border", "1px solid #ccc")
-  //   .style("border-radius", "5px")
-  //   .on("click", function() {
-  //     document.getElementById("featureIDFileInput").click();
-  //   });
-  
   uploadContainer.append("button")
   .text("Upload Feature IDs CSV")
   .attr("class", "upload-button") // Use the new class for styling
@@ -1294,20 +1187,6 @@ async function metadataScatterMain(csvPath) {
     .style("padding", "10px")
     .style("box-shadow", "0px 4px 6px rgba(0, 0, 0, 0.1)")
     .html("<strong>Selected Feature IDs:</strong> None");
-
-  // // Add hover functionality to dropdown
-  // dropdown.on("mouseover", function () {
-  //   const uniqueFeatureIDs = [...new Set(newCSV[currentPage].map(d => d["Feature ID"]))];
-  //   paginationTooltip.style("visibility", "visible")
-  //     .html(`<strong>Feature IDs:</strong> ${uniqueFeatureIDs.join(", ")}`);
-  // })
-  // .on("mousemove", function (event) {
-  //   paginationTooltip.style("top", `${event.pageY + 10}px`)
-  //     .style("left", `${event.pageX + 10}px`);
-  // })
-  // .on("mouseout", function () {
-  //   paginationTooltip.style("visibility", "hidden");
-  // });
   
   // Initialize the scatterplot with the first page
   updatePagination();
