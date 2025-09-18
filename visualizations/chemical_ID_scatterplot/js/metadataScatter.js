@@ -149,6 +149,9 @@ async function metadataScatterMain(csvPath) {
   // Use the entire cleaned and sorted dataset for visualization
   let csvData = csvDataSorted;
 
+  // Initialize filteredData with csvData
+  let filteredData = csvData;
+
   let xAxisField = "Metadata Score";
   let yAxisField = hasMS2Score ? "MS2 Score" : "Metadata Score"; // Fallback if MS2 Score isn't available
   let colorField = "Hazard Score";
@@ -343,7 +346,7 @@ async function metadataScatterMain(csvPath) {
     return data;
   }
 
-  let filteredData; // Declare filteredData globally
+  // let filteredData; // Declare filteredData globally
 
   function filterScatterplotByFeatureIDs(featureIDs) {
 
@@ -673,7 +676,24 @@ async function metadataScatterMain(csvPath) {
   // Set up scales with fixed ranges for the main scatterplot
   const mainXScale = d3.scaleLinear().range([margin.left, width - margin.right]);
   const mainYScale = d3.scaleLinear().range([height - margin.bottom, margin.top]);
-  const mainColorScale = d3.scaleLinear().range(["white", "red"]);
+  
+  // const mainColorScale = d3.scaleLinear().range(["white", "red"]);
+  // // Define the color scale to match "YlOrRd"
+  
+  // const mainColorScale = d3.scaleLinear()
+  //   .domain([0, d3.max(filteredData, d => d[colorField])])
+    // .range(["#ffffb2", "#fecc5c", "#fd8d3c", "#f03b20", "#bd0026"]); // Approximates "YlOrRd"
+  
+    // Define the color scale to match "YlOrRd"
+  // const mainColorScale = d3.scaleLinear()
+  //   .domain(d3.extent(filteredData, d => d[colorField])) // Use extent to cover full data range
+  //   .range(["#ffffb2", "#fecc5c", "#fd8d3c", "#f03b20", "#bd0026"]); // Approximates "YlOrRd"
+  
+  // Define the color scale to match "YlOrRd"
+  const mainColorScale = d3.scaleSequential()
+    .domain(d3.extent(filteredData, d => d[colorField])) // Use extent to cover full data range
+    .interpolator(d3.interpolateYlOrRd); // Use the d3 color interpolator for YlOrRd
+
   const mainSizeScale = d3.scaleSqrt().range([5, 22]);
 
   // Set up scales with fixed ranges for the individual scatterplot
@@ -784,10 +804,16 @@ async function metadataScatterMain(csvPath) {
     .style("font-size", "15px")
     .text(d3.max(csvData, d => d[colorField]).toLocaleString());
 
+  // gradientContainer.append("div")
+  //   .style("width", "20px")
+  //   .style("height", "260px")
+  //   .style("background", "linear-gradient(to top, white, red)");
+
+  // Update gradient div for color legend with min and max labels
   gradientContainer.append("div")
     .style("width", "20px")
     .style("height", "260px")
-    .style("background", "linear-gradient(to top, white, red)");
+    .style("background", "linear-gradient(to top, #ffffb2, #fecc5c, #fd8d3c, #f03b20, #bd0026)");
 
   const gradientMinLabel = gradientContainer
     .append("span")
