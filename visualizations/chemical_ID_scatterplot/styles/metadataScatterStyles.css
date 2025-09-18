@@ -16,6 +16,38 @@ svg#metadataScatterSVG {
   -webkit-user-select: none; /* For Safari */
   -ms-user-select: none; /* For older versions of IE */
 }
+
+#featureIDFileInput {
+  display: none; /* Ensure the file input itself is hidden */
+}
+
+.upload-button {
+  padding: 5px 10px;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: rgb(128, 252, 128); /* Initial background color to stand out */
+  animation: pulse 1s infinite; /* Apply pulsing animation */
+  transition: background-color 0.3s; /* Transition for background color change */
+}
+
+.upload-button.clicked {
+  background-color: #f0f0f0; /* Change to static grey after click */
+  animation: none; /* Stop pulsing animation */
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
 div#sampleFilterContainer {
     grid-area: sampleFilter;
 }
