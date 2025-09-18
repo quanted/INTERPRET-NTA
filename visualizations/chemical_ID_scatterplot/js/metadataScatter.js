@@ -590,6 +590,12 @@ async function metadataScatterMain(csvPath) {
           .attr("fill", d => mainColorScale(d[colorField]))
           .attr("stroke", "black")
           .attr("opacity", 0.7)
+          .on("click", function (event, d) {
+            // Construct the URL using the DTXCID of the clicked marker
+            const url = `https://comptox.epa.gov/dashboard/chemical/details/${d["DTXCID"]}`;
+            // Open the URL in a new tab
+            window.open(url, '_blank');
+          })
           .on("mouseover", function (event, d) {
             tooltip.style("visibility", "visible")
               .html(`
