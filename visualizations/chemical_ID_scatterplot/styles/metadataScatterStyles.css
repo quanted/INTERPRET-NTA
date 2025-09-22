@@ -6,7 +6,7 @@ div#metadataScatterContainer {
     "null0 scatterXAxis null1 null2"
     "filterContainer filterContainer filterContainer filterContainer"
     "sampleFilter sampleFilter sampleFilter sampleFilter";
-  grid-template-columns: 150px 600px 250px 600px;
+  grid-template-columns: 150px 700px 250px 600px;
   grid-template-rows: 60px auto auto auto auto; /* Adjusted to include filterContainer */
   margin: 10px;
 }

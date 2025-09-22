@@ -431,6 +431,7 @@ async function metadataScatterMain(csvPath) {
 
     // Update axes
     svg.select(".x-axis")
+      .attr("transform", `translate(0,${height - margin.bottom})`)
       .call(d3.axisBottom(mainXScale)
         .ticks(10)
         .tickSize(15) // Adjust this value to increase the tick mark length
@@ -440,6 +441,7 @@ async function metadataScatterMain(csvPath) {
       .attr("dy", "1em"); // Adjust this value to move the labels further down
 
     svg.select(".y-axis")
+      .attr("transform", `translate(${margin.left},0)`)
       .call(d3.axisLeft(mainYScale)
         .ticks(10)
         .tickSize(15) // Adjust this value to increase the tick mark length
@@ -515,9 +517,9 @@ async function metadataScatterMain(csvPath) {
   originalCsvData = [...csvData];
 
   // Set up SVG dimensions
-  const width = 600;
+  const width = 700;
   const height = 600;
-  const margin = { top: 50, right: 50, bottom: 50, left: 50 };
+  const margin = { top: 50, right: 50, bottom: 50, left: 100 };
 
   // Create a container for the original elements
   const originalContainer = d3.select("#metadataScatterContainer")
@@ -534,7 +536,7 @@ async function metadataScatterMain(csvPath) {
   // Add initial message to indicate that data points are not yet visualized
   const initialMessage = svg.append("text")
     .attr("id", "initialMessage")
-    .attr("x", width / 4) // Position the text to the right of the y-axis
+    .attr("x", width / 3) // Position the text to the right of the y-axis
     .attr("y", height / 2) // Center vertically
     .attr("text-anchor", "start") // Align text start
     .attr("font-size", "18px") // Font size
