@@ -1203,6 +1203,51 @@ async function metadataScatterMain(csvPath) {
       .attr("value", d => d);
   }
 
+  // Add arrow buttons for iterating through features
+  const arrowButtonContainer = featureInputContainer.append("div")
+    .style("display", "flex")
+    .style("align-items", "center")
+    .style("gap", "5px");
+
+  // Previous feature button
+  arrowButtonContainer.append("button")
+    .text("←")
+    .attr("class", "arrow-button")
+    .style("padding", "5px 10px")
+    .style("cursor", "pointer")
+    .style("border", "1px solid #ccc")
+    .style("border-radius", "5px")
+    .on("click", function() {
+      navigateFeature(-1);
+    });
+
+  // Next feature button
+  arrowButtonContainer.append("button")
+    .text("→")
+    .attr("class", "arrow-button")
+    .style("padding", "5px 10px")
+    .style("cursor", "pointer")
+    .style("border", "1px solid #ccc")
+    .style("border-radius", "5px")
+    .on("click", function() {
+      navigateFeature(1);
+    });
+
+  // Function to navigate through features
+  function navigateFeature(direction) {
+    const currentFeatureID = +featureNumberInput.property("value");
+    const featureIDs = featureNumberList.selectAll("option").data();
+    const currentIndex = featureIDs.indexOf(currentFeatureID);
+
+    if (currentIndex !== -1) {
+      const newIndex = currentIndex + direction;
+      if (newIndex >= 0 && newIndex < featureIDs.length) {
+        const newFeatureID = featureIDs[newIndex];
+        featureNumberInput.property("value", newFeatureID);
+        updateFeatureSelection(newFeatureID);
+      }
+    }
+  }
   // // Populate the datalist with feature IDs
   // function populateFeatureNumberDatalist(csvData) {
   //   const uniqueFeatureIDs = [...new Set(csvData.map(d => d["Feature ID"]))];
