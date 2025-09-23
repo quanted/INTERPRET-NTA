@@ -210,6 +210,7 @@ async function metadataScatterMain(csvPath) {
     minValueRow.append("input")
       .attr("type", "number")
       .attr("class", "minValueInput")
+      .attr("min", "0") // Set the minimum value to 0
       .style("padding", "5px")
       .style("border", "1px solid #ccc")
       .style("border-radius", "5px");
@@ -1163,8 +1164,20 @@ async function metadataScatterMain(csvPath) {
     .style("margin-right", "5px")
     .style("font-weight", "bold");
 
+  // const featureNumberInput = featureInputContainer.append("input")
+  //   .attr("type", "number")
+  //   .attr("id", "featureNumberInput")
+  //   .style("padding", "5px")
+  //   .style("border", "1px solid #ccc")
+  //   .style("border-radius", "5px")
+  //   .on("change", function () {
+  //     const selectedFeatureID = +this.value;
+  //     updateFeatureSelection(selectedFeatureID);
+  //   });
+
+
   const featureNumberInput = featureInputContainer.append("input")
-    .attr("type", "number")
+    .attr("list", "featureNumberList")
     .attr("id", "featureNumberInput")
     .style("padding", "5px")
     .style("border", "1px solid #ccc")
@@ -1173,6 +1186,36 @@ async function metadataScatterMain(csvPath) {
       const selectedFeatureID = +this.value;
       updateFeatureSelection(selectedFeatureID);
     });
+
+  const featureNumberList = featureInputContainer.append("datalist")
+    .attr("id", "featureNumberList");
+
+  // Function to populate the datalist with feature IDs from the uploaded CSV
+  function populateFeatureNumberDatalist(featureIDs) {
+
+    // Clear existing options
+    featureNumberList.selectAll("option").remove();
+
+    featureNumberList.selectAll("option")
+      .data(featureIDs)
+      .enter()
+      .append("option")
+      .attr("value", d => d);
+  }
+
+  // // Populate the datalist with feature IDs
+  // function populateFeatureNumberDatalist(csvData) {
+  //   const uniqueFeatureIDs = [...new Set(csvData.map(d => d["Feature ID"]))];
+  //   featureNumberList.selectAll("option")
+  //     .data(uniqueFeatureIDs)
+  //     .enter()
+  //     .append("option")
+  //     .attr("value", d => d)
+  //     .text(d => `Feature ID: ${d}`);
+  // }
+
+  // // Call the function to populate the datalist after loading the data
+  // populateFeatureNumberDatalist(csvData);
 
   // Function to update feature selection
   function updateFeatureSelection(selectedFeatureID) {
@@ -1203,6 +1246,8 @@ async function metadataScatterMain(csvPath) {
       const file = event.target.files[0];
       if (file) {
         const featureIDs = await readFeatureIDsFromCSV(file);
+        featureIDs.sort((a, b) => a - b);  // Sort the feature IDs numerically
+        populateFeatureNumberDatalist(featureIDs);
         filterScatterplotByFeatureIDs(featureIDs);
 
         // Remove or hide the initial message
