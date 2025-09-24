@@ -1,7 +1,7 @@
 const getNumber = (d) => (Number.isNaN(d) ? "" : Number(d).toFixed(3));
 
-const QNTAData = "Kale_test_INTERPRET_NTA_qNTA.xlsx";
-const QAQCData = "Kale_test_INTERPRET_NTA_QAQC.xlsx";
+const QNTAData = "Example_NTA_NTA_WebApp_qNTA.xlsx";
+const QAQCData = "Example_NTA_NTA_WebApp_qAQC.xlsx";
 
 const MainSheet = "Surrogate Detection Statistics";
 const SlopeValsSheet = "Calibration Curve Metrics";
