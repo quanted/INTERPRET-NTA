@@ -736,14 +736,25 @@ function makeRunSequencePlot(
     .y((d) => yScale(d.y))
     .curve(d3.curveBasis);
 
-  function generateCurve(a, b, c, xMin, xMax, stepSize = 0.2) {
-    const curvePoints = d3.range(xMin, xMax, stepSize).map((x) => ({
-      x,
-      y: a * x ** 2 + b * x + c,
-    }));
-    return curvePoints.filter((d) => d.y >= 1);
+  function generateCurveSegments(a, b, c, xMin, xMax, stepSize = 0.2) {
+    const segments = [];
+    let currentSegment = [];
+    d3.range(xMin, xMax, stepSize).forEach((x) => {
+      const y = a * x ** 2 + b * x + c;
+      if (y >= 1 && y >= yMin && y <= yMax) {
+        currentSegment.push({ x, y });
+      } else {
+        if (currentSegment.length > 1) {
+          segments.push(currentSegment);
+        }
+        currentSegment = [];
+      }
+    });
+    if (currentSegment.length > 1) {
+      segments.push(currentSegment);
+    }
+    return segments;
   }
-
   const groupedData = d3.group(chemPlottingData, (d) => d.groupName);
 
   groupedData.forEach((points, group) => {
@@ -756,29 +767,31 @@ function makeRunSequencePlot(
     const xExtent = d3.extent(points, (d) => d.seqIndex + 1);
     const xMin = xExtent[0] - 1;
     const xMax = xExtent[1] + 1;
-    const curvePoints = generateCurve(a, b, c, xMin, xMax);
+    const curveSegments = generateCurveSegments(a, b, c, xMin, xMax);
 
-    svg
-      .append("path")
-      .datum(curvePoints)
-      .attr("fill", "none")
-      .attr("stroke", "black")
-      .attr("stroke-width", bestFitLW)
-      .attr("stroke-linecap", "round")
-      .attr("d", line)
-      .attr("pointer-events", "none")
-      .attr("class", "fit-line");
+    curveSegments.forEach((curvePoints) => {
+      svg
+        .append("path")
+        .datum(curvePoints)
+        .attr("fill", "none")
+        .attr("stroke", "black")
+        .attr("stroke-width", bestFitLW)
+        .attr("stroke-linecap", "round")
+        .attr("d", line)
+        .attr("pointer-events", "none")
+        .attr("class", "fit-line");
 
-    svg
-      .append("path")
-      .datum(curvePoints)
-      .attr("fill", "none")
-      .attr("stroke", colorScale(group))
-      .attr("stroke-width", bestFitLW - 1)
-      .attr("stroke-linecap", "round")
-      .attr("d", line)
-      .attr("pointer-events", "none")
-      .attr("class", "fit-line");
+      svg
+        .append("path")
+        .datum(curvePoints)
+        .attr("fill", "none")
+        .attr("stroke", colorScale(group))
+        .attr("stroke-width", bestFitLW - 1)
+        .attr("stroke-linecap", "round")
+        .attr("d", line)
+        .attr("pointer-events", "none")
+        .attr("class", "fit-line");
+    });
   });
 
   if (linesOfBestFit === false) {

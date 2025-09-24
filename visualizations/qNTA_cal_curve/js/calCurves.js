@@ -1,7 +1,7 @@
 const getNumber = (d) => (Number.isNaN(d) ? "" : Number(d).toFixed(3));
 
-const QNTAData = "Example_NTA_NTA_WebApp_qNTA.xlsx";
-const QAQCData = "Example_NTA_NTA_WebApp_QAQC.xlsx";
+const QNTAData = "Kale_test_INTERPRET_NTA_qNTA.xlsx";
+const QAQCData = "Kale_test_INTERPRET_NTA_QAQC.xlsx";
 
 const MainSheet = "Surrogate Detection Statistics";
 const SlopeValsSheet = "Calibration Curve Metrics";
@@ -443,7 +443,8 @@ function cleanData(data) {
             : row["Ionization Mode"];
 
         row[colName] = `${row[colName]} (${ionization})`;
-        row["Surrogate Group"] = `${row["Surrogate Group"]} (${ionization})`;
+        row["Surrogate Group"] =
+          `${row["Surrogate Group"]} (${ionization})`.replace(/\s\s+/g, " ");
         return;
       }
 
@@ -617,7 +618,8 @@ function calculatePredictionIntervals(
  * @returns {object[]} The data for plotting points of a single chemical.
  */
 function getPlottingDataForChem(data, chemName) {
-  return data.filter((d) => d["Surrogate Group"] === chemName);
+  const filteredData = data.filter((d) => d["Surrogate Group"] === chemName);
+  return filteredData;
 }
 
 /**
@@ -631,10 +633,10 @@ function getChemNames(dataMain, chemNameSuffix = "(ESI+)") {
 
   // allow for "Chemical Name" or "Chemical_Name" as keys
   let chemNameKey;
-  if (Object.keys(dataMain[0]).includes("Chemical Name")) {
-    chemNameKey = "Chemical Name";
-  } else if (Object.keys(dataMain[0]).includes("Chemical_Name")) {
-    chemNameKey = "Chemical_Name";
+  if (Object.keys(dataMain[0]).includes("Surrogate Group")) {
+    chemNameKey = "Surrogate Group";
+  } else if (Object.keys(dataMain[0]).includes("Surrogate_Group")) {
+    chemNameKey = "Surrogate_Group";
   } else {
     // if no chemical names found, generate a list of empty strings
     dataMain.forEach(() => {
@@ -813,8 +815,8 @@ function makeCalCurve(
   if (chemName === "Empty") {
     return;
   }
-  const pointDataChem = getPlottingDataForChem(pointData, chemName);
 
+  const pointDataChem = getPlottingDataForChem(pointData, chemName);
   // Add X axis
   const tickFontSize = resolution === "3x3" ? "12px" : "14px";
   let widthOffset = 50;
@@ -2155,10 +2157,10 @@ async function calCurvesMain(inputXlsxPath) {
           pointData = pointData.map((p) => {
             return {
               ...p,
-              Enabled: chemList.includes(p["Chemical Name"])
+              Enabled: chemList.includes(p["Surrogate Group"])
                 ? false
                 : p["Enabled"],
-              Color: chemList.includes(p["Chemical Name"])
+              Color: chemList.includes(p["Surrogate Group"])
                 ? "rgb(0, 0, 0)"
                 : p["Color"],
             };
