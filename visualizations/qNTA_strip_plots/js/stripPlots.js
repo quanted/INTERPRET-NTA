@@ -499,6 +499,7 @@ async function stripPlotsMain(inputXlsxPath) {
     if (sortedBy === "rt") {
       data.sort((a, b) => a["Retention Time"] - b["Retention Time"]);
     } else {
+      data = data.filter((d) => d["Median Log RF"] !== undefined);
       data.sort((a, b) => a["Median Log RF"] - b["Median Log RF"]);
     }
 
