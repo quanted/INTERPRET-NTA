@@ -443,7 +443,8 @@ function cleanData(data) {
             : row["Ionization Mode"];
 
         row[colName] = `${row[colName]} (${ionization})`;
-        row["Surrogate Group"] = `${row["Surrogate Group"]} (${ionization})`;
+        row["Surrogate Group"] =
+          `${row["Surrogate Group"]} (${ionization})`.replace(/\s\s+/g, " ");
         return;
       }
 
@@ -617,7 +618,8 @@ function calculatePredictionIntervals(
  * @returns {object[]} The data for plotting points of a single chemical.
  */
 function getPlottingDataForChem(data, chemName) {
-  return data.filter((d) => d["Surrogate Group"] === chemName);
+  const filteredData = data.filter((d) => d["Surrogate Group"] === chemName);
+  return filteredData;
 }
 
 /**
@@ -631,10 +633,10 @@ function getChemNames(dataMain, chemNameSuffix = "(ESI+)") {
 
   // allow for "Chemical Name" or "Chemical_Name" as keys
   let chemNameKey;
-  if (Object.keys(dataMain[0]).includes("Chemical Name")) {
-    chemNameKey = "Chemical Name";
-  } else if (Object.keys(dataMain[0]).includes("Chemical_Name")) {
-    chemNameKey = "Chemical_Name";
+  if (Object.keys(dataMain[0]).includes("Surrogate Group")) {
+    chemNameKey = "Surrogate Group";
+  } else if (Object.keys(dataMain[0]).includes("Surrogate_Group")) {
+    chemNameKey = "Surrogate_Group";
   } else {
     // if no chemical names found, generate a list of empty strings
     dataMain.forEach(() => {
@@ -813,8 +815,8 @@ function makeCalCurve(
   if (chemName === "Empty") {
     return;
   }
-  const pointDataChem = getPlottingDataForChem(pointData, chemName);
 
+  const pointDataChem = getPlottingDataForChem(pointData, chemName);
   // Add X axis
   const tickFontSize = resolution === "3x3" ? "12px" : "14px";
   let widthOffset = 50;
@@ -1052,7 +1054,7 @@ function makeCalCurve(
 
   tableRows.exit().remove();
 
-  // update the excluded table tows
+  // update the excluded table rows
   const tableRowsDis = d3
     .select("#excludedTabledContainer")
     .select("tbody")
@@ -1983,16 +1985,6 @@ async function calCurvesMain(inputXlsxPath) {
       .append("option")
       .text((d) => d);
 
-    // add button for adding chemical
-    chemSelectContainer
-      .append("button")
-      .text("Add Chemical")
-      .style("width", "100px")
-      .on("click", () => {
-        const selectedChem = select.property("value");
-        addChemToList(groupDiv, selectedChem);
-      });
-
     // list to display selected chems
     groupDiv.append("ul").attr("class", "chem-list");
 
@@ -2155,10 +2147,10 @@ async function calCurvesMain(inputXlsxPath) {
           pointData = pointData.map((p) => {
             return {
               ...p,
-              Enabled: chemList.includes(p["Chemical Name"])
+              Enabled: chemList.includes(p["Surrogate Group"])
                 ? false
                 : p["Enabled"],
-              Color: chemList.includes(p["Chemical Name"])
+              Color: chemList.includes(p["Surrogate Group"])
                 ? "rgb(0, 0, 0)"
                 : p["Color"],
             };
@@ -2166,12 +2158,21 @@ async function calCurvesMain(inputXlsxPath) {
           plottingData = chemNames.map((chemName) =>
             getPlottingDataForChem(pointData, chemName)
           );
+
+          const chemNamesTemp = [];
+          dropdownData.forEach((ddObject) => {
+            const dd = d3.select(`#${ddObject.id}`);
+            if (dd.property("disabled") === true) {
+              return;
+            }
+            chemNamesTemp.push(dd.property("value"));
+          });
           // update plots
           makeCalCurvesXxY(
             resolutionData,
             resolution,
             pointData,
-            chemNamesToggled,
+            chemNamesTemp,
             tooltip,
             tooltipContainer,
             cleanedQaqcData,
@@ -2205,12 +2206,20 @@ async function calCurvesMain(inputXlsxPath) {
           plottingData = chemNames.map((chemName) =>
             getPlottingDataForChem(pointData, chemName)
           );
+          const chemNamesTemp = [];
+          dropdownData.forEach((ddObject) => {
+            const dd = d3.select(`#${ddObject.id}`);
+            if (dd.property("disabled") === true) {
+              return;
+            }
+            chemNamesTemp.push(dd.property("value"));
+          });
           // update plots
           makeCalCurvesXxY(
             resolutionData,
             resolution,
             pointData,
-            chemNamesToggled,
+            chemNamesTemp,
             tooltip,
             tooltipContainer,
             cleanedQaqcData,
@@ -2219,6 +2228,16 @@ async function calCurvesMain(inputXlsxPath) {
           );
         }
       });
+
+    // add button for adding chemical
+    chemSelectContainer
+      .append("button")
+      .text("Add Chemical")
+      .style("width", "100px")
+      .on("click", () => {
+        const selectedChem = select.property("value");
+        addChemToList(groupDiv, selectedChem, groupCheckDiv);
+      });
   }
 
   /**
@@ -2226,8 +2245,11 @@ async function calCurvesMain(inputXlsxPath) {
    * @param {D3Selection} groupDiv The group div selection to add the chemicals to.
    * @param {string} chemName The chemical that is being added to the group list.
    */
-  function addChemToList(groupDiv, chemName) {
+  function addChemToList(groupDiv, chemName, groupCheckDiv) {
     const list = groupDiv.select(".chem-list");
+    const excluded = groupCheckDiv
+      .select(".disable-checkbox")
+      .property("checked");
 
     // check if this chem is already in the list
     const exists = list
@@ -2258,6 +2280,101 @@ async function calCurvesMain(inputXlsxPath) {
 
     // create list item
     listItem.append("span").text(chemName).style("margin-left", "10px");
+
+    if (excluded) {
+      const chemList = [];
+      groupDiv
+        .selectAll("li")
+        .nodes()
+        .forEach((d) => {
+          chemList.push(d3.select(d).select("span").text());
+        });
+
+      if (chemList.length === 0) {
+        return;
+      }
+
+      pointData = pointData.map((p) => {
+        return {
+          ...p,
+          Enabled: chemList.includes(p["Surrogate Group"])
+            ? false
+            : p["Enabled"],
+          Color: chemList.includes(p["Surrogate Group"])
+            ? "rgb(0, 0, 0)"
+            : p["Color"],
+        };
+      });
+      plottingData = chemNames.map((chemName) =>
+        getPlottingDataForChem(pointData, chemName)
+      );
+
+      const chemNamesTemp = [];
+      dropdownData.forEach((ddObject) => {
+        const dd = d3.select(`#${ddObject.id}`);
+        if (dd.property("disabled") === true) {
+          return;
+        }
+        chemNamesTemp.push(dd.property("value"));
+      });
+      // update plots
+      makeCalCurvesXxY(
+        resolutionData,
+        resolution,
+        pointData,
+        chemNamesTemp,
+        tooltip,
+        tooltipContainer,
+        cleanedQaqcData,
+        confidence,
+        chemNames
+      );
+    } else {
+      const chemList = [];
+      groupDiv
+        .selectAll("li")
+        .nodes()
+        .forEach((d) => {
+          chemList.push(d3.select(d).select("span").text());
+        });
+
+      if (chemList.length === 0) {
+        return;
+      }
+
+      pointData = pointData.map((p) => {
+        return {
+          ...p,
+          Enabled: chemList.includes(p["Chemical Name"]) ? true : p["Enabled"],
+          Color: chemList.includes(p["Chemical Name"])
+            ? "rgb(1, 199, 234)"
+            : p["Color"],
+        };
+      });
+      plottingData = chemNames.map((chemName) =>
+        getPlottingDataForChem(pointData, chemName)
+      );
+      const chemNamesTemp = [];
+      dropdownData.forEach((ddObject) => {
+        const dd = d3.select(`#${ddObject.id}`);
+        if (dd.property("disabled") === true) {
+          return;
+        }
+        chemNamesTemp.push(dd.property("value"));
+      });
+      // update plots
+      makeCalCurvesXxY(
+        resolutionData,
+        resolution,
+        pointData,
+        chemNamesTemp,
+        tooltip,
+        tooltipContainer,
+        cleanedQaqcData,
+        confidence,
+        chemNames
+      );
+    }
   }
 
   /**
