@@ -30,9 +30,9 @@ function flagSpectra(spectrum1, spectrum2, mass_window=0, window_type="da", peak
     }
 
     return [new_spectrum1, new_spectrum2]
-  }
+}
 
-  function createDualMassSpectrumPlot(DTXCID, feature, inputSpec, CFMIDSpec){
+function createDualMassSpectrumPlot(DTXCID, feature, inputSpec, CFMIDSpec){
     var svg = d3.select("#msplot")
     var width = svg.attr("width")
     var height = svg.attr("height")

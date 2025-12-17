@@ -77,7 +77,7 @@ function cleanData(data, keysToKeep) {
     "Structure_AMOS spectra count_norm",
     "Structure_Presence in water lists count_norm",
     "STRUCTURE_TOTAL_NORM",
-    "MS2 quotient score", 
+    "Q-SCORE", 
     "Median blanksub mean feature abundance",
     "Final Occurrence Percentage", 
     "Acute Mammalian Toxicity Oral_authority_mapped",
@@ -201,7 +201,7 @@ function getTop5Rows(arr, categoryField, valueField) {
     "Structure_AMOS spectra count_norm",
     "Structure_Presence in water lists count_norm",
     "STRUCTURE_TOTAL_NORM",
-    "MS2 quotient score", 
+    "Q-SCORE", 
     "Acute Mammalian Toxicity Oral_authority_mapped",
     "Acute Mammalian Toxicity Inhalation_authority_mapped",
     "Acute Mammalian Toxicity Dermal_authority_mapped",
@@ -403,7 +403,6 @@ var image = null
 var outlinksvg = null
 
 // Static URL links
-// const comptoxURL = "https://ccte-res-ncd.epa.gov/dashboard/dsstoxdb/results?search="
 const comptoxURL = "https://comptox.epa.gov/dashboard/msready-mixture?dtxcid="
 const structureImageURL = "https://comptox.epa.gov/dashboard-api/ccdapp1/chemical-files/image/by-dtxcid/"
 
@@ -416,7 +415,7 @@ async function generatePlots(filePath) {
 const fullData = await parseCSV(filePath)
 
 // Check if the dataset contains MS2 data columns
-const hasMS2 = Object.keys(fullData[0]).some(col => col.includes("MS2"))
+const hasMS2 = Object.keys(fullData[0]).some(col => col.includes("Q-SCORE"))
 
 // Set default amenability mode to positive. positive mode will be selected upon first rendering of the visualization. 
 var amenabilityMode = "POSITIVE_MODE_AMENABILITY_PREDICTION"
@@ -731,7 +730,7 @@ function createTop5ToggleButton(){
       MS2Input.checked = true
       document.getElementById('tripod-chart-MS2').innerHTML= ""
       document.getElementById('tripod-title').innerHTML= ""
-      updateData("MS2 quotient score")
+      updateData("Q-SCORE")
       loadData(data)}
 
       metaInput.checked = true
@@ -763,7 +762,7 @@ function createTop5ToggleButton(){
       MS2Input.checked = true
       document.getElementById('tripod-chart-MS2').innerHTML= ""
       document.getElementById('tripod-title').innerHTML= ""
-      updateData("MS2 quotient score")
+      updateData("Q-SCORE")
       loadData(data)}
 
       metaInput.checked = true
@@ -880,7 +879,7 @@ function goToPosition(event, position){
   MS2Input.checked = true
   document.getElementById('tripod-chart-MS2').innerHTML= ""
   document.getElementById('tripod-title').innerHTML= ""
-  updateData("MS2 quotient score")
+  updateData("Q-SCORE")
   loadData(data)}
   
   metaInput.checked = true
@@ -1059,7 +1058,7 @@ const keysToKeep = [
     "Hazard Completeness Score",
     "POSITIVE_MODE_AMENABILITY_PREDICTION",
     "NEGATIVE_MODE_AMENABILITY_PREDICTION",
-    "MS2 quotient score", 
+    "Q-SCORE", 
     "Median blanksub mean feature abundance",
     "Final Occurrence Percentage", 
     "Acute Mammalian Toxicity Oral_authority_mapped",
@@ -1131,7 +1130,7 @@ const subgroupKeys = [
     "Hazard Completeness Score",
     "POSITIVE_MODE_AMENABILITY_PREDICTION",
     "NEGATIVE_MODE_AMENABILITY_PREDICTION",
-    "MS2 quotient score", 
+    "Q-SCORE", 
     "energy0", 
     "energy1", 
     "energy2", 
@@ -1968,13 +1967,13 @@ function loadData(data){
   var mouseoverBarMS2 = function(d) {
     
     if (! hasAmenability){
-    var MS2Score = d3.select(this)._groups[0][0]["__data__"]["MS2 quotient score"];
+    var MS2Score = d3.select(this)._groups[0][0]["__data__"]["Q-SCORE"];
     tooltipBarMS2
       .html("MS2 Score: " + MS2Score)
       .style("opacity", 1)}
 
     else {
-      var MS2Score = d3.select(this)._groups[0][0]["__data__"]["MS2 quotient score"];
+      var MS2Score = d3.select(this)._groups[0][0]["__data__"]["Q-SCORE"];
       var amenabilityScore = d3.select(this)._groups[0][0]["__data__"][amenabilityMode];
       if (amenabilityScore == -9999){amenabilityScore = "No Data"}
     tooltipBarMS2
@@ -2103,7 +2102,7 @@ showBarsMS2 = function(data){
   .attr("class", "MS2-bar")
   .attr("y", d => yMS2(d.DTXCID_INDIVIDUAL_COMPONENT))
   .attr("x", 0)
-  .attr("width", d => xMS2(d["MS2 quotient score"]))
+  .attr("width", d => xMS2(d["Q-SCORE"]))
   .attr("height", yMS2.bandwidth())
   .on("mouseover", mouseoverBarMS2)
   .on("mousemove", mousemoveBarMS2)
@@ -2264,13 +2263,13 @@ function makeLargeGrid(){
         },
       ]},
     {headerName: "MS2", children: [{columnGroupShow: "closed", headerName: 'MS2 Score', 
-      field: 'MS2 quotient score', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], 
-      valueGetter: (params) => {return params.data?.["MS2 quotient score"] ?? 'N/A'}
+      field: 'Q-SCORE', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], 
+      valueGetter: (params) => {return params.data?.["Q-SCORE"] ?? 'N/A'}
     }, 
     {columnGroupShow: "open", headerName: 'MS2 Score', 
-      field: 'MS2 quotient score', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], 
+      field: 'Q-SCORE', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], 
       // cellRenderer: params => {params.value === "" ? "N/A" : params.value}, 
-      valueGetter: (params) => {return params.data?.["MS2 quotient score"] ?? 'N/A'}
+      valueGetter: (params) => {return params.data?.["Q-SCORE"] ?? 'N/A'}
     },
     {columnGroupShow: "open", headerName: '(pos) Amenability Score', 
       field: 'POSITIVE_MODE_AMENABILITY_PREDICTION', floatingFilter: true, filter: 'agNumberColumnFilter', width: 150, sortingOrder: ['desc', 'asc', null], 
@@ -2428,7 +2427,7 @@ function makeLargeGrid(){
         MS2Input.checked = true
         document.getElementById('tripod-chart-MS2').innerHTML= ""
         document.getElementById('tripod-title').innerHTML= ""
-        updateData("MS2 quotient score")
+        updateData("Q-SCORE")
         loadData(data)}
         
         document.getElementById("tripod-yAxisToolTip").remove()
@@ -2627,7 +2626,7 @@ hazardInput.checked = false
 MS2Input.checked = true
 document.getElementById('tripod-chart-MS2').innerHTML= ""
 document.getElementById('tripod-title').innerHTML= ""
-updateData("MS2 quotient score")
+updateData("Q-SCORE")
 loadData()}
 
 metaInput.checked = true
@@ -2649,9 +2648,10 @@ screenshotButton.addEventListener('click', () => {
 }
 
 // ======= CALL MAIN FUNCTION ==================================================================================================
-// const dataPath = "./data/short_test_noMS2.csv";
+const dataPath = "./data/INTERPRET NTA test MS2 file 500 features.csv";
 // const dataPath = "./data/short_test_amen.csv";
 // const dataPath = "./data/short_test_no_amen.csv";
-const dataPath = "./data/WW2DW_Data_Analysis_file_5_with_MS2.csv";
+// const dataPath = "./data/short_test_noMS2.csv";
+// const dataPath = "./data/WW2DW_Data_Analysis_file_5_with_MS2.csv";
 // const dataPath = "./data/WW2DW_Data_Analysis_file_5_without_MS2.csv";
 generatePlots(dataPath);
