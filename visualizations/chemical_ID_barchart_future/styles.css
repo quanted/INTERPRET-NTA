@@ -8,6 +8,10 @@
     top: 6px;
 }
 
+.hazardtxt {
+  color: green;
+}
+
 #tripod-main-container {
     height: 820px;
     width: 1620px; 

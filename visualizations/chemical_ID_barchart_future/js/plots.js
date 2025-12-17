@@ -295,7 +295,6 @@ function addHazardLegend(){
   gradientSVG.appendChild(gradRect)
 
   // Tooltip setup for tripod-rect1
-  document.addEventListener("DOMContentLoaded", function() {
     const tooltip = document.createElement("div");
     tooltip.id = "tripod-rect1-tooltip";
     tooltip.className = "tripod-tooltip";
@@ -306,10 +305,12 @@ function addHazardLegend(){
     tooltip.style.borderRadius = "5px";
     tooltip.style.padding = "10px";
     tooltip.style.zIndex = "1000";
+
     document.body.appendChild(tooltip);
 
     gradRect.addEventListener("mouseover", function(event) {
       tooltip.style.display = "block";
+      
       tooltip.innerHTML = `
       <p><b>Hazard Score</b> (<i>0-12</i>): A composite of the average hazard score (<b>low</b> to <b>very high</b> hazard values are converted to <b>1</b> through <b>4</b>, respectively) 
       multiplied by the average quality score (<b><i>in silico</i></b> to <b><i>in vivo</i></b> authority values are converted to <b>1</b> through <b>3</b>, respectively).</p>
@@ -343,7 +344,6 @@ function addHazardLegend(){
     gradRect.addEventListener("mouseleave", function() {
       tooltip.style.display = "none";
     });
-  });
 }
 
 //Creates the white-to-blue gradient for the MS2 amenability score legend
@@ -406,7 +406,7 @@ var outlinksvg = null
 const comptoxURL = "https://comptox.epa.gov/dashboard/msready-mixture?dtxcid="
 const structureImageURL = "https://comptox.epa.gov/dashboard-api/ccdapp1/chemical-files/image/by-dtxcid/"
 
-addHazardLegend()
+
 
 // ======= MAIN FUNCTION =======================================================================================================
 async function generatePlots(filePath) {
@@ -416,6 +416,9 @@ const fullData = await parseCSV(filePath)
 
 // Check if the dataset contains MS2 data columns
 const hasMS2 = Object.keys(fullData[0]).some(col => col.includes("Q-SCORE"))
+
+// Check if the dataset contains hazard data columns
+const hasHazard = Object.keys(fullData[0]).some(col => col.includes("Hazard Score"))
 
 // Set default amenability mode to positive. positive mode will be selected upon first rendering of the visualization. 
 var amenabilityMode = "POSITIVE_MODE_AMENABILITY_PREDICTION"
@@ -432,16 +435,39 @@ if (hasAmenability){
   infoboxTop = "482px"
   spanTop = "510px"
   settingsHeight = 470
-  buttonTop = "180px"
   gradientTop= "270px"
+  if(hasHazard){
+    addHazardLegend()
+    metadataTitleTop = 45
+    metadataTop= "-2px"
+    buttonTop = "184px"
+  }
+  else {
+    metadataTitleTop = 70
+    metadataTop= "30px"
+    buttonTop = "245px"
+  }
 }
-else{
+else if(hasHazard) {
+  addHazardLegend()
+  metadataTitleTop = 45
+  metadataTop= "-2px"
   infoboxHeight = 347
   infoboxTop = "435px"
   spanTop = "460px"
   settingsHeight = 420
   buttonTop = "200px"
   gradientTop= "304px"
+}
+else { // no amenability and no hazard data
+  infoboxHeight = 400
+  infoboxTop = "382px"
+  spanTop = "460px"
+  settingsHeight = 370
+  buttonTop = "250px"
+  gradientTop= "304px"
+  metadataTop= "30px"
+  metadataTitleTop = 70
 }
 
 function addInfoBox() {
@@ -483,6 +509,7 @@ function addInfoBox() {
         .attr("x", 358)
         .attr("y", 405) 
 
+      if (hasHazard){    
       settingsBorder.append("text")
         .text("Hazard Completeness Score")  
         .attr("font-size", 22)
@@ -500,10 +527,11 @@ function addInfoBox() {
         .text("1.0")  
         .attr("font-size", 18)
         .attr("x", 358)
-        .attr("y", 319)     
+        .attr("y", 319)    
+      } 
       }  
 
-    else {
+    else if(hasHazard) {
       settingsBorder.append("text")
         .text("Hazard Completeness Score")  
         .attr("font-size", 22)
@@ -524,9 +552,10 @@ function addInfoBox() {
         .attr("y", 354)
     }  
 
+      if (hasHazard) {
       // Set the position of the hazard legend gradient
       document.getElementById("tripod-gradient-rect-hazard").style.position = "absolute"
-      document.getElementById("tripod-gradient-rect-hazard").style.top = gradientTop  
+      document.getElementById("tripod-gradient-rect-hazard").style.top = gradientTop  }
 
   // Add text for the metadata legend title
   settingsBorder.append("text")
@@ -534,7 +563,10 @@ function addInfoBox() {
     .attr("font-size", 22)
     .attr("font-weight", "bold")
     .attr("x", 156)
-    .attr("y", 45) 
+    .attr("y", metadataTitleTop) 
+    .attr("id", "top")
+
+  document.getElementById("metadata-legend").style.top = metadataTop
 
   // Add a border around the candidate information box
   infoBox = makeSvgElement(465, 304, "infobox", d3.select("#tripod-infobox"))
@@ -632,11 +664,24 @@ var metaInput = document.createElement("input")
   document.getElementById("tripod-main-container").appendChild(metaInput)
 metaInput.checked = true  
 
+if (hasHazard){  
 var hazardInput = document.createElement("input")
   hazardInput.setAttribute('type', 'checkbox')
   hazardInput.setAttribute('id', 'input-hazard')
   document.getElementById("tripod-main-container").appendChild(hazardInput)
 hazardInput.checked = true  
+}
+// If no Hazard data is present in the dataset, display a 'No Hazard data found' message in place of the hazard plots
+else{
+  const mySpan = document.createElement('span')
+  noHazardText = document.createTextNode("No hazard data found.")
+  mySpan.appendChild(noHazardText)
+  document.getElementById("tripod-chart-hazard").appendChild(mySpan)
+  mySpan.style.position = "absolute"
+  mySpan.style.top = "200px"
+  mySpan.style.left = "190px"
+  mySpan.style.fontSize = '22px';
+}
 
 if (hasMS2){  
 var MS2Input = document.createElement("input")
@@ -710,7 +755,7 @@ function createTop5ToggleButton(){
       makeLargeGrid()
       makeExportButton()
       metaInput.checked = true;
-      hazardInput.checked = false;
+      if (hasHazard){hazardInput.checked = false;}
       if (hasMS2){MS2Input.checked = false;}
 
       document.getElementById('tripod-chart-meta').innerHTML= ""
@@ -718,15 +763,17 @@ function createTop5ToggleButton(){
       updateData("STRUCTURE_TOTAL_NORM")
       loadData(data)
 
+      if (hasHazard){
       metaInput.checked = false;
       hazardInput.checked = true;
       document.getElementById('tripod-chart-hazard').innerHTML= ""
       document.getElementById('tripod-title').innerHTML= ""
       updateData("Hazard Score")
-      loadData(data)
+      loadData(data)}
 
       if (hasMS2){
-      hazardInput.checked = false;
+      metaInput.checked = false;
+      if (hasHazard){hazardInput.checked = false;}
       MS2Input.checked = true
       document.getElementById('tripod-chart-MS2').innerHTML= ""
       document.getElementById('tripod-title').innerHTML= ""
@@ -734,15 +781,17 @@ function createTop5ToggleButton(){
       loadData(data)}
 
       metaInput.checked = true
-      hazardInput.checked = true
+      if (hasHazard){hazardInput.checked = true;}
     }
     else {
       button.textContent = "Showing Top 5 metadata candidates. Click to show all";
       showingTop5 = true
       makeLargeGrid()
       makeExportButton()
+
+      // re-load and re-order the metadata plots
       metaInput.checked = true;
-      hazardInput.checked = false;
+      if (hasHazard){hazardInput.checked = false;}
       if (hasMS2){MS2Input.checked = false;}
 
       document.getElementById('tripod-chart-meta').innerHTML= ""
@@ -750,15 +799,18 @@ function createTop5ToggleButton(){
       updateData("STRUCTURE_TOTAL_NORM")
       loadData(data)
 
+      // re-load and re-order the hazard plots
+      if (hasHazard){
       metaInput.checked = false;
       hazardInput.checked = true;
       document.getElementById('tripod-chart-hazard').innerHTML= ""
       document.getElementById('tripod-title').innerHTML= ""
       updateData("Hazard Score")
-      loadData(data)
+      loadData(data)}
 
       if (hasMS2){
-      hazardInput.checked = false;
+      metaInput.checked = false;
+      if (hasHazard){hazardInput.checked = false;}
       MS2Input.checked = true
       document.getElementById('tripod-chart-MS2').innerHTML= ""
       document.getElementById('tripod-title').innerHTML= ""
@@ -766,7 +818,8 @@ function createTop5ToggleButton(){
       loadData(data)}
 
       metaInput.checked = true
-      hazardInput.checked = true
+      // hazardInput.checked = true
+      if (hasHazard){hazardInput.checked = true;}
       }
 
       // If the currently selected dtxcid exists in the plots after applying the top-5-metadata filter, highlight the dtxcid red in the y-axis
@@ -859,7 +912,8 @@ function goToPosition(event, position){
   gridUpdated = false
 
   metaInput.checked = true;
-  hazardInput.checked = false;
+  // hazardInput.checked = false;
+  if (hasHazard){hazardInput.checked = false;}
   if (hasMS2){MS2Input.checked = false;}
 
   document.getElementById('tripod-chart-meta').innerHTML= ""
@@ -867,15 +921,17 @@ function goToPosition(event, position){
   updateData("STRUCTURE_TOTAL_NORM")
   loadData(data)
 
+  if (hasHazard){
   metaInput.checked = false;
   hazardInput.checked = true;
   document.getElementById('tripod-chart-hazard').innerHTML= ""
   document.getElementById('tripod-title').innerHTML= ""
   updateData("Hazard Score")
-  loadData(data)
+  loadData(data)}
 
   if (hasMS2){
-  hazardInput.checked = false;
+  metaInput.checked = false;
+  if(hasHazard) {hazardInput.checked = false;}
   MS2Input.checked = true
   document.getElementById('tripod-chart-MS2').innerHTML= ""
   document.getElementById('tripod-title').innerHTML= ""
@@ -883,7 +939,7 @@ function goToPosition(event, position){
   loadData(data)}
   
   metaInput.checked = true
-  hazardInput.checked = true
+  if (hasHazard) {hazardInput.checked = true}
 
   if (clickedDTXCID != null){
     try{
@@ -1024,11 +1080,11 @@ createTop5ToggleButton()
 if (hasMS2) {
   xMS2 = addXaxis(1, pre_space = 136)
   xMeta = addXaxis(8, pre_space = 274)
-  xHazard = addXaxis(12, pre_space = 410)
+  if (hasHazard) {xHazard = addXaxis(12, pre_space = 410)}
 }
 else {
   xMeta = addXaxis(8, pre_space = 674)
-  xHazard = addXaxis(12, pre_space = 810)
+  if (hasHazard) {xHazard = addXaxis(12, pre_space = 810)}
 }
 
 // Keys to keep for cleaning data
@@ -1149,8 +1205,9 @@ var svgHazard = null
 var svgMS2 = null
 
 
-// const fieldList = ["meta", "hazard", "MS2"]
-const fieldList = ["meta", "hazard"]
+// const fieldList = ["meta", "hazard"]
+const fieldList = ["meta"]
+if (hasHazard) {fieldList.push("hazard")}
 if (hasMS2) {fieldList.push("MS2")}
 
 //Updates sorts, and cleans the data displayed in the plots 
@@ -1457,10 +1514,10 @@ outlinkDiv.addEventListener('mouseout', function(){imageDiv.style.borderWidth = 
 }
 
 
-
 // Define function for bar click on MS2 and hazard plot
 var barClickMS2Hazard = function(){
-  var DTXCIDname = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["DTXCID"]}-hazard`).innerHTML
+  if(hasMS2){var DTXCIDname = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["DTXCID"]}-MS2`).innerHTML}
+  if(hasHazard){var DTXCIDname = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["DTXCID"]}-hazard`).innerHTML}
   structure_label.nodeValue = DTXCIDname
 
   // If a hazard bar is being clicked, open the empty cheminformatics hazard module page. 
@@ -1631,7 +1688,7 @@ function reSortData(data, headers) {
     yAxisMeta(newData)
   }
 
-  if (hazardInput.checked){
+  if (hasHazard && hazardInput.checked){
     document.getElementById("tripod-ylabel-hazard").remove()
     yAxisHazard(newData)
   }
@@ -1674,7 +1731,7 @@ var legendClick = function(event, d, i) {
         showBarsMetadata(showKeys, newData);
       }
     
-      if (hazardInput.checked){
+      if (hasHazard && hazardInput.checked){
         hazard_bars.remove(); //remove all bars
         showBarsHazard(newData)
       }
@@ -1696,7 +1753,7 @@ var legendClick = function(event, d, i) {
         showBarsMetadata(showKeys, newData);
       }
     
-      if (hazardInput.checked){
+      if (hasHazard && hazardInput.checked){
         hazard_bars.remove(); //remove all bars
         showBarsHazard(newData)
       }
@@ -1819,12 +1876,13 @@ function makeTitleStatic(){
     .style("font-weight", "bold")
     .text(`Hazard`);  
 
-  titlesvg.append("text")  
+    if (hasHazard){
+    titlesvg.append("text")  
     .attr("x", 1418)
     .attr("y", 55)
     .attr("text-anchor", "left")
     .style("font-size", "20px")
-    .text(`Select plot to sort`); 
+    .text(`Select plot to sort`); }
 
   titlesvg.append("text") 
     .attr("x", 850)
@@ -1835,7 +1893,6 @@ function makeTitleStatic(){
 
 }
 makeTitleStatic()
-
 
 
 function loadData(data){
@@ -1869,6 +1926,7 @@ function loadData(data){
     .style("position", "fixed")
     .attr("id", "tripod-tooltipbar");}
 
+    if (hasHazard){
     var tooltipBarHazard = d3.select("#tripod-chart-hazard")
     .append("div")
     .style("display", "none")
@@ -1879,7 +1937,7 @@ function loadData(data){
     .style("border-radius", "5px")
     .style("padding", "8px")
     .style("position", "fixed")
-    .attr("id", "tripod-tooltipbar");
+    .attr("id", "tripod-tooltipbar");}
 
   // Hover functions for Metadata bars
   var mouseoverBarMeta = function(d) {
@@ -1997,7 +2055,8 @@ function loadData(data){
   }
   var mouseleaveBarMS2Hazard = function() {
     if (hasMS2){tooltipBarMS2.style("display", "none");}
-    tooltipBarHazard.style("display", "none");  
+    if (hasHazard){tooltipBarHazard.style("display", "none");}
+    // tooltipBarHazard.style("display", "none");  
 
   // Make the corresponding y-axis label black again
   if (clickedDTXCID != d3.select(this)._groups[0][0]["__data__"]["DTXCID"])
@@ -2117,7 +2176,7 @@ if (metaInput.checked){
   showBarsMetadata(showKeys, subGroupData);
 }
 
-if (hazardInput.checked){
+if (hasHazard && hazardInput.checked){
   svgHazard = makeSvgElement(width, height + 20, "tripod-vis", d3.select("#tripod-chart-hazard"));
   yAxisHazard(subGroupData);
   showBarsHazard(subGroupData);
@@ -2323,8 +2382,8 @@ function makeLargeGrid(){
         }
 
     }, 
-  
-  ]},
+    ]
+    },
     {headerName: "Metadata", 
         openByDefault: true,
         children: [
@@ -2339,53 +2398,53 @@ function makeLargeGrid(){
           {columnGroupShow: "open", headerName: "PubChem Sources", field: 'SOURCE_COUNT_COLLAPSED', floatingFilter: true, filter: 'agNumberColumnFilter', width: 150, sortingOrder: ['desc', 'asc', null]},
           {columnGroupShow: "open", headerName: "Dashboard Water Lists", field: 'Structure_Presence in water lists count', floatingFilter: true, filter: 'agNumberColumnFilter', width: 175, sortingOrder: ['desc', 'asc', null]},
         ]
-      },    
+    },    
     {headerName: "Hazard", 
       children: [
-        {columnGroupShow: "closed", headerName: "Hazard Score", field: 'Hazard Score', floatingFilter: true, filter: 'agNumberColumnFilter', width: 140, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "closed", headerName: "Hazard Completeness Score", field: 'Hazard Completeness Score', floatingFilter: true, filter: 'agNumberColumnFilter', width: 210, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Hazard Score", field: 'Hazard Score', floatingFilter: true, filter: 'agNumberColumnFilter', width: 150, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Hazard Completeness Score", field: 'Hazard Completeness Score', floatingFilter: true, filter: 'agNumberColumnFilter', width: 200, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Acute Aquatic Toxicity Authority", field: 'Acute Aquatic Toxicity_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Acute Aquatic Toxicity Score", field: 'Acute Aquatic Toxicity_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Acute Mammalian Toxicity Dermal Authority", field: 'Acute Mammalian Toxicity Dermal_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Acute Mammalian Toxicity Dermal Score", field: 'Acute Mammalian Toxicity Dermal_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Acute Mammalian Toxicity Inhalation Authority", field: 'Acute Mammalian Toxicity Inhalation_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Acute Mammalian Toxicity Inhalation Score", field: 'Acute Mammalian Toxicity Inhalation_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Acute Mammalian Toxicity Oral Authority", field: 'Acute Mammalian Toxicity Oral_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Acute Mammalian Toxicity Oral Score", field: 'Acute Mammalian Toxicity Oral_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Bioaccumulation Authority", field: 'Bioaccumulation_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Bioaccumulation Score", field: 'Bioaccumulation_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Carcinogenicity Authority", field: 'Carcinogenicity_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Carcinogenicity Score", field: 'Carcinogenicity_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Chronic Aquatic Toxicity Authority", field: 'Chronic Aquatic Toxicity_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Chronic Aquatic Toxicity Score", field: 'Chronic Aquatic Toxicity_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Developmental Authority", field: 'Developmental_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Developmental Score", field: 'Developmental_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Endocrine Disruption Authority", field: 'Endocrine Disruption_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Endocrine Disruption Score", field: 'Endocrine Disruption_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Exposure Authority", field: 'Exposure_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Exposure Score", field: 'Exposure_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Eye Irritation Authority", field: 'Eye Irritation_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Eye Irritation Score", field: 'Eye Irritation_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Genotoxicity Mutagenicity Authority", field: 'Genotoxicity Mutagenicity_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Genotoxicity Mutagenicity Score", field: 'Genotoxicity Mutagenicity_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Neurotoxicity Repeat Exposure Authority", field: 'Neurotoxicity Repeat Exposure_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Neurotoxicity Repeat Exposure Score", field: 'Neurotoxicity Repeat Exposure_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Neurotoxicity Single Exposure Authority", field: 'Neurotoxicity Single Exposure_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Neurotoxicity Single Exposure Score", field: 'Neurotoxicity Single Exposure_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Persistence Authority", field: 'Persistence_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Persistence Score", field: 'Persistence_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Reproductive Authority", field: 'Reproductive_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Reproductive Score", field: 'Reproductive_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Skin Irritation Authority", field: 'Skin Irritation_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Skin Irritation Toxicity Score", field: 'Skin Irritation_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Skin Sensitization Authority", field: 'Skin Sensitization_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Skin Sensitization Score", field: 'Skin Sensitization_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Systemic Toxicity Repeat Exposure Authority", field: 'Systemic Toxicity Repeat Exposure_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Systemic Toxicity Repeat Exposure Score", field: 'Systemic Toxicity Repeat Exposure_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Systemic Toxicity Single Exposure Authority", field: 'Systemic Toxicity Single Exposure_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
-        {columnGroupShow: "open", headerName: "Systemic Toxicity Single Exposurey Score", field: 'Systemic Toxicity Single Exposure_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null]},
+        {columnGroupShow: "closed", headerName: "Hazard Score", field: 'Hazard Score', floatingFilter: true, filter: 'agNumberColumnFilter', width: 140, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "closed", headerName: "Hazard Completeness Score", field: 'Hazard Completeness Score', floatingFilter: true, filter: 'agNumberColumnFilter', width: 210, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Hazard Score", field: 'Hazard Score', floatingFilter: true, filter: 'agNumberColumnFilter', width: 150, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Hazard Completeness Score", field: 'Hazard Completeness Score', floatingFilter: true, filter: 'agNumberColumnFilter', width: 200, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Acute Aquatic Toxicity Authority", field: 'Acute Aquatic Toxicity_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Acute Aquatic Toxicity Score", field: 'Acute Aquatic Toxicity_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Acute Mammalian Toxicity Dermal Authority", field: 'Acute Mammalian Toxicity Dermal_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Acute Mammalian Toxicity Dermal Score", field: 'Acute Mammalian Toxicity Dermal_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Acute Mammalian Toxicity Inhalation Authority", field: 'Acute Mammalian Toxicity Inhalation_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Acute Mammalian Toxicity Inhalation Score", field: 'Acute Mammalian Toxicity Inhalation_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Acute Mammalian Toxicity Oral Authority", field: 'Acute Mammalian Toxicity Oral_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Acute Mammalian Toxicity Oral Score", field: 'Acute Mammalian Toxicity Oral_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Bioaccumulation Authority", field: 'Bioaccumulation_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Bioaccumulation Score", field: 'Bioaccumulation_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Carcinogenicity Authority", field: 'Carcinogenicity_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Carcinogenicity Score", field: 'Carcinogenicity_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Chronic Aquatic Toxicity Authority", field: 'Chronic Aquatic Toxicity_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Chronic Aquatic Toxicity Score", field: 'Chronic Aquatic Toxicity_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Developmental Authority", field: 'Developmental_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Developmental Score", field: 'Developmental_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Endocrine Disruption Authority", field: 'Endocrine Disruption_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Endocrine Disruption Score", field: 'Endocrine Disruption_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Exposure Authority", field: 'Exposure_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Exposure Score", field: 'Exposure_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Eye Irritation Authority", field: 'Eye Irritation_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Eye Irritation Score", field: 'Eye Irritation_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Genotoxicity Mutagenicity Authority", field: 'Genotoxicity Mutagenicity_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Genotoxicity Mutagenicity Score", field: 'Genotoxicity Mutagenicity_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Neurotoxicity Repeat Exposure Authority", field: 'Neurotoxicity Repeat Exposure_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Neurotoxicity Repeat Exposure Score", field: 'Neurotoxicity Repeat Exposure_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Neurotoxicity Single Exposure Authority", field: 'Neurotoxicity Single Exposure_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Neurotoxicity Single Exposure Score", field: 'Neurotoxicity Single Exposure_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Persistence Authority", field: 'Persistence_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Persistence Score", field: 'Persistence_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Reproductive Authority", field: 'Reproductive_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Reproductive Score", field: 'Reproductive_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Skin Irritation Authority", field: 'Skin Irritation_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Skin Irritation Toxicity Score", field: 'Skin Irritation_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Skin Sensitization Authority", field: 'Skin Sensitization_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Skin Sensitization Score", field: 'Skin Sensitization_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Systemic Toxicity Repeat Exposure Authority", field: 'Systemic Toxicity Repeat Exposure_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Systemic Toxicity Repeat Exposure Score", field: 'Systemic Toxicity Repeat Exposure_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Systemic Toxicity Single Exposure Authority", field: 'Systemic Toxicity Single Exposure_authority_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
+        {columnGroupShow: "open", headerName: "Systemic Toxicity Single Exposurey Score", field: 'Systemic Toxicity Single Exposure_score_mapped', floatingFilter: true, filter: 'agNumberColumnFilter', width: 100, sortingOrder: ['desc', 'asc', null], valueGetter: (params) => {return params.data?.["Hazard Score"] ?? 'N/A'}},
       ]
     }
   ];
@@ -2407,7 +2466,7 @@ function makeLargeGrid(){
         gridUpdated = false
 
         metaInput.checked = true;
-        hazardInput.checked = false;
+        if (hasHazard){hazardInput.checked = false;}
         if (hasMS2){MS2Input.checked = false;}
 
         document.getElementById('tripod-chart-meta').innerHTML= ""
@@ -2415,15 +2474,17 @@ function makeLargeGrid(){
         updateData("STRUCTURE_TOTAL_NORM")
         loadData(data)
 
+        if (hasHazard){
         metaInput.checked = false;
         hazardInput.checked = true;
         document.getElementById('tripod-chart-hazard').innerHTML= ""
         document.getElementById('tripod-title').innerHTML= ""
         updateData("Hazard Score")
-        loadData(data)
+        loadData(data)}
 
         if (hasMS2){
-        hazardInput.checked = false;
+        metaInput.checked = false;
+        if (hasHazard){hazardInput.checked = false;}
         MS2Input.checked = true
         document.getElementById('tripod-chart-MS2').innerHTML= ""
         document.getElementById('tripod-title').innerHTML= ""
@@ -2434,7 +2495,7 @@ function makeLargeGrid(){
         createYToolTip()
 
         metaInput.checked = true
-        hazardInput.checked = true
+        if (hasHazard) {hazardInput.checked = true}
 
         // highlight the selected DTXCID on the y-axis labels
         var DTXCIDname = event.data["DTXCID"]
@@ -2508,7 +2569,7 @@ function makeLargeGrid(){
     dataFromGrid = sortData(dataset);
 
     if (metaInput.checked){document.getElementById('tripod-chart-meta').innerHTML= ""}
-    if (hazardInput.checked){document.getElementById('tripod-chart-hazard').innerHTML= ""}
+    if (hasHazard && hazardInput.checked){document.getElementById('tripod-chart-hazard').innerHTML= ""}
     if (hasMS2 && MS2Input.checked){document.getElementById('tripod-chart-MS2').innerHTML= ""}
 
     document.getElementById("tripod-yAxisToolTip").remove()
@@ -2538,16 +2599,17 @@ function makeLargeGrid(){
     dataFromGrid = sortData(dataset);
 
     var originallyCheckedMS2 = null
+    var originallyCheckedHazard = null
     let originallyCheckedMeta = metaInput.checked
     if (hasMS2){originallyCheckedMS2 = MS2Input.checked}
-    let originallyCheckedHazard = hazardInput.checked
+    if (hasHazard){originallyCheckedHazard = hazardInput.checked}
 
     metaInput.checked = true
     if (hasMS2){MS2Input.checked = true}
-    hazardInput.checked = true
+    if (hasHazard){hazardInput.checked = true}
 
     document.getElementById('tripod-chart-meta').innerHTML= ""
-    document.getElementById('tripod-chart-hazard').innerHTML= ""
+    if (hasHazard){document.getElementById('tripod-chart-hazard').innerHTML= ""}
     if (hasMS2){document.getElementById('tripod-chart-MS2').innerHTML= ""}
 
     document.getElementById("tripod-yAxisToolTip").remove()
@@ -2559,7 +2621,7 @@ function makeLargeGrid(){
 
     metaInput.checked = originallyCheckedMeta
     if (hasMS2){MS2Input.checked = originallyCheckedMS2}
-    hazardInput.checked = originallyCheckedHazard
+    if (hasHazard){hazardInput.checked = originallyCheckedHazard}
 
     // highlight the y-axis label after filtering. 
     if (clickedDTXCID){
@@ -2576,7 +2638,7 @@ function makeLargeGrid(){
 }
 }
 
-hazardInput.checked = false
+if (hasHazard){hazardInput.checked = false}
 if (hasMS2){MS2Input.checked = false}
 updateData("STRUCTURE_TOTAL_NORM")
 makeLegend()
@@ -2614,15 +2676,17 @@ makeExportButton()
 
 loadData(data)
 
+if(hasHazard){
 metaInput.checked = false
 hazardInput.checked = true
 document.getElementById('tripod-chart-hazard').innerHTML= ""
 document.getElementById('tripod-title').innerHTML= ""
 updateData("Hazard Score")
-loadData()
+loadData()}
 
 if(hasMS2){
-hazardInput.checked = false
+metaInput.checked = false
+if(hasHazard){hazardInput.checked = false}
 MS2Input.checked = true
 document.getElementById('tripod-chart-MS2').innerHTML= ""
 document.getElementById('tripod-title').innerHTML= ""
@@ -2630,7 +2694,7 @@ updateData("Q-SCORE")
 loadData()}
 
 metaInput.checked = true
-hazardInput.checked = true
+if(hasHazard){hazardInput.checked = true}
 
 
 const screenshotButton = document.getElementById('screenshot-btn');
@@ -2649,9 +2713,10 @@ screenshotButton.addEventListener('click', () => {
 
 // ======= CALL MAIN FUNCTION ==================================================================================================
 // const dataPath = "./data/INTERPRET NTA test MS2 file 500 features.csv";
-const dataPath = "./data/short_test_amen.csv";
+// const dataPath = "./data/short_test_amen.csv";
 // const dataPath = "./data/short_test_no_amen.csv";
 // const dataPath = "./data/short_test_noMS2.csv";
-// const dataPath = "./data/WW2DW_Data_Analysis_file_5_with_MS2.csv";
+// const dataPath = "./data/short_test_noMS2_noHazard.csv";
+const dataPath = "./data/WW2DW_Data_Analysis_file_5_with_MS2.csv";
 // const dataPath = "./data/WW2DW_Data_Analysis_file_5_without_MS2.csv";
 generatePlots(dataPath);
