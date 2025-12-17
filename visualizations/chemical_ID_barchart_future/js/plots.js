@@ -183,7 +183,7 @@ function getTop5Rows(arr, categoryField, valueField) {
 
   let usefulKeys = [
     "Feature ID",
-    "DTXCID_INDIVIDUAL_COMPONENT",
+    "DTXCID",
     "SOURCE_COUNT_COLLAPSED",
     "PATENT_COUNT_COLLAPSED",
     "LITERATURE_COUNT_COLLAPSED",
@@ -1034,7 +1034,7 @@ else {
 // Keys to keep for cleaning data
 const keysToKeep = [
     "Feature ID",
-    "DTXCID_INDIVIDUAL_COMPONENT",
+    "DTXCID",
     "Mass", 
     "Retention Time",
     "SOURCE_COUNT_COLLAPSED",
@@ -1101,14 +1101,14 @@ const keysToKeep = [
     "Persistence_score_mapped",
     "Bioaccumulation_score_mapped",
     "Exposure_score_mapped",
-    "energy0", 
-    "energy1", 
-    "energy2", 
-    "feature_spectrum"
+    "CFMID_10", 
+    "CFMID_20", 
+    "CFMID_40", 
+    "experimental_spectrum"
   ];
 // Keys to keep for cleaning data further for sub-grouping on bar plot
 const subgroupKeys = [
-    "DTXCID_INDIVIDUAL_COMPONENT",
+    "DTXCID",
     "SOURCE_COUNT_COLLAPSED",
     "PATENT_COUNT_COLLAPSED",
     "LITERATURE_COUNT_COLLAPSED",
@@ -1131,10 +1131,10 @@ const subgroupKeys = [
     "POSITIVE_MODE_AMENABILITY_PREDICTION",
     "NEGATIVE_MODE_AMENABILITY_PREDICTION",
     "Q-SCORE", 
-    "energy0", 
-    "energy1", 
-    "energy2", 
-    "feature_spectrum"
+    "CFMID_10", 
+    "CFMID_20", 
+    "CFMID_40", 
+    "experimental_spectrum"
   ];
 
 //Instantiate variables
@@ -1216,7 +1216,7 @@ var yMS2 = null
 //Create y axis for all three plots
 function yAxisMeta(data){
   height = subGroupData.length * 30;
-  let Ygroups = data.map(d => (d.DTXCID_INDIVIDUAL_COMPONENT))
+  let Ygroups = data.map(d => (d.DTXCID))
   yMeta = d3.scaleBand() 
     .domain(Ygroups)
     .range([0, height])
@@ -1248,7 +1248,7 @@ function yAxisMeta(data){
 }
 function yAxisHazard(data){
   height = subGroupData.length * 30;
-  let Ygroups = data.map(d => (d.DTXCID_INDIVIDUAL_COMPONENT))
+  let Ygroups = data.map(d => (d.DTXCID))
   yHazard = d3.scaleBand() 
     .domain(Ygroups)
     .range([0, height])
@@ -1280,7 +1280,7 @@ function yAxisHazard(data){
 }
 function yAxisMS2(data){
   height = subGroupData.length * 30;
-  let Ygroups = data.map(d => (d.DTXCID_INDIVIDUAL_COMPONENT))
+  let Ygroups = data.map(d => (d.DTXCID))
   yMS2 = d3.scaleBand() 
     .domain(Ygroups)
     .range([0, height])
@@ -1358,7 +1358,7 @@ var ylabelClick = function(event){
   structure_label.nodeValue = DTXCIDname
 
   //Get the other features that this DTXCID is a candidate for 
-  const featureArray = fullData.filter(d => d.DTXCID_INDIVIDUAL_COMPONENT === DTXCIDname).map(d => d["Feature ID"])
+  const featureArray = fullData.filter(d => d.DTXCID === DTXCIDname).map(d => d["Feature ID"])
   more_features_as_text = featureArray.join(", ")
   more_features.nodeValue = `Candidate for feature(s): ${more_features_as_text}`
 
@@ -1406,11 +1406,11 @@ var ylabelClick = function(event){
 
 // Define function for bar click on metadata plot
 var barClickMeta = function(){
-  var DTXCIDname = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["data"]["DTXCID_INDIVIDUAL_COMPONENT"]}-meta`).innerHTML
+  var DTXCIDname = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["data"]["DTXCID"]}-meta`).innerHTML
   structure_label.nodeValue = DTXCIDname
 
   //Get the other features that this DTXCID is a candidate for 
-  const featureArray = fullData.filter(d => d.DTXCID_INDIVIDUAL_COMPONENT === DTXCIDname).map(d => d["Feature ID"])
+  const featureArray = fullData.filter(d => d.DTXCID === DTXCIDname).map(d => d["Feature ID"])
   more_features_as_text = featureArray.join(", ")
   more_features.nodeValue = `Candidate for feature(s): ${more_features_as_text}`
 
@@ -1460,23 +1460,23 @@ outlinkDiv.addEventListener('mouseout', function(){imageDiv.style.borderWidth = 
 
 // Define function for bar click on MS2 and hazard plot
 var barClickMS2Hazard = function(){
-  var DTXCIDname = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["DTXCID_INDIVIDUAL_COMPONENT"]}-hazard`).innerHTML
+  var DTXCIDname = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["DTXCID"]}-hazard`).innerHTML
   structure_label.nodeValue = DTXCIDname
 
   // If a hazard bar is being clicked, open the empty cheminformatics hazard module page. 
   // In the future, we want this to open the hazard table of the clicked-on DTXCID
   if (this.className["baseVal"] == "hazard-bar") {window.open(`https://hazard-dev.sciencedataexperts.com/#/hazard/report/${DTXCIDname}`)}
     else if (this.className["baseVal"] == "MS2-bar") {
-      const inputSpec0=d3.select(this)._groups[0][0]["__data__"]["energy0"]
-      const inputSpec1=d3.select(this)._groups[0][0]["__data__"]["energy1"]
-      const inputSpec2=d3.select(this)._groups[0][0]["__data__"]["energy2"]
-      const CFMIDSpec=d3.select(this)._groups[0][0]["__data__"]["feature_spectrum"]
+      const inputSpec0=d3.select(this)._groups[0][0]["__data__"]["CFMID_10"]
+      const inputSpec1=d3.select(this)._groups[0][0]["__data__"]["CFMID_20"]
+      const inputSpec2=d3.select(this)._groups[0][0]["__data__"]["CFMID_40"]
+      const CFMIDSpec=d3.select(this)._groups[0][0]["__data__"]["experimental_spectrum"]
 
       window.open(`mirror_plots.html?dtxcid=${DTXCIDname}&feature=${selectedFeature}&inputSpec0=${inputSpec0}&inputSpec1=${inputSpec1}&inputSpec2=${inputSpec2}&CFMIDSpec=${CFMIDSpec}`, "PopupWindow", "width=700,height=600");
   }
 
   //Get the other features that this DTXCID is a candidate for 
-  const featureArray = fullData.filter(d => d.DTXCID_INDIVIDUAL_COMPONENT === DTXCIDname).map(d => d["Feature ID"])
+  const featureArray = fullData.filter(d => d.DTXCID === DTXCIDname).map(d => d["Feature ID"])
   more_features_as_text = featureArray.join(", ")
   more_features.nodeValue = `Candidate for feature(s): ${more_features_as_text}`
 
@@ -1935,7 +1935,7 @@ function loadData(data){
 
     // Make the corresponding y-axis label red
     fieldList.forEach(key =>{
-      let IdToHighlight = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["data"]["DTXCID_INDIVIDUAL_COMPONENT"]}-${key}`);
+      let IdToHighlight = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["data"]["DTXCID"]}-${key}`);
       IdToHighlight.setAttribute("fill", "#FF13F0");
       IdToHighlight.style.fontWeight = "bold";})
 
@@ -1950,14 +1950,14 @@ function loadData(data){
     tooltipBarMeta
       .style("display", "none");
 
-    if (clickedDTXCID != d3.select(this)._groups[0][0]["__data__"]["data"]["DTXCID_INDIVIDUAL_COMPONENT"])
+    if (clickedDTXCID != d3.select(this)._groups[0][0]["__data__"]["data"]["DTXCID"])
       {fieldList.forEach(key =>{
-        let IdToHighlight = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["data"]["DTXCID_INDIVIDUAL_COMPONENT"]}-${key}`)
+        let IdToHighlight = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["data"]["DTXCID"]}-${key}`)
         IdToHighlight.setAttribute("fill", "black");
         IdToHighlight.style.fontWeight = "normal";
     })} 
     else {fieldList.forEach(key =>{
-      let IdToHighlight = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["data"]["DTXCID_INDIVIDUAL_COMPONENT"]}-${key}`)
+      let IdToHighlight = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["data"]["DTXCID"]}-${key}`)
       IdToHighlight.setAttribute("fill", "red");
       IdToHighlight.style.fontWeight = "bold";
     })}  
@@ -1983,7 +1983,7 @@ function loadData(data){
 
     // Make the corresponding y-axis label red
     fieldList.forEach(key =>{
-      let IdToHighlight = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["DTXCID_INDIVIDUAL_COMPONENT"]}-${key}`)
+      let IdToHighlight = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["DTXCID"]}-${key}`)
       IdToHighlight.setAttribute("fill", "#FF13F0");
       IdToHighlight.style.fontWeight = "bold";
     })  
@@ -2000,14 +2000,14 @@ function loadData(data){
     tooltipBarHazard.style("display", "none");  
 
   // Make the corresponding y-axis label black again
-  if (clickedDTXCID != d3.select(this)._groups[0][0]["__data__"]["DTXCID_INDIVIDUAL_COMPONENT"])
+  if (clickedDTXCID != d3.select(this)._groups[0][0]["__data__"]["DTXCID"])
     {fieldList.forEach(key =>{
-      let IdToHighlight = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["DTXCID_INDIVIDUAL_COMPONENT"]}-${key}`)
+      let IdToHighlight = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["DTXCID"]}-${key}`)
       IdToHighlight.setAttribute("fill", "black");
       IdToHighlight.style.fontWeight = "normal";
     })}  
   else {fieldList.forEach(key =>{
-    let IdToHighlight = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["DTXCID_INDIVIDUAL_COMPONENT"]}-${key}`)
+    let IdToHighlight = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["DTXCID"]}-${key}`)
     IdToHighlight.setAttribute("fill", "red");
     IdToHighlight.style.fontWeight = "bold";
     })}  
@@ -2023,7 +2023,7 @@ function loadData(data){
 
     // Make the corresponding y-axis label red
     fieldList.forEach(key =>{
-      let IdToHighlight = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["DTXCID_INDIVIDUAL_COMPONENT"]}-${key}`)
+      let IdToHighlight = document.getElementById(`ylabel-${d3.select(this)._groups[0][0]["__data__"]["DTXCID"]}-${key}`)
       IdToHighlight.setAttribute("fill", "#FF13F0");
       IdToHighlight.style.fontWeight = "bold";
     })  
@@ -2046,7 +2046,7 @@ showBarsMetadata = function(keys2Include, data){
   // enter a second time = loop subgroup per subgroup to add all rectangles
   .data(d => {return d})
   .join("rect")
-    .attr("y", d => yMeta(d.data.DTXCID_INDIVIDUAL_COMPONENT))
+    .attr("y", d => yMeta(d.data.DTXCID))
     .attr("x", d => xMeta(d[0]))
     .attr("transform", `translate(137, 20)`)
     .attr("width", d => xMeta(d[1]) - xMeta(d[0]))
@@ -2064,7 +2064,7 @@ showBarsHazard = function(data){
   .enter().append("rect").attr("fill", "red").attr("opacity", d => d["Hazard Completeness Score"])
   .attr("transform", `translate(137, 20)`)
   .attr("class", "hazard-bar")
-  .attr("y", d => yHazard(d.DTXCID_INDIVIDUAL_COMPONENT))
+  .attr("y", d => yHazard(d.DTXCID))
   .attr("x", 0)
   .attr("width", d => xHazard(d["Hazard Score"]))
   .attr("height", yHazard.bandwidth())
@@ -2100,7 +2100,7 @@ showBarsMS2 = function(data){
   .attr("fill-opacity", d => d[amenabilityMode])
   .attr("transform", `translate(137, 20)`)
   .attr("class", "MS2-bar")
-  .attr("y", d => yMS2(d.DTXCID_INDIVIDUAL_COMPONENT))
+  .attr("y", d => yMS2(d.DTXCID))
   .attr("x", 0)
   .attr("width", d => xMS2(d["Q-SCORE"]))
   .attr("height", yMS2.bandwidth())
@@ -2242,10 +2242,10 @@ function makeLargeGrid(){
         cellRenderer: params => {
           try {
             var image = document.createElement('img');
-            image.src = structureImageURL + params.data.DTXCID_INDIVIDUAL_COMPONENT
+            image.src = structureImageURL + params.data.DTXCID
           
             image.style = "width:80px;height:80px;padding-top:2px;padding-bottom:2px;";
-            image.alt = `Structure image for ${params.data.DTXCID_INDIVIDUAL_COMPONENT}`
+            image.alt = `Structure image for ${params.data.DTXCID}`
             return image;
           } 
           catch (error) {
@@ -2256,9 +2256,9 @@ function makeLargeGrid(){
           }
         }
         },
-        {headerName: "DTXCID", field: 'DTXCID_INDIVIDUAL_COMPONENT', filter: 'agTextColumnFilter', floatingFilter: true, width: 120, sortingOrder: ['desc', 'asc', null], 
+        {headerName: "DTXCID", field: 'DTXCID', filter: 'agTextColumnFilter', floatingFilter: true, width: 120, sortingOrder: ['desc', 'asc', null], 
           cellRenderer: params => {
-          return "<a href='" + comptoxURL + params.data.DTXCID_INDIVIDUAL_COMPONENT + "' target='_blank'>" + params.data.DTXCID_INDIVIDUAL_COMPONENT + "</a>"
+          return "<a href='" + comptoxURL + params.data.DTXCID + "' target='_blank'>" + params.data.DTXCID + "</a>"
           }
         },
       ]},
@@ -2437,11 +2437,11 @@ function makeLargeGrid(){
         hazardInput.checked = true
 
         // highlight the selected DTXCID on the y-axis labels
-        var DTXCIDname = event.data["DTXCID_INDIVIDUAL_COMPONENT"]
+        var DTXCIDname = event.data["DTXCID"]
         structure_label.nodeValue = DTXCIDname
 
         //Get the other features that this DTXCID is a candidate for 
-        const featureArray = fullData.filter(d => d.DTXCID_INDIVIDUAL_COMPONENT === DTXCIDname).map(d => d["Feature ID"])
+        const featureArray = fullData.filter(d => d.DTXCID === DTXCIDname).map(d => d["Feature ID"])
         more_features_as_text = featureArray.join(", ")
         more_features.nodeValue = `Candidate for feature(s): ${more_features_as_text}`
 
@@ -2648,8 +2648,8 @@ screenshotButton.addEventListener('click', () => {
 }
 
 // ======= CALL MAIN FUNCTION ==================================================================================================
-const dataPath = "./data/INTERPRET NTA test MS2 file 500 features.csv";
-// const dataPath = "./data/short_test_amen.csv";
+// const dataPath = "./data/INTERPRET NTA test MS2 file 500 features.csv";
+const dataPath = "./data/short_test_amen.csv";
 // const dataPath = "./data/short_test_no_amen.csv";
 // const dataPath = "./data/short_test_noMS2.csv";
 // const dataPath = "./data/WW2DW_Data_Analysis_file_5_with_MS2.csv";
