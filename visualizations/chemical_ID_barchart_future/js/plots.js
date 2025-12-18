@@ -407,17 +407,14 @@ const comptoxURL = "https://comptox.epa.gov/dashboard/msready-mixture?dtxcid="
 const structureImageURL = "https://comptox.epa.gov/dashboard-api/ccdapp1/chemical-files/image/by-dtxcid/"
 
 
-
 // ======= MAIN FUNCTION =======================================================================================================
 async function generatePlots(filePath) {
 
 // Import the input csv
 const fullData = await parseCSV(filePath)
 
-// Check if the dataset contains MS2 data columns
+// Check if the dataset contains MS2 and hazard data columns
 const hasMS2 = Object.keys(fullData[0]).some(col => col.includes("Q-SCORE"))
-
-// Check if the dataset contains hazard data columns
 const hasHazard = Object.keys(fullData[0]).some(col => col.includes("Hazard Score"))
 
 // Set default amenability mode to positive. positive mode will be selected upon first rendering of the visualization. 
@@ -427,52 +424,111 @@ var hasAmenability = false
 // If the dataset has MS2 data, check if the dataset contains amenability data columns
 if (hasMS2){hasAmenability = Object.keys(fullData[0]).some(col => col.includes("AMENABILITY"))}
 
-// Assign positioning layout values to visualization elements in case of the presence/absence of amenability data in the input dataset
-if (hasAmenability){
-  // In amenability data is present, display the MS2 amenability score legend gradient
-  addMS2Legend()
-  infoboxHeight = 300
-  infoboxTop = "482px"
-  spanTop = "510px"
-  settingsHeight = 470
-  gradientTop= "270px"
-  if(hasHazard){
+
+function addInfoBox() {
+  var settingsBorder = makeSvgElement(465, 420, "settings-border", d3.select("#tripod-settings-container"));
+
+  // Format and add elements to the info box based on presence of amenability and hazard data 
+  if (hasAmenability){  // if amenability data exists
+    addMS2Legend()
+    infoboxHeight = 300
+    infoboxTop = "482px"
+    spanTop = "510px"
+    settingsHeight = 470
+    gradientTop= "270px"
+    settingsBorder.append("text")
+      .text("MS2 Amenability Score")  
+      .attr("font-size", 22)
+      .attr("font-weight", "bold")
+      .attr("x", 125)
+      .attr("y", 355)  
+    settingsBorder.append("text")
+      .text("Amenability Mode: ")  
+      .attr("font-size", 20)
+      .attr("x", 80)
+      .attr("y", 450)  
+  
+    settingsBorder.append("text")
+      .text("0.0")  
+      .attr("font-size", 18)
+      .attr("x", 90)
+      .attr("y", 405) 
+    
+    settingsBorder.append("text")
+      .text("1.0")  
+      .attr("font-size", 18)
+      .attr("x", 358)
+      .attr("y", 405) 
+    if (hasHazard){ // If hazard data and amenability data exists
+      addHazardLegend()
+      metadataTitleTop = 45
+      metadataTop= "-2px"
+      buttonTop = "184px"
+    
+      settingsBorder.append("text")
+      .text("Hazard Completeness Score")  
+      .attr("font-size", 22)
+      .attr("font-weight", "bold")
+      .attr("x", 110)
+      .attr("y", 270)
+    settingsBorder.append("text")
+      .text("0.0")  
+      .attr("font-size", 18)
+      .attr("x", 90)
+      .attr("y", 319) 
+
+    settingsBorder.append("text")
+      .text("1.0")  
+      .attr("font-size", 18)
+      .attr("x", 358)
+      .attr("y", 319)    
+    } 
+    else {
+      metadataTitleTop = 70
+      metadataTop= "30px"
+      buttonTop = "245px"
+    }
+  }  
+  else if(hasHazard) { //hazard data but no amenability data 
     addHazardLegend()
     metadataTitleTop = 45
     metadataTop= "-2px"
-    buttonTop = "184px"
-  }
-  else {
-    metadataTitleTop = 70
-    metadataTop= "30px"
-    buttonTop = "245px"
-  }
-}
-else if(hasHazard) {
-  addHazardLegend()
-  metadataTitleTop = 45
-  metadataTop= "-2px"
-  infoboxHeight = 347
-  infoboxTop = "435px"
-  spanTop = "460px"
-  settingsHeight = 420
-  buttonTop = "200px"
-  gradientTop= "304px"
-}
-else { // no amenability and no hazard data
-  infoboxHeight = 400
-  infoboxTop = "382px"
-  spanTop = "460px"
-  settingsHeight = 370
-  buttonTop = "250px"
-  gradientTop= "304px"
-  metadataTop= "30px"
-  metadataTitleTop = 70
-}
+    infoboxHeight = 347
+    infoboxTop = "435px"
+    spanTop = "460px"
+    settingsHeight = 420
+    buttonTop = "200px"
+    gradientTop= "304px"
+    settingsBorder.append("text")
+      .text("Hazard Completeness Score")  
+      .attr("font-size", 22)
+      .attr("font-weight", "bold")
+      .attr("x", 110)
+      .attr("y", 305)
+    settingsBorder.append("text")
+      .text("0.0")  
+      .attr("font-size", 18)
+      .attr("x", 90)
+      .attr("y", 354) 
 
-function addInfoBox() {
+    settingsBorder.append("text")
+      .text("1.0")  
+      .attr("font-size", 18)
+      .attr("x", 358)
+      .attr("y", 354)
+  }  
+  else { // no amenability and no hazard data
+    infoboxHeight = 400
+    infoboxTop = "382px"
+    spanTop = "460px"
+    settingsHeight = 370
+    buttonTop = "250px"
+    gradientTop= "304px"
+    metadataTop= "30px"
+    metadataTitleTop = 70
+  }
+
   // Add a border around the visualization options box
-  var settingsBorder = makeSvgElement(465, 420, "settings-border", d3.select("#tripod-settings-container"));
   settingsBorder.append("rect")
     .attr("width", 465)
     .attr("height", settingsHeight)
@@ -482,80 +538,11 @@ function addInfoBox() {
     .style("stroke", "#a7b2c2")
     .attr("z-index", -1);
 
-    // If amenability data is present in the datase, add the legend text for the amenability score legend and reposition the hazard legend
-    if (hasAmenability){  
-      settingsBorder.append("text")
-        .text("MS2 Amenability Score")  
-        .attr("font-size", 22)
-        .attr("font-weight", "bold")
-        .attr("x", 125)
-        .attr("y", 355)  
-
-      settingsBorder.append("text")
-        .text("Amenability Mode: ")  
-        .attr("font-size", 20)
-        .attr("x", 80)
-        .attr("y", 450)  
-    
-      settingsBorder.append("text")
-        .text("0.0")  
-        .attr("font-size", 18)
-        .attr("x", 90)
-        .attr("y", 405) 
-      
-      settingsBorder.append("text")
-        .text("1.0")  
-        .attr("font-size", 18)
-        .attr("x", 358)
-        .attr("y", 405) 
-
-      if (hasHazard){    
-      settingsBorder.append("text")
-        .text("Hazard Completeness Score")  
-        .attr("font-size", 22)
-        .attr("font-weight", "bold")
-        .attr("x", 110)
-        .attr("y", 270)
-
-      settingsBorder.append("text")
-        .text("0.0")  
-        .attr("font-size", 18)
-        .attr("x", 90)
-        .attr("y", 319) 
-  
-      settingsBorder.append("text")
-        .text("1.0")  
-        .attr("font-size", 18)
-        .attr("x", 358)
-        .attr("y", 319)    
-      } 
-      }  
-
-    else if(hasHazard) {
-      settingsBorder.append("text")
-        .text("Hazard Completeness Score")  
-        .attr("font-size", 22)
-        .attr("font-weight", "bold")
-        .attr("x", 110)
-        .attr("y", 305)
-
-      settingsBorder.append("text")
-        .text("0.0")  
-        .attr("font-size", 18)
-        .attr("x", 90)
-        .attr("y", 354) 
-  
-      settingsBorder.append("text")
-        .text("1.0")  
-        .attr("font-size", 18)
-        .attr("x", 358)
-        .attr("y", 354)
-    }  
-
-      if (hasHazard) {
-      // Set the position of the hazard legend gradient
-      document.getElementById("tripod-gradient-rect-hazard").style.position = "absolute"
-      document.getElementById("tripod-gradient-rect-hazard").style.top = gradientTop  }
+  // Set the position of the hazard legend gradient
+  if (hasHazard) {
+    document.getElementById("tripod-gradient-rect-hazard").style.position = "absolute"
+    document.getElementById("tripod-gradient-rect-hazard").style.top = gradientTop  
+  }
 
   // Add text for the metadata legend title
   settingsBorder.append("text")
@@ -565,7 +552,6 @@ function addInfoBox() {
     .attr("x", 156)
     .attr("y", metadataTitleTop) 
     .attr("id", "top")
-
   document.getElementById("metadata-legend").style.top = metadataTop
 
   // Add a border around the candidate information box
@@ -579,8 +565,7 @@ function addInfoBox() {
     .attr("fill", "transparent")
     .style("stroke", "#a7b2c2")
     .attr("z-index", -1)
-
-    document.getElementById("tripod-infobox").style.top = infoboxTop 
+  document.getElementById("tripod-infobox").style.top = infoboxTop 
 
   // Create a span element containing the dtxcid of the currently-selected candidate
   structure_label_span = document.createElement('span')
@@ -590,7 +575,7 @@ function addInfoBox() {
     structure_label_span.style.fontSize = "18px"
     structure_label = document.createTextNode(' ')
     structure_label_span.appendChild(structure_label)
-    document.getElementById("tripod-settings-container").appendChild(structure_label_span)
+  document.getElementById("tripod-settings-container").appendChild(structure_label_span)
 
   // Create a span element containing the list of other features to which the currently-selected candidate also belongs
   more_features_span = document.createElement('span')
@@ -606,25 +591,25 @@ function addInfoBox() {
     more_features_span.appendChild(more_features)
   document.getElementById("tripod-settings-container").appendChild(more_features_span)
   
-    // Create the clickable InfoBox structure image tooltip
-    structureToolTip = d3.select(`#tripod-infobox`)
-      .append("div")
-      .attr("id", `tripod-StructureToolTip`)
-    imageDiv = document.getElementById("tripod-StructureToolTip")
-    imageDiv.style.height = "200px"
-    imageDiv.style.width = "200px"
-    
-    image = document.createElement('div')
-    image.style.width = "190px"
-    image.style.height = "208px"
-    imageDiv.appendChild(image)
-    image.style.paddingLeft = "10px"
-    const textNode = document.createTextNode("Click on a DTXCID to display the structure image")  
-    image.appendChild(textNode)
-    
-    image.style.display = 'flex';
-    image.style.justifyContent = 'center'; // Horizontal centering
-    image.style.alignItems = 'center'; // Vertical centering
+  // Create the clickable InfoBox structure image tooltip
+  structureToolTip = d3.select(`#tripod-infobox`)
+    .append("div")
+    .attr("id", `tripod-StructureToolTip`)
+  imageDiv = document.getElementById("tripod-StructureToolTip")
+  imageDiv.style.height = "200px"
+  imageDiv.style.width = "200px"
+  
+  image = document.createElement('div')
+  image.style.width = "190px"
+  image.style.height = "208px"
+  imageDiv.appendChild(image)
+  image.style.paddingLeft = "10px"
+  const textNode = document.createTextNode("Click on a DTXCID to display the structure image")  
+  image.appendChild(textNode)
+  
+  image.style.display = 'flex';
+  image.style.justifyContent = 'center'; // Horizontal centering
+  image.style.alignItems = 'center'; // Vertical centering
     
   outlinkDiv = document.createElement('div')
   outlinkDiv.setAttribute("id", "tripod-outlinkDiv")
@@ -654,9 +639,14 @@ function addInfoBox() {
      
     outlinksvgGroup.attr("transform", "translate(190, -252) scale(0.06)")
   }
-
   addInfoBox()
 
+// Create a list of fields for which data exists
+const fieldList = ["meta"]
+  if (hasHazard) {fieldList.push("hazard")}
+  if (hasMS2) {fieldList.push("MS2")}
+
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // create checkboxes for selecting plots to sort
 var metaInput = document.createElement("input")
   metaInput.setAttribute('type', 'checkbox')
@@ -702,6 +692,7 @@ else{
   mySpan.style.fontSize = '22px';
 }
 
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 // Gets a dataset containing only the top 5 highest metadata rows. 
 const top5groups = getTop5Rows(fullData, 'Feature ID', 'STRUCTURE_TOTAL_NORM');
@@ -1203,12 +1194,6 @@ var height = null
 var svgMeta = null
 var svgHazard = null
 var svgMS2 = null
-
-
-// const fieldList = ["meta", "hazard"]
-const fieldList = ["meta"]
-if (hasHazard) {fieldList.push("hazard")}
-if (hasMS2) {fieldList.push("MS2")}
 
 //Updates sorts, and cleans the data displayed in the plots 
 function updateData (category){
