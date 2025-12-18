@@ -47,6 +47,27 @@ function createDualMassSpectrumPlot(DTXCID, feature, CFMID_spec, exp_spec){
     // clear the plot (for when new data is supplied to this component)
     svg.selectAll("*").remove();
 
+    // Check if spectral data exists
+    const has_exp_spec = exp_spec.length != 0
+    const has_CFMID_spec = CFMID_spec.length != 0
+
+    // Add message to indicate missing experimental spectra data 
+    if (!has_exp_spec){
+      svg.append("text")
+      .attr("x", width/2)
+      .attr("y", height/2 - 20)
+      .attr("text-anchor", "middle")
+      .text("ERROR: No experimental spectral data found.")}
+    
+    // Add message to indicate missing CFMID spectra data 
+    if (!has_CFMID_spec){
+      svg.append("text")
+      .attr("x", width/2)
+      .attr("y", height/2 + 50)
+      .attr("text-anchor", "middle")
+      .text("ERROR: No CFMID spectral data found.")}
+
+
     // construct the scales for the axes
     const mz_domain = d3.extent(spectrum1.concat(spectrum2), d => d[0])
     const middle_height = (height - margins.bottom + margins.top)/2
@@ -97,20 +118,6 @@ function createDualMassSpectrumPlot(DTXCID, feature, CFMID_spec, exp_spec){
       .attr("fill", "currentColor")
       .text(spectrum2_name)
 
-    if (exp_spec.length == 0){
-      svg.append("text")
-      .attr("x", width/2)
-      .attr("y", height/2 - 20)
-      .attr("text-anchor", "middle")
-      .text("WARNING. No experimental spectral data found.")}
-    
-    if (CFMID_spec.length == 0){
-      svg.append("text")
-      .attr("x", width/2)
-      .attr("y", height/2 + 60)
-      .attr("text-anchor", "middle")
-      .text("WARNING. No CFMID spectral data found.")}
-
 
     // plots peaks as circles; may be useful for visual debugging
     //svg.append("g").selectAll("circle").data(this.spectrum).join("circle").attr("cx", d => mz_rescale(d[0])).attr("cy", d => intensity_scale(d[1])).attr("r", 3)
@@ -123,8 +130,10 @@ function createDualMassSpectrumPlot(DTXCID, feature, CFMID_spec, exp_spec){
       .attr("height", height - margins.top - margins.bottom)
       .attr("transform", `translate(${margins.left}, ${margins.top})`)
       .attr("fill", "none")
-    // add per-point lines
-    svg.append("g")
+    
+      // add per-point vertical lines
+    if (has_exp_spec){
+      svg.append("g")
       .selectAll("line")
       .data(spectrum1)
       .join("line")
@@ -140,8 +149,9 @@ function createDualMassSpectrumPlot(DTXCID, feature, CFMID_spec, exp_spec){
         } else {
           return "ms-peak-line"
         }
-      }).attr("clip-path", "url(#clippy)")
-    svg.append("g")
+      }).attr("clip-path", "url(#clippy)")}
+    if (has_CFMID_spec){
+      svg.append("g")
       .selectAll("line")
       .data(spectrum2)
       .join("line")
@@ -157,7 +167,7 @@ function createDualMassSpectrumPlot(DTXCID, feature, CFMID_spec, exp_spec){
         } else {
           return "ms-peak-line-secondary"
         }
-      }).attr("clip-path", "url(#clippy)")
+      }).attr("clip-path", "url(#clippy)")}
     
     // make it zoom
     const extent = [[margins.left, margins.top], [width-margins.right, height-margins.bottom]]
@@ -172,6 +182,7 @@ function createDualMassSpectrumPlot(DTXCID, feature, CFMID_spec, exp_spec){
       })
     svg.call(zoom)
     
+
     // make circles to add to the plot to highlight points
     var focus = svg.append("g").style("display", "none")
     focus.append("circle").attr("id", "circle1").attr("class", "mouseover-highlight-circle").attr("r", 3)
@@ -192,8 +203,8 @@ function createDualMassSpectrumPlot(DTXCID, feature, CFMID_spec, exp_spec){
         var cursor_x = mz_rescale.invert(pt[0])
         const x1_index = d3.bisectCenter(spectrum1.map(d => d[0]), cursor_x)
         const x2_index = d3.bisectCenter(spectrum2.map(d => d[0]), cursor_x)
-        const show_spectrum1_hover = Math.abs(cursor_x - spectrum1[x1_index][0]) < cursor_proximity
-        const show_spectrum2_hover = Math.abs(cursor_x - spectrum2[x2_index][0]) < cursor_proximity
+        const show_spectrum1_hover = has_exp_spec ? Math.abs(cursor_x - spectrum1[x1_index][0]) < cursor_proximity : false
+        const show_spectrum2_hover = has_CFMID_spec ? Math.abs(cursor_x - spectrum2[x2_index][0]) < cursor_proximity : false
         if (show_spectrum1_hover) {
           focus.select("#circle1").attr("class", () => {
             if (spectrum1[x1_index][1] < peak_threshold) {
@@ -230,6 +241,8 @@ function createDualMassSpectrumPlot(DTXCID, feature, CFMID_spec, exp_spec){
         }
       })
      
+
+    // Handler for 'Reset Zoom' button  
     d3.select("#zoomReset").on("click", function(){
       svg.call(zoom.transform, d3.zoomIdentity)
     })  
@@ -242,6 +255,7 @@ function getQueryParam(key){
 }
 
 function parseJsonArray(value) {
+  // Returns an empty list if value is an empty string, undefined, or invalid JSON
   try {
     return value && value.trim() !== "" ? JSON.parse(value) : [];
   }catch {
@@ -249,14 +263,16 @@ function parseJsonArray(value) {
   }
 }
 
+
 document.addEventListener("DOMContentLoaded", () => {
     const DTXCID = getQueryParam("dtxcid")
     const feature = getQueryParam("feature")
 
-      const CFMID_10 = parseJsonArray(getQueryParam("CFMID_10"))
-      const CFMID_20 = parseJsonArray(getQueryParam("CFMID_20"))
-      const CFMID_40 = parseJsonArray(getQueryParam("CFMID_40"))
-      const exp_spec = parseJsonArray(getQueryParam("exp_spec"))
+    // Get spectral data, sets variable to empty list if spectral data does not exist. 
+    const CFMID_10 = parseJsonArray(getQueryParam("CFMID_10"))
+    const CFMID_20 = parseJsonArray(getQueryParam("CFMID_20"))
+    const CFMID_40 = parseJsonArray(getQueryParam("CFMID_40"))
+    const exp_spec = parseJsonArray(getQueryParam("exp_spec"))
       
     createDualMassSpectrumPlot(DTXCID, feature, CFMID_10, exp_spec)
 
@@ -284,8 +300,7 @@ document.addEventListener("DOMContentLoaded", () => {
       CFMID_20button.disabled = false;
       CFMID_10button.disabled = false;
       CFMID_40button.disabled = true;
-      // createDualMassSpectrumPlot(DTXCID, feature, CFMID_40, exp_spec)
-      createDualMassSpectrumPlot(DTXCID, feature, [], [])
+      createDualMassSpectrumPlot(DTXCID, feature, CFMID_40, exp_spec)
     })
 
 
