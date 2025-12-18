@@ -641,12 +641,13 @@ function addInfoBox() {
   }
   addInfoBox()
 
+// Create a list of fields for which data doesn't exist
+const missingList = []
 // Create a list of fields for which data exists
 const fieldList = ["meta"]
-  if (hasHazard) {fieldList.push("hazard")}
-  if (hasMS2) {fieldList.push("MS2")}
+  hasHazard ? fieldList.push("hazard") : missingList.push("hazard")
+  hasMS2 ? fieldList.push("MS2") : missingList.push("MS2")
 
-// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // create checkboxes for selecting plots to sort
 var metaInput = document.createElement("input")
   metaInput.setAttribute('type', 'checkbox')
@@ -659,18 +660,7 @@ var hazardInput = document.createElement("input")
   hazardInput.setAttribute('type', 'checkbox')
   hazardInput.setAttribute('id', 'input-hazard')
   document.getElementById("tripod-main-container").appendChild(hazardInput)
-hazardInput.checked = true  
-}
-// If no Hazard data is present in the dataset, display a 'No Hazard data found' message in place of the hazard plots
-else{
-  const mySpan = document.createElement('span')
-  noHazardText = document.createTextNode("No hazard data found.")
-  mySpan.appendChild(noHazardText)
-  document.getElementById("tripod-chart-hazard").appendChild(mySpan)
-  mySpan.style.position = "absolute"
-  mySpan.style.top = "200px"
-  mySpan.style.left = "190px"
-  mySpan.style.fontSize = '22px';
+  hazardInput.checked = true  
 }
 
 if (hasMS2){  
@@ -678,21 +668,20 @@ var MS2Input = document.createElement("input")
   MS2Input.setAttribute('type', 'checkbox')
   MS2Input.setAttribute('id', 'input-MS2')
   document.getElementById("tripod-main-container").appendChild(MS2Input)
-MS2Input.checked = true
+  MS2Input.checked = true
 }
-// If no MS2 data is present in the dataset, display a 'No MS2 data found' message in place of the MS2 plots
-else{
+
+// Add text indicating data is missing. 
+missingList.forEach(field =>{
   const mySpan = document.createElement('span')
-  noMS2Text = document.createTextNode("No MS2 data found.")
-  mySpan.appendChild(noMS2Text)
-  document.getElementById("tripod-chart-MS2").appendChild(mySpan)
+  txt = document.createTextNode(`No ${field} data found.`)
+  mySpan.appendChild(txt)
+  document.getElementById(`tripod-chart-${field}`).appendChild(mySpan)
   mySpan.style.position = "absolute"
   mySpan.style.top = "200px"
   mySpan.style.left = "190px"
   mySpan.style.fontSize = '22px';
-}
-
-// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+})
 
 // Gets a dataset containing only the top 5 highest metadata rows. 
 const top5groups = getTop5Rows(fullData, 'Feature ID', 'STRUCTURE_TOTAL_NORM');
@@ -2698,10 +2687,10 @@ screenshotButton.addEventListener('click', () => {
 
 // ======= CALL MAIN FUNCTION ==================================================================================================
 // const dataPath = "./data/INTERPRET NTA test MS2 file 500 features.csv";
-const dataPath = "./data/short_test_amen.csv";
+// const dataPath = "./data/short_test_amen.csv";
 // const dataPath = "./data/short_test_no_amen.csv";
 // const dataPath = "./data/short_test_noMS2.csv";
 // const dataPath = "./data/short_test_noMS2_noHazard.csv";
-// const dataPath = "./data/WW2DW_Data_Analysis_file_5_with_MS2.csv";
+const dataPath = "./data/WW2DW_Data_Analysis_file_5_with_MS2.csv";
 // const dataPath = "./data/WW2DW_Data_Analysis_file_5_without_MS2.csv";
 generatePlots(dataPath);
