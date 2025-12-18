@@ -32,7 +32,7 @@ function flagSpectra(spectrum1, spectrum2, mass_window=0, window_type="da", peak
     return [new_spectrum1, new_spectrum2]
 }
 
-function createDualMassSpectrumPlot(DTXCID, feature, inputSpec, CFMIDSpec){
+function createDualMassSpectrumPlot(DTXCID, feature, CFMID_spec, exp_spec){
     var svg = d3.select("#msplot")
     var width = svg.attr("width")
     var height = svg.attr("height")
@@ -40,8 +40,7 @@ function createDualMassSpectrumPlot(DTXCID, feature, inputSpec, CFMIDSpec){
     const cursor_proximity = 2  // how close a cursor should be to a peak for a highlighting circle to show up
     const peak_threshold = this.peak_threshold
 
-    // const [spectrum1, spectrum2] = this.flagSpectra(this.spectrum1, this.spectrum2, this.window_size, this.window_type, peak_threshold)
-    const [spectrum1, spectrum2] = this.flagSpectra(CFMIDSpec, inputSpec, this.window_size, this.window_type, peak_threshold)
+    const [spectrum1, spectrum2] = this.flagSpectra(exp_spec, CFMID_spec, this.window_size, this.window_type, peak_threshold)
         const spectrum1_name = `Feature ${feature}`
         const spectrum2_name = DTXCID
 
@@ -97,6 +96,21 @@ function createDualMassSpectrumPlot(DTXCID, feature, inputSpec, CFMIDSpec){
       .attr("text-anchor", "start")
       .attr("fill", "currentColor")
       .text(spectrum2_name)
+
+    if (exp_spec.length == 0){
+      svg.append("text")
+      .attr("x", width/2)
+      .attr("y", height/2 - 20)
+      .attr("text-anchor", "middle")
+      .text("WARNING. No experimental spectral data found.")}
+    
+    if (CFMID_spec.length == 0){
+      svg.append("text")
+      .attr("x", width/2)
+      .attr("y", height/2 + 60)
+      .attr("text-anchor", "middle")
+      .text("WARNING. No CFMID spectral data found.")}
+
 
     // plots peaks as circles; may be useful for visual debugging
     //svg.append("g").selectAll("circle").data(this.spectrum).join("circle").attr("cx", d => mz_rescale(d[0])).attr("cy", d => intensity_scale(d[1])).attr("r", 3)
@@ -220,8 +234,6 @@ function createDualMassSpectrumPlot(DTXCID, feature, inputSpec, CFMIDSpec){
       svg.call(zoom.transform, d3.zoomIdentity)
     })  
 
-    console.log("new mirror plot loaded")
-
 }
 
 function getQueryParam(key){
@@ -229,45 +241,51 @@ function getQueryParam(key){
     return params.get(key)
 }
 
+function parseJsonArray(value) {
+  try {
+    return value && value.trim() !== "" ? JSON.parse(value) : [];
+  }catch {
+    return [];
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     const DTXCID = getQueryParam("dtxcid")
     const feature = getQueryParam("feature")
-    // const inputSpec0 = JSON.parse(getQueryParam("inputSpec"))
-    const inputSpec0 = JSON.parse(getQueryParam("inputSpec0"))
-    const inputSpec1 = JSON.parse(getQueryParam("inputSpec1"))
-    const inputSpec2 = JSON.parse(getQueryParam("inputSpec2"))
-    const CFMIDSpec = JSON.parse(getQueryParam("CFMIDSpec"))
-    createDualMassSpectrumPlot(DTXCID, feature, inputSpec0, CFMIDSpec)
 
-    if (DTXCID){
-        document.body.insertAdjacentHTML("beforeend", `<p>WARNING: YOU ARE SEEING FAKE DATA. MIRROR PLOTS ARE STILL UNDER DEVELOPMENT. </p>`)
-    }
+      const CFMID_10 = parseJsonArray(getQueryParam("CFMID_10"))
+      const CFMID_20 = parseJsonArray(getQueryParam("CFMID_20"))
+      const CFMID_40 = parseJsonArray(getQueryParam("CFMID_40"))
+      const exp_spec = parseJsonArray(getQueryParam("exp_spec"))
+      
+    createDualMassSpectrumPlot(DTXCID, feature, CFMID_10, exp_spec)
 
-    const energy0button = document.getElementById("energy0button")
-    const energy1button = document.getElementById("energy1button")
-    const energy2button = document.getElementById("energy2button")
+    const CFMID_10button = document.getElementById("CFMID_10button")
+    const CFMID_20button = document.getElementById("CFMID_20button")
+    const CFMID_40button = document.getElementById("CFMID_40button")
 
-    energy0button.disabled = true
+    CFMID_10button.disabled = true
 
-    energy0button.addEventListener("click", function() {
-      energy1button.disabled = false;
-      energy0button.disabled = true;
-      energy2button.disabled = false;
-      createDualMassSpectrumPlot(DTXCID, feature, inputSpec0, CFMIDSpec)
+    CFMID_10button.addEventListener("click", function() {
+      CFMID_20button.disabled = false;
+      CFMID_10button.disabled = true;
+      CFMID_40button.disabled = false;
+      createDualMassSpectrumPlot(DTXCID, feature, CFMID_10, exp_spec)
     })
 
-      energy1button.addEventListener("click", function() {
-      energy1button.disabled = true;
-      energy0button.disabled = false;
-      energy2button.disabled = false;
-      createDualMassSpectrumPlot(DTXCID, feature, inputSpec1, CFMIDSpec)
+    CFMID_20button.addEventListener("click", function() {
+      CFMID_20button.disabled = true;
+      CFMID_10button.disabled = false;
+      CFMID_40button.disabled = false;
+      createDualMassSpectrumPlot(DTXCID, feature, CFMID_20, exp_spec)
     })
 
-      energy2button.addEventListener("click", function() {
-      energy1button.disabled = false;
-      energy0button.disabled = false;
-      energy2button.disabled = true;
-      createDualMassSpectrumPlot(DTXCID, feature, inputSpec2, CFMIDSpec)
+    CFMID_40button.addEventListener("click", function() {
+      CFMID_20button.disabled = false;
+      CFMID_10button.disabled = false;
+      CFMID_40button.disabled = true;
+      // createDualMassSpectrumPlot(DTXCID, feature, CFMID_40, exp_spec)
+      createDualMassSpectrumPlot(DTXCID, feature, [], [])
     })
 
 

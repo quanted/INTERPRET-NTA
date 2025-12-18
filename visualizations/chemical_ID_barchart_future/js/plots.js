@@ -1524,12 +1524,12 @@ var barClickMS2Hazard = function(){
   // In the future, we want this to open the hazard table of the clicked-on DTXCID
   if (this.className["baseVal"] == "hazard-bar") {window.open(`https://hazard-dev.sciencedataexperts.com/#/hazard/report/${DTXCIDname}`)}
     else if (this.className["baseVal"] == "MS2-bar") {
-      const inputSpec0=d3.select(this)._groups[0][0]["__data__"]["CFMID_10"]
-      const inputSpec1=d3.select(this)._groups[0][0]["__data__"]["CFMID_20"]
-      const inputSpec2=d3.select(this)._groups[0][0]["__data__"]["CFMID_40"]
-      const CFMIDSpec=d3.select(this)._groups[0][0]["__data__"]["experimental_spectrum"]
+      const CFMID_10=d3.select(this)._groups[0][0]["__data__"]["CFMID_10"]
+      const CFMID_20=d3.select(this)._groups[0][0]["__data__"]["CFMID_20"]
+      const CFMID_40=d3.select(this)._groups[0][0]["__data__"]["CFMID_40"]
+      const exp_spec=d3.select(this)._groups[0][0]["__data__"]["experimental_spectrum"]
 
-      window.open(`mirror_plots.html?dtxcid=${DTXCIDname}&feature=${selectedFeature}&inputSpec0=${inputSpec0}&inputSpec1=${inputSpec1}&inputSpec2=${inputSpec2}&CFMIDSpec=${CFMIDSpec}`, "PopupWindow", "width=700,height=600");
+      window.open(`mirror_plots.html?dtxcid=${DTXCIDname}&feature=${selectedFeature}&CFMID_10=${CFMID_10}&CFMID_20=${CFMID_20}&CFMID_40=${CFMID_40}&exp_spec=${exp_spec}`, "PopupWindow", "width=700,height=600");
   }
 
   //Get the other features that this DTXCID is a candidate for 
@@ -2714,9 +2714,9 @@ screenshotButton.addEventListener('click', () => {
 // ======= CALL MAIN FUNCTION ==================================================================================================
 // const dataPath = "./data/INTERPRET NTA test MS2 file 500 features.csv";
 // const dataPath = "./data/short_test_amen.csv";
-// const dataPath = "./data/short_test_no_amen.csv";
+const dataPath = "./data/short_test_no_amen.csv";
 // const dataPath = "./data/short_test_noMS2.csv";
 // const dataPath = "./data/short_test_noMS2_noHazard.csv";
-const dataPath = "./data/WW2DW_Data_Analysis_file_5_with_MS2.csv";
+// const dataPath = "./data/WW2DW_Data_Analysis_file_5_with_MS2.csv";
 // const dataPath = "./data/WW2DW_Data_Analysis_file_5_without_MS2.csv";
 generatePlots(dataPath);
