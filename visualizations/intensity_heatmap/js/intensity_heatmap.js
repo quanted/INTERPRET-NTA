@@ -3,7 +3,7 @@ import * as heatmapUtils from "./heatmapUtils.js";
 
 import * as THREE from "three";
 
-async function createOccurrenceHeatmap(
+async function createIntensityHeatmap(
   csvPathOccurrence,
   csvPathParameters,
   data = null,
@@ -12,14 +12,7 @@ async function createOccurrenceHeatmap(
   maxCv = null,
   mrlMult = null
 ) {
-  // read in and parse data from files
-  // var [
-  //   data,
-  //   minReplicateHitsPercent,
-  //   minReplicateBlankHitPercent,
-  //   maxReplicateCvValue,
-  //   MrlMult,
-  // ] = dataUtils.getOccurrenceAndParameterData(dataXlsxPath);
+  // read in and parse data from csv files
   let fetchedData; // Declare fetchedData outside the block
 
   try {
@@ -30,12 +23,16 @@ async function createOccurrenceHeatmap(
       minReplicateBlankHitPercent,
       maxReplicateCvValue,
       MrlMult,
-    ] = await dataUtils.getOccurrenceAndParameterData(csvPathOccurrence, csvPathParameters);
-
+    ] = await dataUtils.getOccurrenceAndParameterData(
+      csvPathOccurrence,
+      csvPathParameters
+    );
   } catch (error) {
-    console.error('Error loading data:', error);
+    console.error("Error loading data:", error);
   }
 
+  // Get the variables if they were passed into the function as arguments.
+  // These arguments trump the data retrieved from Analysis_parameters.csv
   if (minSample !== null) {
     var minReplicateHitsPercent = minSample;
     var minReplicateBlankHitPercent = minBlank;
@@ -50,7 +47,7 @@ async function createOccurrenceHeatmap(
     MrlMult,
   };
 
-  // get unique sample headers
+  // get unique sample headers from the csv.
   const sampleGroups = dataUtils.getUniqueSampleHeaders(fetchedData);
 
   // find the blank sample names
@@ -105,11 +102,29 @@ async function createOccurrenceHeatmap(
   // draw heatmap
   drawHeatMap();
 
+  // EXPLORE CODE
+  console.log("data:", data); // Updated results from csv (fetchedData) after calcMRL()
+  console.log("thresholdData:", thresholdData); // From parameters csv
+  console.log("sampleGroups:", sampleGroups); // Unique sample groups including blank
+  console.log("blankMeanHeader:", blankMeanHeader); //header for col containing means for blank sample
+  console.log("blankStdHeader:", blankStdHeader); //header for col containing stds for blank sample
+  console.log("blankRepPerHeader:", blankRepPerHeader); //header for col containing detection% for blank sample
+  console.log("repColHeaders:", repColHeaders); // list of headers for cols contianing detection% for samples
+  console.log("cvColHeaders:", cvColHeaders); // list of headers for cols contianing CV (variation coefficient) for samples
+  console.log("meanColHeaders:", meanColHeaders); // list of headers for cols contianing mean for samples
+  console.log("cvDataDiscrete:", cvDataDiscrete); // the FeatureID col + CV cols for samples and blank
+  console.log("cvDataFlat:", cvDataFlat); // flattened CV data for generating three.js heatmap. Has 'color' value. Each item in this object represents a cell.
+  console.log("nFeatures:", nFeatures); // total number of features in the dataset
+  console.log("samplePassCounts:", samplePassCounts); // dict: number of pass/fail/non-detect for each sample/blank group
+  console.log("redCount:", redCount); // counts for how many total cells are red/grey/white
+  console.log("greyCount:", greyCount);
+  console.log("whiteCount:", whiteCount);
+
   function drawHeatMap() {
     // await new Promise(r => setTimeout(r, 3000));
     // determine number of rows and columns
-    const nRows = cvColHeaders.length;
-    const nCols = cvDataDiscrete.length;
+    const nRows = cvColHeaders.length; // number of unique samples including blank
+    const nCols = cvDataDiscrete.length; // number of features
     const nCells = nRows * nCols;
 
     // setup graph and cell dims
@@ -642,9 +657,10 @@ async function createOccurrenceHeatmap(
 function loadHeatmap() {
   // const csvPathOccurrence = "./data/20250709_test_file_run/Example_NTA_for_QAQC_visuals.csv";
   // const csvPathParameters = "./data/20250709_test_file_run/Analysis_parameters.csv";
-  const csvPathOccurrence = "./data/20250709_NTAW807/Method_1_-_HLB_for_QAQC_visuals.csv";
+  const csvPathOccurrence =
+    "./data/20250709_NTAW807/Method_1_-_HLB_for_QAQC_visuals.csv";
   const csvPathParameters = "./data/20250709_NTAW807/Analysis_parameters.csv";
-  createOccurrenceHeatmap(csvPathOccurrence, csvPathParameters);
+  createIntensityHeatmap(csvPathOccurrence, csvPathParameters);
 }
 
 // loadHeatmap();
