@@ -1,0 +1,36 @@
+Parameter,Value
+Project name,Example NTA
+Date & time,2025-07-09 14:23:00.556567
+Run test files only (debugging),yes
+Positive mode file,/src/nta_app/views/ms1/../../input/ms1/1a_MZmine3_pos.csv
+Negative mode file,/src/nta_app/views/ms1/../../input/ms1/1b_MZmine3_neg.csv
+Positive mode adducts,"['Na', 'K', 'NH4']"
+Negative mode adducts,"['Cl', 'Br', 'HCO2', 'CH3CO2', 'CF3CO2']"
+Neutral losses (both modes),"['H2O', 'CO2']"
+Adduct / duplicate mass accuracy units,ppm
+Adduct / duplicate mass accuracy,10
+Adduct / duplicate retention time accuracy (mins),0.05
+Run sequence positive mode file,/src/nta_app/views/ms1/../../input/ms1/WW2DW_sequence_cal.csv
+Run sequence negative mode file,/src/nta_app/views/ms1/../../input/ms1/WW2DW_sequence_cal.csv
+Tracer file,/src/nta_app/views/ms1/../../input/ms1/WW2DW_Tracers_Amenable.csv
+Tracer mass accuracy units,ppm
+Tracer mass accuracy,7
+Tracer retention time accuracy (mins),0.5
+Tracer plot y-axis scaling,log
+Tracer plot trendlines shown,yes
+Min replicate hits (%),66
+Min replicate hits in blanks (%),60
+Max replicate CV,0.5
+Filter on CV values?,yes
+MRL standard deviation multiplier,10
+Parent ion mass accuracy (ppm),5
+Discard features below this retention time (mins),0.5
+Search DSSTox for possible structures,no
+Return chemical candidates with no data sources?,yes
+Search Cheminformatics Hazard Module for toxicity data,no
+Search dashboard by,mass
+Perform qNTA?,yes
+qNTA Surrogate input file,/src/nta_app/views/ms1/../../input/ms1/qNTA_Surrogate_Input_File_WW2DW.csv
+qNTA Validation input file,/src/nta_app/views/ms1/../../input/ms1/WW2DW_qNTA_validation.csv
+Do atom filtering?,no
+Atom filtering ranges,

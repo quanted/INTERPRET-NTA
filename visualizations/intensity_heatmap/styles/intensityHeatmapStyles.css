@@ -1,0 +1,10 @@
+#heatmap-title {
+  white-space: pre;
+  color: black;
+  font-size: 30px;
+  background-color: transparent;
+  width: auto;
+  display: block;
+  margin-bottom: 20px; /* Add margin to separate from the canvas */
+}
+
