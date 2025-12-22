@@ -209,7 +209,7 @@ export function createInstancedMesh(geometry, material, n) {
  * Determines and sets the positions and colors for each occurrence (cell) and returns an array of objects
  * containing data about each red cell to be used for animations later in code.
  *
- * @param {object[]} cvDataFlat Our cleaned data structure with one object per occurrence.
+ * @param {object[]} dataFlat Our cleaned data structure with one object per occurrence.
  * @param {object} dimsObject The object containing the widths/heights of graph and cells.
  * @param {THREE.InstancedMesh} greyMesh Mesh for non-detects.
  * @param {THREE.InstancedMesh} redMesh Mesh for fails.
@@ -217,7 +217,7 @@ export function createInstancedMesh(geometry, material, n) {
  * @returns {object[]} An object with index and location data for the red cells, to be used for animations.
  */
 export function setCellColorAndPos(
-  cvDataFlat,
+  dataFlat,
   dimsObject,
   greyMesh,
   redMesh,
@@ -231,7 +231,7 @@ export function setCellColorAndPos(
   let redCellInstances = []; // for animating the red cells later
 
   // iterate over data to calculate positions and colors for each cell
-  cvDataFlat.forEach((cell, index) => {
+  dataFlat.forEach((cell, index) => {
     // calculate and set positions
     let x = -(dimsObject.actualWidth / 2) + dimsObject.paddingWidth; // shift to far left, account for padding
     x += cell.featureIndex * dimsObject.cellWidth + dimsObject.cellWidth / 2; // shift by colNumber and center to col
@@ -245,17 +245,15 @@ export function setCellColorAndPos(
     dummy.updateMatrix();
 
     // add cells to appropriate mesh based on color value, add needed data
-    if (cell.value === -1) {
+    if (cell.color === "grey") {
       // if non-detect (grey)
       greyMesh.setMatrixAt(greyIndex, dummy.matrix);
       cell.meshIndex = greyIndex;
-      cell.cvIndex = index;
       greyIndex++;
-    } else if (cell.value === 1) {
+    } else if (cell.color === "red") {
       // if fail (red)
       redMesh.setMatrixAt(redIndex, dummy.matrix);
       cell.meshIndex = redIndex;
-      cell.cvIndex = index;
       redCellInstances.push({
         index: redIndex,
         scaleX: 1,
@@ -264,11 +262,10 @@ export function setCellColorAndPos(
         y: y,
       }); // for animating red cells
       redIndex++;
-    } else if (cell.value === 0) {
+    } else if (cell.color === "white") {
       // if pass (white)
       whiteMesh.setMatrixAt(whiteIndex, dummy.matrix);
       cell.meshIndex = whiteIndex;
-      cell.cvIndex = index;
       whiteIndex++;
     }
   });
@@ -287,7 +284,7 @@ export function setCellColorAndPos(
  * @param {object} dimsObject The object containing the widths/heights of graph and cells.
  * @param {THREE.Mesh} graphMesh The Mesh that is made to hold title and axes labels.
  */
-export function addTitle(canvas, thresholdData, dimsObject, graphMesh) {
+export function addTitle(canvas, dimsObject, graphMesh) {
   // create and style div
   // const titleDiv = document.createElement("div");
   const titleDiv = document.getElementById("heatmap-title");
@@ -301,10 +298,10 @@ export function addTitle(canvas, thresholdData, dimsObject, graphMesh) {
 
   // add the innerHTML
   titleDiv.innerHTML = `Occurrence Intensity Heatmap\n`;
-  titleDiv.innerHTML += `<span class="subTitle">Sample Rep. Threshold: ${thresholdData.minReplicateHitsPercent}%&emsp; `;
-  titleDiv.innerHTML += `<span class="subTitle">Blank Rep. Threshold: ${thresholdData.minReplicateBlankHitPercent}%&emsp; `;
-  titleDiv.innerHTML += `<span class="subTitle">CV Threshold: ${thresholdData.maxReplicateCvValue}&emsp; `;
-  titleDiv.innerHTML += `<span class="subTitle">MRL Multiplier: ${thresholdData.MrlMult}</span>`;
+  // titleDiv.innerHTML += `<span class="subTitle">Sample Rep. Threshold: ${thresholdData.minReplicateHitsPercent}%&emsp; `;
+  // titleDiv.innerHTML += `<span class="subTitle">Blank Rep. Threshold: ${thresholdData.minReplicateBlankHitPercent}%&emsp; `;
+  // titleDiv.innerHTML += `<span class="subTitle">CV Threshold: ${thresholdData.maxReplicateCvValue}&emsp; `;
+  // titleDiv.innerHTML += `<span class="subTitle">MRL Multiplier: ${thresholdData.MrlMult}</span>`;
 
   // set the position
   const canvRect = canvas.getBoundingClientRect();
@@ -834,7 +831,7 @@ export function mousemoveCellEvent(
   greyMesh,
   mousePos,
   raycaster,
-  cvDataFlat,
+  dataFlat,
   tooltip,
   zoomBox,
   startX,
@@ -865,15 +862,15 @@ export function mousemoveCellEvent(
     // determine which mesh was intersected
     let cellData;
     if (intersectedObject === redMesh) {
-      cellData = cvDataFlat.find(
+      cellData = dataFlat.find(
         (cell, i) => cell.color === "red" && cell.meshIndex === instanceId
       );
     } else if (intersectedObject === whiteMesh) {
-      cellData = cvDataFlat.find(
+      cellData = dataFlat.find(
         (cell, i) => cell.color === "white" && cell.meshIndex === instanceId
       );
     } else if (intersectedObject === greyMesh) {
-      cellData = cvDataFlat.find(
+      cellData = dataFlat.find(
         (cell, i) => cell.color === "grey" && cell.meshIndex === instanceId
       );
     }
