@@ -490,30 +490,6 @@ export function getVertLines(
 }
 
 /**
- * Creates and returns the tooltip div for title on-hover.
- *
- * @returns {HTMLDivElement} The tooltip div element for title on-hover.
- */
-export function buildTitleTooltip() {
-  const titleTooltip = document.createElement("div");
-
-  titleTooltip.style.position = "absolute";
-  titleTooltip.style.background = "black";
-  titleTooltip.style.color = "white";
-  titleTooltip.style.padding = "8px";
-  titleTooltip.style.borderRadius = "4px";
-  titleTooltip.style.pointerEvents = "none";
-  titleTooltip.style.display = "none";
-  titleTooltip.style.whiteSpace = "pre";
-  titleTooltip.className = "tooltip";
-  titleTooltip.id = "heatmapTitle";
-
-  document.body.appendChild(titleTooltip);
-
-  return titleTooltip;
-}
-
-/**
  * Creates and returns the tooltip div for y-axis labels on-hover.
  *
  * @returns {HTMLDivElement} The tooltip div element for y-axis labels on-hover.
@@ -565,61 +541,9 @@ export function buildTooltip() {
  *
  * @param {MouseEvent} e The mouse event invoked by 'mouseenter'.
  * @param {object} samplePassCounts An object containing meta-data like total number of passes, fails, etc...
- * @param {HTMLDivElement} titleTooltip Div element for title tooltip.
  * @param {HTMLDivElement} heatmapTitleDiv Div element for title div.
  * @param {object} dimsObject Object containing dims for graph and cells.
  */
-export function mouseenterTitleEvent(
-  e,
-  samplePassCounts,
-  titleTooltip,
-  heatmapTitleDiv,
-  dimsObject
-) {
-  const data = samplePassCounts["total"];
-  if (data) {
-    // set innerHTML, could clean this up
-    titleTooltip.innerHTML = `<div style="background-color: white; color: black; padding: 5px; border-radius: 3px; border: solid 1px white;"><b>Features</b>: ${data[
-      "nFeatures"
-    ].toLocaleString()}\n<b>Samples</b>: ${data[
-      "nSamples"
-    ].toLocaleString()}\n<b>Occurrences</b>: ${data[
-      "nOccurrences"
-    ].toLocaleString()}</div>\n<b>Pass</b>: ${data[
-      "nPass"
-    ].toLocaleString()}\n<b>Fail</b>: <span style="color: rgb(255, 160, 160)">${data[
-      "nFail"
-    ].toLocaleString()}</span>\n<b>Non-Detect</b>: <span style="color: rgb(200,200,200)">${data[
-      "nNonDetect"
-    ].toLocaleString()}</span>`;
-
-    // set position to just right of the title, same height that mouse enters
-    const heatmapElement = document.getElementById("heatmap");
-    const heatmapRect = heatmapElement.getBoundingClientRect();
-    const heatmapTop = heatmapRect.top + window.scrollY - 14;
-    titleTooltip.style.left =
-      dimsObject.paddingWidth +
-      dimsObject.width / 2 +
-      heatmapTitleDiv.offsetWidth * 0.55 +
-      "px";
-    titleTooltip.style.top = heatmapTop + "px";
-    titleTooltip.style.display = "block";
-    heatmapTitleDiv.style.color = "white";
-    heatmapTitleDiv.style.backgroundColor = "black";
-  }
-}
-
-/**
- * Makes the title on-hover tooltip disappear on mouseout event.
- *
- * @param {HTMLDivElement} titleTooltip Div element for title tooltip.
- * @param {HTMLDivElement} heatmapTitleDiv Div element for title div.
- */
-export function mouseoutTitleEvent(titleTooltip, heatmapTitleDiv) {
-  titleTooltip.style.display = "none";
-  heatmapTitleDiv.style.color = "black";
-  heatmapTitleDiv.style.backgroundColor = "white";
-}
 
 /**
  * Handles the click event for title. If ctrl is held, will cause red cells to spin one full rotation.
@@ -764,21 +688,14 @@ export function clickTitleEvent(
 export function mouseenterYAxisLabelEvent(
   event,
   label,
-  samplePassCounts,
   yAxisTooltip,
   dimsObject
 ) {
   const sampleName = label.innerHTML;
-  const sampleData = samplePassCounts[sampleName];
+  const sampleData = "X";
 
   if (sampleData) {
-    yAxisTooltip.innerHTML = `<div style="background-color: white; color: black; padding: 5px; border-radius: 3px; border: solid 1px white;"><b>Sample Name</b>: ${sampleName}</div>\n<div style="margin-top: -5px"><b>Pass</b>: ${sampleData[
-      "nPass"
-    ].toLocaleString()}\n<b>Fail</b>: <span style="color: rgb(255, 160, 160);">${sampleData[
-      "nFail"
-    ].toLocaleString()}</span>\n<b>Non-Detect</b>: <span style="color: rgb(200,200,200)">${sampleData[
-      "nNonDetect"
-    ].toLocaleString()}</span></div>`;
+    yAxisTooltip.innerHTML = `<div style="background-color: white; color: black; padding: 5px; border-radius: 3px; border: solid 1px white;"><b>Sample Name</b>: ${sampleName}</div><span>occurs in ${sampleData} features</span>`;
 
     yAxisTooltip.style.left = `${dimsObject.paddingWidth + 20}px`;
     yAxisTooltip.style.top = `${event.pageY - 25}px`;
@@ -886,21 +803,11 @@ export function mousemoveCellEvent(
         cellData.featureId
       }\n<b>Sample Name</b>: ${
         cellData.sampleName
-      }\n<b>Decision</b>: <span style="color: ${
-        cellData.color === "grey" ? "rgb(100,100,100)" : cellData.color
-      }; background-color: ${
-        cellData.color === "white" ? "black" : "none"
-      }; padding: ${
+      }\n<b>Intensity</b>: <span style="color: black; padding: ${
         cellData.color === "white" ? "1px 8px" : "1px"
       }; border-radius: 3px; margin-top: 4px;">${
-        cellData["decision"]
-      }</span></div>\n${
-        cellData.passSampleReplicate === true ? greenCheck : redX
-      }<b>Replicate Percentage</b>: ${cellData["repPercentValue"]}%\n${
-        cellData.passCV ? greenCheck : redX
-      }<b>CV</b>: ${cellData["cvValue"]}\n${
-        cellData.mrlQuotient === "NA" || !cellData.passMRL ? redX : greenCheck
-      }<b>Sample Mean / MRL</b>: ${cellData["mrlQuotient"]}`;
+        cellData["value"]
+      }</span></div>This feature occurs in \n${cellData["FUTURE"]} samples`;
       tooltip.style.left = heatmapLeft + "px";
       tooltip.style.top = heatmapTop + "px";
       tooltip.style.display = "block";

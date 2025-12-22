@@ -42,7 +42,7 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
     const margin = { top: 75, right: 0, bottom: 75, left: 0 };
     const width = 1300 - margin.left - margin.right;
     const height = 725 - margin.top - margin.bottom;
-    const paddingHeight = 160;
+    const paddingHeight = 40; // padding between title and top
     const paddingWidth = 100;
     const actualWidth = width + paddingWidth * 2;
     const actualHeight = height + paddingHeight * 2;
@@ -159,8 +159,7 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
     // set up rendering loop
     animate();
 
-    // build on-hover tooltips for cells, y-axis labels and title
-    const titleTooltip = heatmapUtils.buildTitleTooltip();
+    // build on-hover tooltips for cells, y-axis labels
     const yAxisTooltip = heatmapUtils.buildYAxisTooltip();
     const tooltip = heatmapUtils.buildTooltip();
 
@@ -334,200 +333,6 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
       orbitControls.update();
       renderer.render(scene, camera);
       labelRenderer.render(scene, camera);
-    }
-
-    function createControls() {
-      const canvasRect = canvas.getBoundingClientRect();
-      const controls = document.createElement("div");
-      controls.id = "controls";
-      controls.style.padding = "10px";
-      controls.style.border = "1px solid black";
-      controls.style.borderRadius = "4px";
-      controls.style.display = "block";
-      controls.style.position = "absolute";
-      controls.style.marginTop = "0px";
-      controls.style.top =
-        canvasRect.top +
-        height +
-        window.scrollY -
-        paddingHeight * 1.65 -
-        10 +
-        "px";
-      controls.style.left =
-        canvasRect.left + canvasRect.width + window.scrollX + 10 + "px";
-      controls.style.width = "305px";
-
-      const sliders = [
-        {
-          id: "replicateSampleThreshold",
-          label: "Sample Replicate Threshold",
-          min: 0,
-          max: 100,
-          step: 0.1,
-          value: 60,
-        },
-        {
-          id: "replicateBlankThreshold",
-          label: "Blank Replicate Threshold",
-          min: 0,
-          max: 100,
-          step: 0.1,
-          value: 60,
-        },
-        {
-          id: "cvThreshold",
-          label: "CV Threshold",
-          min: 0,
-          max: 3,
-          step: 0.01,
-          value: 2,
-        },
-        {
-          id: "mrlMultiplier",
-          label: "MRL Multiplier",
-          min: 0,
-          max: 10,
-          step: 1,
-          value: 3,
-        },
-      ];
-
-      sliders.forEach((slider) => {
-        const sliderContainer = document.createElement("div");
-        sliderContainer.style.margin = "10px auto";
-
-        const label = document.createElement("label");
-        label.innerHTML = slider.label;
-        label.style.display = "inline-block";
-        label.style.width = "200px";
-
-        const input = document.createElement("input");
-        input.type = "range";
-        input.id = slider.id;
-        input.min = slider.min;
-        input.max = slider.max;
-        input.step = slider.step;
-        input.value = slider.value;
-        input.style.width = "200px";
-
-        const inputBox = document.createElement("input");
-        inputBox.type = "number";
-        inputBox.id = slider.id + "Box";
-        inputBox.min = slider.min;
-        inputBox.max = slider.max;
-        inputBox.step = slider.step;
-        inputBox.value = slider.value;
-        inputBox.style.width = "75px";
-        inputBox.style.marginLeft = "10px";
-        inputBox.style.borderRadius = "3px";
-
-        if (inputBox.id === "mrlMultiplierBox") {
-          inputBox.readOnly = true;
-        }
-
-        input.addEventListener("input", () => {
-          if (input.id === "mrlMultiplier") {
-            if (input.value < 4) {
-              input.value = 3;
-            } else if (input.value < 7.5) {
-              input.value = 5;
-            } else {
-              input.value = 10;
-            }
-          }
-          inputBox.value = input.value;
-        });
-        inputBox.addEventListener("input", () => {
-          if (inputBox.value > slider.max) {
-            inputBox.value = slider.max;
-          } else if (inputBox.value < slider.min) {
-            inputBox.value = slider.min;
-          }
-          input.value = inputBox.value;
-        });
-        input.addEventListener("mouseup", () => {
-          const minReplicateHitsPercent = parseFloat(
-            document.getElementById("replicateSampleThreshold").value
-          );
-          const minReplicateBlankHitPercent = parseFloat(
-            document.getElementById("replicateBlankThreshold").value
-          );
-          const maxReplicateCvValue = parseFloat(
-            document.getElementById("cvThreshold").value
-          );
-          const mrlMult = parseFloat(
-            document.getElementById("mrlMultiplier").value
-          );
-
-          const children = Array.from(
-            document.getElementById("heatmap-container").children
-          );
-
-          children.forEach((child) => {
-            if (
-              child.id !== "loadDataBtn" &&
-              child.id !== "controls" &&
-              child.tagName.toLowerCase() !== "script"
-            ) {
-              child.remove();
-            }
-          });
-
-          createIntensityHeatmap(csvPathIntensity, data);
-        });
-        inputBox.addEventListener("keydown", (event) => {
-          if (event.key === "Enter") {
-            const minReplicateHitsPercent = parseFloat(
-              document.getElementById("replicateSampleThreshold").value
-            );
-            const minReplicateBlankHitPercent = parseFloat(
-              document.getElementById("replicateBlankThreshold").value
-            );
-            const maxReplicateCvValue = parseFloat(
-              document.getElementById("cvThreshold").value
-            );
-            const mrlMult = parseFloat(
-              document.getElementById("mrlMultiplier").value
-            );
-
-            const children = Array.from(
-              document.getElementById("heatmap-container").children
-            );
-
-            children.forEach((child) => {
-              if (
-                child.id !== "loadDataBtn" &&
-                child.id !== "controls" &&
-                child.tagName.toLowerCase() !== "script"
-              ) {
-                child.remove();
-              }
-            });
-
-            createOccurrenceHeatmap(
-              csvPathOccurrence,
-              csvPathParameters,
-              data,
-              minReplicateHitsPercent,
-              minReplicateBlankHitPercent,
-              maxReplicateCvValue,
-              mrlMult
-            );
-          }
-        });
-
-        sliderContainer.appendChild(label);
-        sliderContainer.appendChild(input);
-        sliderContainer.appendChild(inputBox);
-        controls.appendChild(sliderContainer);
-      });
-
-      document.body.appendChild(controls);
-    }
-
-    const sliderCheck = document.getElementById("replicateSampleThreshold");
-    if (sliderCheck === null) {
-      createControls();
     }
   }
 }

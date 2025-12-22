@@ -119,7 +119,7 @@ export function getFlattenedData(data, sampleGroups) {
           featureIndex: featureIndex,
           sampleIndex: sampleIndex,
           value: intensityValue,
-          color: "red",
+          color: intensityValue > 0 ? "red" : "white",
           sampleName: s_name,
           featureId: feature["Feature ID"],
         });
