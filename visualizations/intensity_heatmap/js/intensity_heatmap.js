@@ -645,48 +645,18 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
   // get unique sample headers from the csv.
   const sampleGroups = dataUtils.getUniqueSampleHeaders(data);
 
-  // EXPLORE CODE
-  console.log("data:", data); // results from csv
-  console.log("sampleGroups:", sampleGroups); // results from csv
+  // replace null intensity values with 0
+  const transformedData = dataUtils.GetTransformedData(data);
 
-  // find the blank sample names
-  const [blankMeanHeader, blankStdHeader, blankRepPerHeader] =
-    dataUtils.getBlankHeaders(sampleGroups);
+  // flatten data for generating three.js heatmap. Each entry is a cell in the heatmap.
+  let dataFlat;
+  dataFlat = dataUtils.getFlattenedData(transformedData, sampleGroups);
+  console.log(dataFlat);
 
-  // get rep_percent, CV and Mean cols for data
-  const [repColHeaders, cvColHeaders, meanColHeaders] =
-    dataUtils.getRepCvMeanHeaders(sampleGroups);
-
-  // get subset of data for CV columns
-  let cvData = dataUtils.getCvSubset(data, cvColHeaders);
-
-  // replace cvValues with null if don't pass n_abun / MRL cutoffs
-  let cvDataDiscrete = dataUtils.cleanCvDataAndGetDiscretizedData(
-    cvData,
-    data,
-    minReplicateBlankHitPercent,
-    minReplicateHitsPercent,
-    maxReplicateCvValue,
-    repColHeaders,
-    cvColHeaders,
-    meanColHeaders,
-    blankRepPerHeader
-  );
-
-  // flatten data for generating three.js heatmap
-  let cvDataFlat;
-  [cvDataFlat, data] = dataUtils.getFlattenedCvData(
-    cvDataDiscrete,
-    data,
-    sampleGroups
-  );
-
-  // get counts (n_samples, n_features, n_passes for each sample)
-  const nFeatures = cvDataDiscrete.length;
-  const samplePassCounts = dataUtils.getSamplePassCounts(cvDataFlat, nFeatures);
+  const nFeatures = data.length;
 
   // we need counts for how many cells are red, grey and white
-  let [redCount, greyCount, whiteCount] = dataUtils.getColorCounts(cvDataFlat);
+  let [redCount, greyCount, whiteCount] = dataUtils.getColorCounts(dataFlat);
 
   // draw heatmap
   drawHeatMap();
@@ -694,9 +664,9 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
   function drawHeatMap() {
     // await new Promise(r => setTimeout(r, 3000));
     // determine number of rows and columns
-    const nRows = cvColHeaders.length; // number of unique samples including blank
-    const nCols = cvDataDiscrete.length; // number of features
-    const nCells = nRows * nCols; // number of total cells
+    const nRows = sampleGroups.length; // number of unique samples including blank
+    const nCols = transformedData.length; // number of features
+    const nCells = nRows * nCols; // number of total cells, equal to length of dataFlat
 
     // setup graph and cell dims
     const margin = { top: 75, right: 0, bottom: 75, left: 0 };
@@ -786,7 +756,7 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
 
     // find cell positions and colors, get red cell instances for animation later
     const redCellInstances = heatmapUtils.setCellColorAndPos(
-      cvDataFlat,
+      dataFlat,
       dimsObject,
       greyMesh,
       redMesh,
@@ -798,7 +768,7 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
     scene.add(graphMesh);
 
     // add title, x-axis label, y-axis labels, horizontal and vertical partition lines
-    heatmapUtils.addTitle(canvas, thresholdData, dimsObject, graphMesh);
+    heatmapUtils.addTitle(canvas, dimsObject, graphMesh);
     heatmapUtils.addXAxisLabel(canvas, dimsObject, graphMesh);
     heatmapUtils.addYAxisLabelsAndHorzLines(
       canvas,
@@ -830,7 +800,6 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
     heatmapTitleDiv.addEventListener("mouseenter", (e) => {
       heatmapUtils.mouseenterTitleEvent(
         e,
-        samplePassCounts,
         titleTooltip,
         heatmapTitleDiv,
         dimsObject
@@ -858,7 +827,6 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
         heatmapUtils.mouseenterYAxisLabelEvent(
           e,
           label,
-          samplePassCounts,
           yAxisTooltip,
           dimsObject
         );
@@ -907,7 +875,7 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
         greyMesh,
         mousePos,
         raycaster,
-        cvDataFlat,
+        dataFlat,
         tooltip,
         zoomBox,
         startX,
@@ -1026,7 +994,7 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
           min: 0,
           max: 100,
           step: 0.1,
-          value: minReplicateHitsPercent,
+          value: 60,
         },
         {
           id: "replicateBlankThreshold",
@@ -1034,7 +1002,7 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
           min: 0,
           max: 100,
           step: 0.1,
-          value: minReplicateBlankHitPercent,
+          value: 60,
         },
         {
           id: "cvThreshold",
@@ -1042,7 +1010,7 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
           min: 0,
           max: 3,
           step: 0.01,
-          value: maxReplicateCvValue,
+          value: 2,
         },
         {
           id: "mrlMultiplier",
@@ -1050,7 +1018,7 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
           min: 0,
           max: 10,
           step: 1,
-          value: MrlMult,
+          value: 3,
         },
       ];
 
@@ -1135,15 +1103,7 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
             }
           });
 
-          createOccurrenceHeatmap(
-            csvPathOccurrence,
-            csvPathParameters,
-            data,
-            minReplicateHitsPercent,
-            minReplicateBlankHitPercent,
-            maxReplicateCvValue,
-            mrlMult
-          );
+          createIntensityHeatmap(csvPathIntensity, data);
         });
         inputBox.addEventListener("keydown", (event) => {
           if (event.key === "Enter") {
@@ -1201,29 +1161,6 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
     }
   }
 }
-
-// function loadHeatmap() {
-//   fetch('/data/Example_nta_NTA_WebApp_results.xlsx')
-//   .then(response => response.arrayBuffer()) // read file as array buffer
-//   .then(data => {
-//     const workbook = XLSX.read(data, { type: 'array' });
-
-//     // call the main function that cleans data and draws heatmap
-//     createOccurrenceHeatmap(workbook);
-//   });
-// }
-
-// // Use the global XLSX object provided by the CDN
-// function loadHeatmap() {
-//   fetch("./data/Example_nta_NTA_WebApp_results.xlsx")
-//     .then((response) => response.arrayBuffer()) // read file as array buffer
-//     .then((data) => {
-//       const workbook = XLSX.read(data, { type: "array" });
-
-//       // call the main function that cleans data and draws heatmap
-//       createOccurrenceHeatmap(workbook);
-//     });
-// }
 
 function loadHeatmap() {
   // const csvPathOccurrence = "./data/20250709_test_file_run/Example_NTA_for_QAQC_visuals.csv";
