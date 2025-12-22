@@ -4031,7 +4031,7 @@ async function generatePlots(filePath) {
 }
 
 // ======= CALL MAIN FUNCTION ==================================================================================================
-// const dataPath = "./data/hazard_metadata_for_tripod_visualization.csv"; // Bug when peak intensities > 100
+// const dataPath = "./data/hazard_metadata_for_tripod_visualization.csv";
 // const dataPath = "./data/INTERPRET NTA test MS2 file 500 features.csv";
 // const dataPath = "./data/short_test_amen.csv";
 // const dataPath = "./data/short_test_no_amen.csv";

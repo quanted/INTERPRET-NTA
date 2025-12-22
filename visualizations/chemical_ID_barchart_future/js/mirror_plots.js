@@ -94,6 +94,15 @@ function createDualMassSpectrumPlot(DTXCID, feature, CFMID_spec, exp_spec) {
 
   // construct the scales for the axes
   const mz_domain = d3.extent(spectrum1.concat(spectrum2), (d) => d[0]);
+
+  // Find the maximum intensity to set the y-axis range of the mirrior plots.
+  const specs = exp_spec.concat(CFMID_spec);
+  const maxIntensity = specs.length ? Math.max(...specs.map((a) => a[1])) : 0;
+  let range = 100;
+  maxIntensity > 100
+    ? (range = Math.ceil(maxIntensity / 10) * 10)
+    : (range = 100);
+
   const middle_height = (height - margins.bottom + margins.top) / 2;
 
   var mz_scale = d3
@@ -103,12 +112,12 @@ function createDualMassSpectrumPlot(DTXCID, feature, CFMID_spec, exp_spec) {
   let mz_rescale = mz_scale.copy();
   var intensity_scale1 = d3
     .scaleLinear()
-    .domain([0, 100])
+    .domain([0, range])
     .range([middle_height, margins.top])
     .nice();
   var intensity_scale2 = d3
     .scaleLinear()
-    .domain([0, 100])
+    .domain([0, range])
     .range([middle_height, height - margins.bottom])
     .nice();
   // make the axes
