@@ -300,7 +300,7 @@ export function addTitle(canvas, thresholdData, dimsObject, graphMesh) {
   // titleDiv.style.display = "inline-block";
 
   // add the innerHTML
-  titleDiv.innerHTML = `Occurrence Heatmap\n`;
+  titleDiv.innerHTML = `Occurrence Intensity Heatmap\n`;
   titleDiv.innerHTML += `<span class="subTitle">Sample Rep. Threshold: ${thresholdData.minReplicateHitsPercent}%&emsp; `;
   titleDiv.innerHTML += `<span class="subTitle">Blank Rep. Threshold: ${thresholdData.minReplicateBlankHitPercent}%&emsp; `;
   titleDiv.innerHTML += `<span class="subTitle">CV Threshold: ${thresholdData.maxReplicateCvValue}&emsp; `;
