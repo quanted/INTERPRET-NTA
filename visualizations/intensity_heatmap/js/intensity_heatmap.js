@@ -533,23 +533,11 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
 }
 
 function loadHeatmap() {
-  // const csvPathOccurrence = "./data/20250709_test_file_run/Example_NTA_for_QAQC_visuals.csv";
-  // const csvPathParameters = "./data/20250709_test_file_run/Analysis_parameters.csv";
-  const csvPathOccurrence =
-    "./data/20250709_NTAW807/Method_1_-_HLB_for_QAQC_visuals.csv";
-  const csvPathParameters = "./data/20250709_NTAW807/Analysis_parameters.csv";
   const csvPathIntensity = "./data/intensity_data.csv";
-  // createOcurrenceHeatmap(csvPathOccurrence, csvPathParameters);
   createIntensityHeatmap(csvPathIntensity);
 }
 
-// loadHeatmap();
 document.addEventListener("DOMContentLoaded", () => {
   // Call your function here
   loadHeatmap();
 });
-
-///// uncomment these lines and the button in index.html to create heatmap on button click
-// document.getElementById("loadDataBtn").addEventListener('click', () => {
-//   loadHeatmap();
-// });
