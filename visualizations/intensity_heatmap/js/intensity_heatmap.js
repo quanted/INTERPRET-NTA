@@ -132,7 +132,9 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
 
     redMesh.renderOrder = 998; // ensure redMesh is rendered on top
 
-    // zoomBoxMaterial.renderOrder = 1000;
+    zoomBoxMaterial.depthTest = false;
+    zoomBoxMaterial.depthWrite = false;
+    console.log(zoomBoxMaterial);
 
     // create a single group for the cell meshes and add to the scene
     const heatmapGroup = new THREE.Group();

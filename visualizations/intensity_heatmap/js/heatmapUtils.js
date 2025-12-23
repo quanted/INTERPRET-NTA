@@ -906,6 +906,7 @@ export function mousemoveCellEvent(
       new THREE.BufferAttribute(vertices, 3)
     );
     line = new THREE.Line(zoomBoxGeometry, zoomBoxMaterial);
+    line.renderOrder = 999;
     line.name = "zoomBox";
 
     scene.add(line);
