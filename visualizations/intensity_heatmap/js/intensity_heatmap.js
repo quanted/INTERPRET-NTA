@@ -15,15 +15,29 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
   // get unique sample headers from the csv.
   const sampleGroups = dataUtils.getUniqueSampleHeaders(data);
 
+  const sampleHeaders = data.columns.filter((col) => col !== "Feature ID");
+
   // replace null intensity values with 0
   const transformedData = dataUtils.GetTransformedData(data);
 
+  // For each feature ID, add a column contining number of samples with detections
+  // and add a column containing sum of all sample solumns
+  const dataWithCounts = dataUtils.addDetectionCountAndSum(
+    transformedData,
+    sampleHeaders
+  );
+
   // flatten data for generating three.js heatmap. Each entry is a cell in the heatmap.
   let dataFlat;
-  dataFlat = dataUtils.getFlattenedData(transformedData, sampleGroups);
+  dataFlat = dataUtils.getFlattenedData(
+    dataWithCounts,
+    sampleHeaders,
+    sampleGroups
+  );
   console.log(dataFlat);
 
   const nFeatures = data.length;
+  const sampleCounts = dataUtils.getSampleCounts(dataFlat);
 
   // we need counts for how many cells are red, grey and white
   let [redCount, greyCount, whiteCount] = dataUtils.getColorCounts(dataFlat);
@@ -118,6 +132,7 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
 
     // create a single group for the cell meshes and add to the scene
     const heatmapGroup = new THREE.Group();
+    console.log(redMesh);
     heatmapGroup.add(redMesh);
     heatmapGroup.add(greyMesh);
     heatmapGroup.add(whiteMesh);
@@ -166,19 +181,6 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
     // add event listeners for title (show tooltip on-hover; highlight red cells on click)
     const heatmapTitleDiv = document.querySelector(".title");
 
-    heatmapTitleDiv.addEventListener("mouseenter", (e) => {
-      heatmapUtils.mouseenterTitleEvent(
-        e,
-        titleTooltip,
-        heatmapTitleDiv,
-        dimsObject
-      );
-    });
-
-    heatmapTitleDiv.addEventListener("mouseout", () => {
-      heatmapUtils.mouseoutTitleEvent(titleTooltip, heatmapTitleDiv);
-    });
-
     var redCellZoomed = false;
     heatmapTitleDiv.addEventListener("click", (e) => {
       redCellZoomed = heatmapUtils.clickTitleEvent(
@@ -196,6 +198,7 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
         heatmapUtils.mouseenterYAxisLabelEvent(
           e,
           label,
+          sampleCounts,
           yAxisTooltip,
           dimsObject
         );

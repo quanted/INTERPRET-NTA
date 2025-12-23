@@ -104,12 +104,12 @@ export function GetTransformedData(data) {
  * @returns {object[]} An array of object containing the feature index, sample index and value (-1, 0, 1) for
  * each sample to be plotted on the heatmap.
  */
-export function getFlattenedData(data, sampleGroups) {
+export function getFlattenedData(data, sampleHeaders, sampleGroups) {
   let dataFlat = [];
   data.forEach((feature, featureIndex) => {
     Object.entries(feature).forEach(([sample, value], k) => {
       // skip over featureID keys
-      if (!sample.endsWith("ture ID")) {
+      if (sampleHeaders.includes(sample)) {
         const s_name = sample.replace("BlankSub Mean ", "");
         const sampleIndex = sampleGroups.indexOf(s_name);
 
@@ -122,12 +122,35 @@ export function getFlattenedData(data, sampleGroups) {
           color: intensityValue > 0 ? "red" : "white",
           sampleName: s_name,
           featureId: feature["Feature ID"],
+          featureSum: feature["featureSum"],
+          num_detections: feature["num_detections"],
         });
       }
     });
   });
 
   return dataFlat;
+}
+
+export function getSampleCounts(dataFlat) {
+  let sampleCounts = {};
+  dataFlat.forEach((item, index) => {
+    // ensure sample name is present
+    const sampleName = item["sampleName"];
+    if (!Object.keys(sampleCounts).includes(sampleName)) {
+      sampleCounts[sampleName] = {
+        nPresent: 0,
+      };
+    }
+
+    // add counts
+    const detected = item["value"] > 1 ? true : false;
+    if (detected) {
+      sampleCounts[sampleName]["nPresent"]++;
+    }
+  });
+
+  return sampleCounts;
 }
 
 /**
@@ -151,4 +174,14 @@ export function getColorCounts(dataFlat) {
   });
 
   return [redCount, greyCount, whiteCount];
+}
+
+export function addDetectionCountAndSum(data, sampleHeaders) {
+  return data.map((row) => ({
+    ...row,
+    num_detections: sampleHeaders.filter(
+      (col) => row[col] !== null && row[col] !== 0
+    ).length,
+    featureSum: sampleHeaders.reduce((acc, col) => acc + (row[col] || 0), 0),
+  }));
 }

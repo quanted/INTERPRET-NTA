@@ -167,14 +167,22 @@ export function getGeometries(dimsObject) {
  * THREE.LineBasicMaterial]} An array of Material objects for the different cells, the graph and lines.
  */
 export function getMaterials(
-  failC = 0xff0000,
+  maxIntensityC = 0xf64f00,
   nonDetectC = 0xc7c8c9,
-  passC = 0xffffff,
+  minIntensityC = 0xffffff,
   zoomBoxColor = 0x000000
 ) {
-  const redMaterial = new THREE.MeshBasicMaterial({ color: failC });
-  const greyMaterial = new THREE.MeshBasicMaterial({ color: nonDetectC });
-  const whiteMaterial = new THREE.MeshBasicMaterial({ color: passC });
+  const redMaterial = new THREE.MeshBasicMaterial({
+    color: maxIntensityC,
+    // opacity: 0.5,
+    // transparent: true,
+  });
+  const greyMaterial = new THREE.MeshBasicMaterial({
+    color: nonDetectC,
+  });
+  const whiteMaterial = new THREE.MeshBasicMaterial({
+    color: minIntensityC,
+  });
   const clearMaterial = new THREE.MeshBasicMaterial({
     color: 0xffffff,
     opacity: 0,
@@ -537,15 +545,6 @@ export function buildTooltip() {
 }
 
 /**
- * Displays on-hover tooltip for title for mouseenter event.
- *
- * @param {MouseEvent} e The mouse event invoked by 'mouseenter'.
- * @param {object} samplePassCounts An object containing meta-data like total number of passes, fails, etc...
- * @param {HTMLDivElement} heatmapTitleDiv Div element for title div.
- * @param {object} dimsObject Object containing dims for graph and cells.
- */
-
-/**
  * Handles the click event for title. If ctrl is held, will cause red cells to spin one full rotation.
  * If ctrl is not held, it will toggle between "zooming" the red cells (increasing their width by some factor).
  *
@@ -688,14 +687,15 @@ export function clickTitleEvent(
 export function mouseenterYAxisLabelEvent(
   event,
   label,
+  sampleCounts,
   yAxisTooltip,
   dimsObject
 ) {
   const sampleName = label.innerHTML;
-  const sampleData = "X";
+  const sampleData = sampleCounts[sampleName + "_"];
 
   if (sampleData) {
-    yAxisTooltip.innerHTML = `<div style="background-color: white; color: black; padding: 5px; border-radius: 3px; border: solid 1px white;"><b>Sample Name</b>: ${sampleName}</div><span>occurs in ${sampleData} features</span>`;
+    yAxisTooltip.innerHTML = `<div style="background-color: white; color: black; padding: 5px; border-radius: 3px; border: solid 1px white;"><b>Sample Name</b>: ${sampleName}</div><span>${sampleData["nPresent"]} features detected</span>`;
 
     yAxisTooltip.style.left = `${dimsObject.paddingWidth + 20}px`;
     yAxisTooltip.style.top = `${event.pageY - 25}px`;
@@ -807,7 +807,9 @@ export function mousemoveCellEvent(
         cellData.color === "white" ? "1px 8px" : "1px"
       }; border-radius: 3px; margin-top: 4px;">${
         cellData["value"]
-      }</span></div>This feature occurs in \n${cellData["FUTURE"]} samples`;
+      }</span></div>This feature occurs in \n${
+        cellData["num_detections"]
+      } sample(s)`;
       tooltip.style.left = heatmapLeft + "px";
       tooltip.style.top = heatmapTop + "px";
       tooltip.style.display = "block";
