@@ -173,9 +173,11 @@ export function getMaterials(
   zoomBoxColor = 0x000000
 ) {
   const redMaterial = new THREE.MeshBasicMaterial({
-    color: maxIntensityC,
+    // color: maxIntensityC,
     // opacity: 0.5,
     // transparent: true,
+    color: 0xffffff, // Set to white so instance colors show through
+    // vertexColors: true, // Enable per-instance coloring
   });
   const greyMaterial = new THREE.MeshBasicMaterial({
     color: nonDetectC,
@@ -213,6 +215,22 @@ export function createInstancedMesh(geometry, material, n) {
   return new THREE.InstancedMesh(geometry, material, n);
 }
 
+function valueToColor(value, minValue, maxValue) {
+  // Normalize value to 0-1 range
+  // const normalized = (value - minValue) / (maxValue - minValue);
+  const normalized = Math.pow((value - minValue) / (maxValue - minValue), 0.5);
+
+  const lightYellow = { r: 1.0, g: 1.0, b: 0.6 }; // #FFFF99
+  const darkOrange = { r: 0.8, g: 0.4, b: 0.0 }; // #CC6600
+
+  // Interpolate between colors
+  const r = lightYellow.r + (darkOrange.r - lightYellow.r) * normalized;
+  const g = lightYellow.g + (darkOrange.g - lightYellow.g) * normalized;
+  const b = lightYellow.b + (darkOrange.b - lightYellow.b) * normalized;
+
+  return new THREE.Color(r, g, b);
+}
+
 /**
  * Determines and sets the positions and colors for each occurrence (cell) and returns an array of objects
  * containing data about each red cell to be used for animations later in code.
@@ -231,6 +249,15 @@ export function setCellColorAndPos(
   redMesh,
   whiteMesh
 ) {
+  // Find min and max values for color scaling
+
+  const redValues = dataFlat
+    .filter((cell) => cell.color === "red")
+    .map((cell) => cell.value);
+
+  const minValue = Math.min(...redValues);
+  const maxValue = Math.max(...redValues);
+
   // setup needed variables
   let dummy = new THREE.Object3D();
   let redIndex = 0;
@@ -261,6 +288,12 @@ export function setCellColorAndPos(
     } else if (cell.color === "red") {
       // if fail (red)
       redMesh.setMatrixAt(redIndex, dummy.matrix);
+
+      // Set the color for this instance
+      const color = valueToColor(cell.value, minValue, maxValue);
+
+      redMesh.setColorAt(redIndex, color);
+
       cell.meshIndex = redIndex;
       redCellInstances.push({
         index: redIndex,
@@ -280,6 +313,7 @@ export function setCellColorAndPos(
 
   // this line is needed to animate the red cells
   redMesh.instanceMatrix.needsUpdate = true;
+  redMesh.instanceColor.needsUpdate = true;
 
   return redCellInstances;
 }
