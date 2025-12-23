@@ -18,15 +18,16 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
   const sampleHeaders = data.columns.filter((col) => col !== "Feature ID");
 
   // replace null intensity values with 0
-  var transformedData = dataUtils.GetTransformedData(data);
+  var rawData = dataUtils.GetTransformedData(data);
 
-  // // Get the log transformed data
-  // transformedData = heatmapUtils.addLog10Data(transformedData, sampleHeaders);
+  // Get the log transformed data
+  const log10Data = heatmapUtils.addLog10Data(rawData, sampleHeaders);
+  var isLog10View = true;
 
   // For each feature ID, add a column contining number of samples with detections
   // and add a column containing sum of all sample solumns
   const dataWithCounts = dataUtils.addDetectionCountAndSum(
-    transformedData,
+    log10Data,
     sampleHeaders
   );
 
@@ -53,7 +54,7 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
     // await new Promise(r => setTimeout(r, 3000));
     // determine number of rows and columns
     const nRows = sampleGroups.length; // number of unique samples including blank
-    const nCols = transformedData.length; // number of features
+    const nCols = rawData.length; // number of features
     const nCells = nRows * nCols; // number of total cells, equal to length of dataFlat
 
     // setup graph and cell dims
@@ -179,8 +180,91 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
       dimsObject,
       graphMesh,
       minValue,
-      maxValue
+      maxValue,
+      isLog10View
     );
+
+    function updateHeatmapColors(newDataFlat, redMesh, greyMesh, whiteMesh) {
+      const newRedValues = newDataFlat
+        .filter((cell) => cell.color === "red")
+        .map((cell) => cell.value);
+      const minValue = Math.min(...newRedValues);
+      const maxValue = Math.max(...newRedValues);
+      let dummy = new THREE.Object3D();
+      let redIndex = 0;
+      let greyIndex = 0;
+      let whiteIndex = 0;
+      newDataFlat.forEach((cell) => {
+        let x = -(dimsObject.actualWidth / 2) + dimsObject.paddingWidth;
+        x +=
+          cell.featureIndex * dimsObject.cellWidth + dimsObject.cellWidth / 2;
+        let y = dimsObject.actualHeight / 2 - dimsObject.paddingHeight;
+        y +=
+          -(cell.sampleIndex * dimsObject.cellHeight) +
+          dimsObject.cellHeight / 2;
+        dummy.position.set(x, y, 0);
+        dummy.scale.set(1, 1, 1);
+        dummy.updateMatrix();
+        if (cell.color === "grey") {
+          greyMesh.setMatrixAt(greyIndex, dummy.matrix);
+          cell.meshIndex = greyIndex;
+          greyIndex++;
+        } else if (cell.color === "red") {
+          redMesh.setMatrixAt(redIndex, dummy.matrix);
+          const color = heatmapUtils.valueToColor(
+            cell.value,
+            minValue,
+            maxValue
+          );
+          redMesh.setColorAt(redIndex, color);
+          cell.meshIndex = redIndex;
+          redIndex++;
+        } else if (cell.color === "white") {
+          whiteMesh.setMatrixAt(whiteIndex, dummy.matrix);
+          cell.meshIndex = whiteIndex;
+          whiteIndex++;
+        }
+      });
+      redMesh.instanceMatrix.needsUpdate = true;
+      redMesh.instanceColor.needsUpdate = true;
+    }
+
+    // Add toggle button
+    heatmapUtils.addToggleButton(graphMesh, canvas, dimsObject, () => {
+      isLog10View = !isLog10View;
+
+      // Recalculate data with appropriate transformation
+      const dataToUse = isLog10View ? log10Data : rawData;
+      const dataWithCounts = dataUtils.addDetectionCountAndSum(
+        dataToUse,
+        sampleHeaders
+      );
+      const sortedData = dataUtils.sortFeatures(dataWithCounts);
+      const newDataFlat = dataUtils.getFlattenedData(
+        sortedData,
+        sampleHeaders,
+        sampleGroups
+      );
+
+      // Update colors and legend
+      updateHeatmapColors(
+        newDataFlat,
+        redMesh,
+        greyMesh,
+        whiteMesh,
+        dimsObject
+      );
+
+      const newRedValues = newDataFlat
+        .filter((cell) => cell.color === "red")
+        .map((cell) => cell.value);
+      const newMinValue = Math.min(...newRedValues);
+      const newMaxValue = Math.max(...newRedValues);
+      heatmapUtils.updateColorLegend(newMinValue, newMaxValue, isLog10View);
+
+      // Update dataFlat reference for tooltips
+      dataFlat = newDataFlat;
+    });
 
     let vertLineObjects = heatmapUtils.getVertLines(
       dimsObject,

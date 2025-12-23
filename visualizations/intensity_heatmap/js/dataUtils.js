@@ -98,8 +98,8 @@ export function GetTransformedData(data) {
 
 export function sortFeatures(data) {
   // sort data by number of detects present
-  const sortedData = data.sort((a, b) => a.featureSum - b.featureSum);
-  // const sortedData = data.sort((a, b) => a.num_detections - b.num_detections);
+  // const sortedData = data.sort((a, b) => a.featureSum - b.featureSum);
+  const sortedData = data.sort((a, b) => a.num_detections - b.num_detections);
   return sortedData;
 }
 

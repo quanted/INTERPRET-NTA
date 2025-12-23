@@ -215,7 +215,7 @@ export function createInstancedMesh(geometry, material, n) {
   return new THREE.InstancedMesh(geometry, material, n);
 }
 
-function valueToColor(value, minValue, maxValue) {
+export function valueToColor(value, minValue, maxValue) {
   // Normalize value to 0-1 range
   const normalized = (value - minValue) / (maxValue - minValue);
 
@@ -1139,17 +1139,17 @@ export async function zoomTween(
   }
 }
 
-// export function addLog10Data(data, sampleHeaders) {
-//   return data.map((row) => {
-//     const newRow = { ...row };
+export function addLog10Data(data, sampleHeaders) {
+  return data.map((row) => {
+    const newRow = { ...row };
 
-//     sampleHeaders.forEach((header) => {
-//       const value = row[header];
-//       newRow[header] = value != null && value > 0 ? Math.log10(value) : 0;
-//     });
-//     return newRow;
-//   });
-// }
+    sampleHeaders.forEach((header) => {
+      const value = row[header];
+      newRow[header] = value != null && value > 0 ? Math.log10(value) : 0;
+    });
+    return newRow;
+  });
+}
 
 export function addColorLegend(
   canvas,
@@ -1160,6 +1160,7 @@ export function addColorLegend(
 ) {
   const legendDiv = document.createElement("div");
   legendDiv.className = "colorLegend";
+  legendDiv.id = "intensityLegend";
   legendDiv.style.position = "absolute";
   legendDiv.style.color = "black";
   legendDiv.style.fontSize = "14px";
@@ -1183,13 +1184,16 @@ export function addColorLegend(
   labelsDiv.style.fontSize = "12px";
   const minLabel = document.createElement("span");
   minLabel.textContent = minValue.toFixed(2);
+  minLabel.className = "minLabel";
   const maxLabel = document.createElement("span");
   maxLabel.textContent = maxValue.toFixed(2);
+  maxLabel.className = "maxLabel";
   labelsDiv.appendChild(minLabel);
   labelsDiv.appendChild(maxLabel);
   // Add title
   const titleSpan = document.createElement("div");
-  titleSpan.textContent = "BlankSub Mean Intensity";
+  titleSpan.className = "legendTitle";
+  titleSpan.textContent = "Log10 Intensity";
   titleSpan.style.fontWeight = "bold";
   titleSpan.style.marginBottom = "5px";
 
@@ -1209,4 +1213,82 @@ export function addColorLegend(
   legendLabel.position.set(legendX, legendY, 0);
   graphMesh.add(legendLabel);
   legendLabel.layers.set(0);
+}
+
+export function addToggleButton(graphMesh, canvas, dimsObject, onToggle) {
+  const buttonDiv = document.createElement("div");
+  buttonDiv.id = "toggleButton";
+  buttonDiv.style.position = "absolute";
+  buttonDiv.style.zIndex = "1000";
+  const button = document.createElement("button");
+  button.textContent = "Toggle: Log10 → Raw";
+  button.style.padding = "10px 20px";
+  button.style.fontSize = "14px";
+  button.style.backgroundColor = "#1a1a1aff";
+  button.style.color = "white";
+  button.style.border = "none";
+  button.style.borderRadius = "4px";
+  button.style.cursor = "pointer";
+  button.style.fontWeight = "bold";
+  button.style.boxShadow = "0 2px 4px rgba(0,0,0,0.2)";
+  button.addEventListener("mouseenter", () => {
+    button.style.backgroundColor = "#585858ff";
+  });
+  button.addEventListener("mouseleave", () => {
+    button.style.backgroundColor = "#1a1a1aff";
+  });
+
+  function onClick() {
+    if (button.textContent === "Toggle: Log10 → Raw") {
+      button.textContent = "Toggle: Raw → Log10";
+      console.log("clicked");
+    } else {
+      button.textContent = "Toggle: Log10 → Raw";
+    }
+    onToggle();
+  }
+
+  // button.addEventListener("click", onToggle);
+  button.addEventListener("click", onClick);
+  buttonDiv.appendChild(button);
+  // Add to the heatmap container
+  const heatmapContainer = document.getElementById("heatmap-container");
+  if (heatmapContainer) {
+    heatmapContainer.appendChild(buttonDiv);
+  } else {
+    document.body.appendChild(buttonDiv);
+  }
+
+  const canvRect = canvas.getBoundingClientRect();
+  let buttonX =
+    -(dimsObject.actualWidth / 2) + canvRect.left + dimsObject.paddingWidth;
+  buttonX += dimsObject.width + 210;
+  // Position to the right of the graph
+  let buttonY = dimsObject.actualHeight / 2 - dimsObject.paddingHeight;
+  buttonY -= dimsObject.height / 2 - 630;
+  // Center vertically
+  const buttonLabel = new CSS2DObject(buttonDiv);
+  buttonLabel.position.set(buttonX, buttonY, 0);
+  graphMesh.add(buttonLabel);
+  buttonLabel.layers.set(0);
+}
+
+export function updateColorLegend(minValue, maxValue, isLog10) {
+  const legendDiv = document.getElementById("intensityLegend");
+
+  if (legendDiv) {
+    // Update title
+    const titleSpan = legendDiv.querySelector(".legendTitle");
+    if (titleSpan) {
+      titleSpan.textContent = isLog10 ? "Log10 Intensity" : "Raw Intensity";
+    }
+
+    // Update min Label
+    const minLabel = legendDiv.querySelector(".minLabel");
+    minLabel.textContent = minValue.toFixed(2);
+
+    // Update min Label
+    const maxLabel = legendDiv.querySelector(".maxLabel");
+    maxLabel.textContent = maxValue.toFixed(2);
+  }
 }
