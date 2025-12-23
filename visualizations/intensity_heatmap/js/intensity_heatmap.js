@@ -18,7 +18,10 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
   const sampleHeaders = data.columns.filter((col) => col !== "Feature ID");
 
   // replace null intensity values with 0
-  const transformedData = dataUtils.GetTransformedData(data);
+  var transformedData = dataUtils.GetTransformedData(data);
+
+  // Get the log transformed data
+  transformedData = heatmapUtils.addLog10Data(transformedData, sampleHeaders);
 
   // For each feature ID, add a column contining number of samples with detections
   // and add a column containing sum of all sample solumns
@@ -132,13 +135,8 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
 
     redMesh.renderOrder = 998; // ensure redMesh is rendered on top
 
-    zoomBoxMaterial.depthTest = false;
-    zoomBoxMaterial.depthWrite = false;
-    console.log(zoomBoxMaterial);
-
     // create a single group for the cell meshes and add to the scene
     const heatmapGroup = new THREE.Group();
-    console.log(redMesh);
     heatmapGroup.add(redMesh);
     heatmapGroup.add(greyMesh);
     heatmapGroup.add(whiteMesh);

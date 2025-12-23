@@ -217,11 +217,10 @@ export function createInstancedMesh(geometry, material, n) {
 
 function valueToColor(value, minValue, maxValue) {
   // Normalize value to 0-1 range
-  // const normalized = (value - minValue) / (maxValue - minValue);
-  const normalized = Math.pow((value - minValue) / (maxValue - minValue), 0.5);
+  const normalized = (value - minValue) / (maxValue - minValue);
 
-  const lightYellow = { r: 1.0, g: 1.0, b: 0.6 }; // #FFFF99
-  const darkOrange = { r: 0.8, g: 0.4, b: 0.0 }; // #CC6600
+  const lightYellow = { r: 0.96, g: 0.95, b: 0.15 };
+  const darkOrange = { r: 1.0, g: 0.2, b: 0.0 };
 
   // Interpolate between colors
   const r = lightYellow.r + (darkOrange.r - lightYellow.r) * normalized;
@@ -1138,4 +1137,16 @@ export async function zoomTween(
       scene.remove(object);
     });
   }
+}
+
+export function addLog10Data(data, sampleHeaders) {
+  return data.map((row) => {
+    const newRow = { ...row };
+
+    sampleHeaders.forEach((header) => {
+      const value = row[header];
+      newRow[header] = value != null && value > 0 ? Math.log10(value) : null;
+    });
+    return newRow;
+  });
 }
