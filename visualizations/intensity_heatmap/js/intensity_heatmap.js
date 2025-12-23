@@ -27,10 +27,12 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
     sampleHeaders
   );
 
+  const sortedData = dataUtils.sortFeatures(dataWithCounts);
   // flatten data for generating three.js heatmap. Each entry is a cell in the heatmap.
   let dataFlat;
   dataFlat = dataUtils.getFlattenedData(
-    dataWithCounts,
+    // dataWithCounts,
+    sortedData,
     sampleHeaders,
     sampleGroups
   );

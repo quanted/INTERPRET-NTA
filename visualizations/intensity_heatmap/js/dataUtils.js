@@ -96,6 +96,13 @@ export function GetTransformedData(data) {
   return transformedData;
 }
 
+export function sortFeatures(data) {
+  // sort data by number of detects present
+  // const sortedData = data.sort((a, b) => a.featureSum - b.featureSum);
+  const sortedData = data.sort((a, b) => a.num_detections - b.num_detections);
+  return sortedData;
+}
+
 /**
  * This is the final step in data processing before generating the heatmap itself. Returns a flattened form of our
  * preprocessed data in the form of [{featureIndex: x, sampleIndex: y, value: z}, ...] with length nFeatures*nSamples.
