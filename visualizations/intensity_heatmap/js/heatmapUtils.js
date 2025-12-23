@@ -1139,14 +1139,74 @@ export async function zoomTween(
   }
 }
 
-export function addLog10Data(data, sampleHeaders) {
-  return data.map((row) => {
-    const newRow = { ...row };
+// export function addLog10Data(data, sampleHeaders) {
+//   return data.map((row) => {
+//     const newRow = { ...row };
 
-    sampleHeaders.forEach((header) => {
-      const value = row[header];
-      newRow[header] = value != null && value > 0 ? Math.log10(value) : null;
-    });
-    return newRow;
-  });
+//     sampleHeaders.forEach((header) => {
+//       const value = row[header];
+//       newRow[header] = value != null && value > 0 ? Math.log10(value) : 0;
+//     });
+//     return newRow;
+//   });
+// }
+
+export function addColorLegend(
+  canvas,
+  dimsObject,
+  graphMesh,
+  minValue,
+  maxValue
+) {
+  const legendDiv = document.createElement("div");
+  legendDiv.className = "colorLegend";
+  legendDiv.style.position = "absolute";
+  legendDiv.style.color = "black";
+  legendDiv.style.fontSize = "14px";
+  legendDiv.style.backgroundColor = "white";
+  legendDiv.style.padding = "10px";
+  legendDiv.style.borderRadius = "4px";
+  legendDiv.style.border = "1px solid #ccc";
+  // Create gradient bar
+  const gradientBar = document.createElement("div");
+  gradientBar.style.width = "200px";
+  gradientBar.style.height = "20px";
+  gradientBar.style.background =
+    "linear-gradient(to right, rgb(245, 242, 38), rgb(255, 51, 0))";
+  gradientBar.style.marginTop = "5px";
+  gradientBar.style.marginBottom = "5px";
+  gradientBar.style.border = "1px solid #999";
+  // Create labels container
+  const labelsDiv = document.createElement("div");
+  labelsDiv.style.display = "flex";
+  labelsDiv.style.justifyContent = "space-between";
+  labelsDiv.style.fontSize = "12px";
+  const minLabel = document.createElement("span");
+  minLabel.textContent = minValue.toFixed(2);
+  const maxLabel = document.createElement("span");
+  maxLabel.textContent = maxValue.toFixed(2);
+  labelsDiv.appendChild(minLabel);
+  labelsDiv.appendChild(maxLabel);
+  // Add title
+  const titleSpan = document.createElement("div");
+  titleSpan.textContent = "BlankSub Mean Intensity";
+  titleSpan.style.fontWeight = "bold";
+  titleSpan.style.marginBottom = "5px";
+
+  legendDiv.appendChild(titleSpan);
+  legendDiv.appendChild(gradientBar);
+  legendDiv.appendChild(labelsDiv);
+
+  const canvRect = canvas.getBoundingClientRect();
+  let legendX =
+    -(dimsObject.actualWidth / 2) + canvRect.left + dimsObject.paddingWidth;
+  legendX += dimsObject.width + 210;
+  // Position to the right of the graph
+  let legendY = dimsObject.actualHeight / 2 - dimsObject.paddingHeight;
+  legendY -= dimsObject.height / 2 - 700;
+  // Center vertically
+  const legendLabel = new CSS2DObject(legendDiv);
+  legendLabel.position.set(legendX, legendY, 0);
+  graphMesh.add(legendLabel);
+  legendLabel.layers.set(0);
 }

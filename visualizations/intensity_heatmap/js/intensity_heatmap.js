@@ -20,8 +20,8 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
   // replace null intensity values with 0
   var transformedData = dataUtils.GetTransformedData(data);
 
-  // Get the log transformed data
-  transformedData = heatmapUtils.addLog10Data(transformedData, sampleHeaders);
+  // // Get the log transformed data
+  // transformedData = heatmapUtils.addLog10Data(transformedData, sampleHeaders);
 
   // For each feature ID, add a column contining number of samples with detections
   // and add a column containing sum of all sample solumns
@@ -34,7 +34,6 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
   // flatten data for generating three.js heatmap. Each entry is a cell in the heatmap.
   let dataFlat;
   dataFlat = dataUtils.getFlattenedData(
-    // dataWithCounts,
     sortedData,
     sampleHeaders,
     sampleGroups
@@ -168,6 +167,21 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
       graphMesh,
       scene
     );
+
+    // add color gradient legend
+    const redValues = dataFlat
+      .filter((cell) => cell.color === "red")
+      .map((cell) => cell.value);
+    const minValue = Math.min(...redValues);
+    const maxValue = Math.max(...redValues);
+    heatmapUtils.addColorLegend(
+      canvas,
+      dimsObject,
+      graphMesh,
+      minValue,
+      maxValue
+    );
+
     let vertLineObjects = heatmapUtils.getVertLines(
       dimsObject,
       nFeatures,
