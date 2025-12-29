@@ -17,6 +17,10 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
   // get a list of the sorted unique sample names from the csv.
   const sampleGroups = dataUtils.getUniqueSampleHeaders(data);
 
+  // determine if sample names have training underscores
+  const hasTrailingUnderscores =
+    dataUtils.hasTrailingUnderscores(sampleHeaders);
+
   // replace null intensity values with 0
   var rawData = dataUtils.GetTransformedData(data);
 
@@ -155,7 +159,8 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
       horzLineGeo,
       blackMaterial,
       graphMesh,
-      scene
+      scene,
+      hasTrailingUnderscores
     );
 
     // add color gradient legend
@@ -281,7 +286,8 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
           label,
           featureCounts,
           yAxisTooltip,
-          dimsObject
+          dimsObject,
+          hasTrailingUnderscores
         );
       });
 
@@ -417,6 +423,8 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
 
 function loadHeatmap() {
   const csvPathIntensity = "./data/intensity_data.csv";
+  // const csvPathIntensity = "./data/pooled_blood_intensity.csv";
+  // const csvPathIntensity = "./data/WW2DW_intensity.csv";
   createIntensityHeatmap(csvPathIntensity);
 }
 

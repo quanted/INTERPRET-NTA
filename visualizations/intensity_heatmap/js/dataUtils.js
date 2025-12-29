@@ -205,3 +205,19 @@ export function addDetectionCountAndSum(data, sampleHeaders) {
     featureSum: sampleHeaders.reduce((acc, col) => acc + (row[col] || 0), 0),
   }));
 }
+
+/**
+ *
+ * @param {object[]} sampleHeaders List of raw sample headers
+ * @returns {boolean} true if sample headers have trailing underscores.
+ */
+export function hasTrailingUnderscores(sampleHeaders) {
+  let hasTrailingUnderscores = true;
+  sampleHeaders.forEach((header, index) => {
+    // clean sample names by removing underscore suffix
+    if (header[header.length - 1] !== "_") {
+      hasTrailingUnderscores = false;
+    }
+  });
+  return hasTrailingUnderscores;
+}
