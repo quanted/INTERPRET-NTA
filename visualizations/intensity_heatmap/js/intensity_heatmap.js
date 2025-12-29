@@ -232,6 +232,7 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
     // Add toggle button
     heatmapUtils.addToggleButton(graphMesh, canvas, dimsObject, () => {
       isLog10View = !isLog10View;
+      redCellZoomed = false;
 
       // Recalculate data with appropriate transformation
       const dataToUse = isLog10View ? log10Data : rawData;
