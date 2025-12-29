@@ -2,7 +2,7 @@
 function flagSpectra(
   spectrum1,
   spectrum2,
-  mass_window = 0,
+  mass_window = 0, // peaks within this specified mass range of each other will be flagged as m/z match
   window_type = "da",
   peak_threshold = 0
 ) {
