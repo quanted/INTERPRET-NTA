@@ -24,7 +24,6 @@ On VS Code, install the plugin **Live Server (Five Server)**. To run the visuali
 
 This plot shows a heatmap of occurrence intensities from an INTERPRET NTA job. Each column represents a feature, and each row represents a sample. The color intensity of each cell corresponds to the blank-subtracted mean abundance value of the occurrence for a respective sample.
 
-(TODO REPLACE IMAGE)
 ![Static image of heatmap](./resources/static_heatmap.png)
 
 It should be noted that each section below ends with a GIF. It may take a while for these to load depending on network speeds.
@@ -37,17 +36,11 @@ Hovering over the title will display a tooltip with data about the entire plot, 
 
 Hovering over a y-axis label will generate a tooltip that is populated with data about that sample.
 
-(TODO REPLACE IMAGE)
-![On-hover functionality](./resources/onHover01.gif)
-
 ### Zooming and Cell On-Hovers
 
 Due to the high density of data, you can zoom into a given region by clicking and dragging to draw a zoom-box. Letting go of the mouse will zoom the figure into this region, making it easier to mouse-over the cells of interest. At this point clicking and dragging will pan the figure. Hitting Ctrl+Space will zoom the plot back out to the original view, hitting Ctrl+Space again will zoom/pan the figure back to the last view.
 
-Hovering over a cell will tell you the Feature ID, sample name and [TODO REPLACE TEXT: whether that occurrence was a Pass, Fail, or Non-detect. Right below this data within the tooltip you can see more information about how that occurrence passed/failed each QA/QC step. A red X to the left of the step indicates that it failed while a green check indicates that it passed.]
-
-(TODO REPLACE IMAGE)
-![Zooming, panning, and more on-hover](./resources/onHover02-zoom_pan.gif)
+Hovering over a cell will tell you the Feature ID, sample name and feature abundance in the sample.
 
 ## Licensing
 
