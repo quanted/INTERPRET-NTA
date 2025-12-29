@@ -1,6 +1,5 @@
 import * as dataUtils from "./dataUtils.js";
 import * as heatmapUtils from "./heatmapUtils.js";
-
 import * as THREE from "three";
 
 async function createIntensityHeatmap(csvPathIntensity, data = null) {
@@ -12,26 +11,27 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
     console.error("Error loading data:", error);
   }
 
-  // get unique sample headers from the csv.
-  const sampleGroups = dataUtils.getUniqueSampleHeaders(data);
-
+  // get a list of the raw sample column headers from the csv
   const sampleHeaders = data.columns.filter((col) => col !== "Feature ID");
+
+  // get a list of the sorted unique sample names from the csv.
+  const sampleGroups = dataUtils.getUniqueSampleHeaders(data);
 
   // replace null intensity values with 0
   var rawData = dataUtils.GetTransformedData(data);
 
   // Get the log transformed data
-  const log10Data = heatmapUtils.addLog10Data(rawData, sampleHeaders);
+  const log10Data = heatmapUtils.Log10Data(rawData, sampleHeaders);
   var isLog10View = true;
 
-  // For each feature ID, add a column contining number of samples with detections
-  // and add a column containing sum of all sample solumns
-  const dataWithCounts = dataUtils.addDetectionCountAndSum(
+  // For each feature ID, add a column containing the number of samples with intensity values greater than 0
+  // and add a column containing sum abundance of all sample columns
+  const dataWithMeta = dataUtils.addDetectionCountAndSum(
     log10Data,
     sampleHeaders
   );
 
-  const sortedData = dataUtils.sortFeatures(dataWithCounts);
+  const sortedData = dataUtils.sortFeatures(dataWithMeta);
   // flatten data for generating three.js heatmap. Each entry is a cell in the heatmap.
   let dataFlat;
   dataFlat = dataUtils.getFlattenedData(
@@ -39,23 +39,20 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
     sampleHeaders,
     sampleGroups
   );
-  console.log(dataFlat);
 
-  const nFeatures = data.length;
-  const sampleCounts = dataUtils.getSampleCounts(dataFlat);
+  const nFeatures = data.length; // number of unique features in the data
+  const featureCounts = dataUtils.getFeatureCounts(dataFlat); // number of features detected in each sample
 
-  // we need counts for how many cells are red, grey and white
-  let [redCount, greyCount, whiteCount] = dataUtils.getColorCounts(dataFlat);
+  // we need counts for how many cells are colored and white
+  let [coloredCount, whiteCount] = dataUtils.getColorCounts(dataFlat);
 
   // draw heatmap
   drawHeatMap();
 
   function drawHeatMap() {
-    // await new Promise(r => setTimeout(r, 3000));
     // determine number of rows and columns
     const nRows = sampleGroups.length; // number of unique samples including blank
     const nCols = rawData.length; // number of features
-    const nCells = nRows * nCols; // number of total cells, equal to length of dataFlat
 
     // setup graph and cell dims
     const margin = { top: 75, right: 0, bottom: 75, left: 0 };
@@ -97,7 +94,7 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
     const heatmapTitle = document.getElementById("heatmap-title");
     heatmapTitle.style.width = canvas.offsetWidth + "px";
 
-    // set renderer bg color
+    // set renderer background color
     renderer.setClearColor(0xffffff, 1);
 
     // set dims and geometry for heatmap graph, and heatmap cells
@@ -106,10 +103,9 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
 
     const vertLineLimit = 60; // diff in x zoomed coords for showing vertical line separators
 
-    // setup materials (the colors for graph bg, cells and axes)
+    // setup materials (the colors for graph background, cells and axes)
     const [
-      redMaterial,
-      greyMaterial,
+      coloredMaterial,
       whiteMaterial,
       clearMaterial,
       zoomBoxMaterial,
@@ -117,15 +113,10 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
     ] = heatmapUtils.getMaterials();
 
     // create instanced mesh objects, to prevent creating a new mesh for each cell of the heatmap
-    let redMesh = heatmapUtils.createInstancedMesh(
+    let coloredMesh = heatmapUtils.createInstancedMesh(
       cellGeometry,
-      redMaterial,
-      redCount
-    );
-    let greyMesh = heatmapUtils.createInstancedMesh(
-      cellGeometry,
-      greyMaterial,
-      greyCount
+      coloredMaterial,
+      coloredCount
     );
     let whiteMesh = heatmapUtils.createInstancedMesh(
       cellGeometry,
@@ -133,22 +124,20 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
       whiteCount
     );
 
-    redMesh.renderOrder = 998; // ensure redMesh is rendered on top
+    coloredMesh.renderOrder = 998; // ensure coloredMesh is rendered on top
 
     // create a single group for the cell meshes and add to the scene
     const heatmapGroup = new THREE.Group();
-    heatmapGroup.add(redMesh);
-    heatmapGroup.add(greyMesh);
+    heatmapGroup.add(coloredMesh);
     heatmapGroup.add(whiteMesh);
 
     scene.add(heatmapGroup);
 
-    // find cell positions and colors, get red cell instances for animation later
-    const redCellInstances = heatmapUtils.setCellColorAndPos(
+    // find cell positions and colors, get colored cell instances for animation later
+    const coloredCellInstances = heatmapUtils.setCellColorAndPos(
       dataFlat,
       dimsObject,
-      greyMesh,
-      redMesh,
+      coloredMesh,
       whiteMesh
     );
 
@@ -170,11 +159,11 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
     );
 
     // add color gradient legend
-    const redValues = dataFlat
-      .filter((cell) => cell.color === "red")
+    const coloredValues = dataFlat
+      .filter((cell) => cell.color === "colored")
       .map((cell) => cell.value);
-    const minValue = Math.min(...redValues);
-    const maxValue = Math.max(...redValues);
+    const minValue = Math.min(...coloredValues);
+    const maxValue = Math.max(...coloredValues);
     heatmapUtils.addColorLegend(
       canvas,
       dimsObject,
@@ -184,15 +173,14 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
       isLog10View
     );
 
-    function updateHeatmapColors(newDataFlat, redMesh, greyMesh, whiteMesh) {
-      const newRedValues = newDataFlat
-        .filter((cell) => cell.color === "red")
+    function updateHeatmapColors(newDataFlat, coloredMesh, whiteMesh) {
+      const newColoredValues = newDataFlat
+        .filter((cell) => cell.color === "colored")
         .map((cell) => cell.value);
-      const minValue = Math.min(...newRedValues);
-      const maxValue = Math.max(...newRedValues);
+      const minValue = Math.min(...newColoredValues);
+      const maxValue = Math.max(...newColoredValues);
       let dummy = new THREE.Object3D();
-      let redIndex = 0;
-      let greyIndex = 0;
+      let coloredIndex = 0;
       let whiteIndex = 0;
       newDataFlat.forEach((cell) => {
         let x = -(dimsObject.actualWidth / 2) + dimsObject.paddingWidth;
@@ -205,42 +193,38 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
         dummy.position.set(x, y, 0);
         dummy.scale.set(1, 1, 1);
         dummy.updateMatrix();
-        if (cell.color === "grey") {
-          greyMesh.setMatrixAt(greyIndex, dummy.matrix);
-          cell.meshIndex = greyIndex;
-          greyIndex++;
-        } else if (cell.color === "red") {
-          redMesh.setMatrixAt(redIndex, dummy.matrix);
+        if (cell.color === "colored") {
+          coloredMesh.setMatrixAt(coloredIndex, dummy.matrix);
           const color = heatmapUtils.valueToColor(
             cell.value,
             minValue,
             maxValue
           );
-          redMesh.setColorAt(redIndex, color);
-          cell.meshIndex = redIndex;
-          redIndex++;
+          coloredMesh.setColorAt(coloredIndex, color);
+          cell.meshIndex = coloredIndex;
+          coloredIndex++;
         } else if (cell.color === "white") {
           whiteMesh.setMatrixAt(whiteIndex, dummy.matrix);
           cell.meshIndex = whiteIndex;
           whiteIndex++;
         }
       });
-      redMesh.instanceMatrix.needsUpdate = true;
-      redMesh.instanceColor.needsUpdate = true;
+      coloredMesh.instanceMatrix.needsUpdate = true;
+      coloredMesh.instanceColor.needsUpdate = true;
     }
 
     // Add toggle button
     heatmapUtils.addToggleButton(graphMesh, canvas, dimsObject, () => {
       isLog10View = !isLog10View;
-      redCellZoomed = false;
+      coloredCellZoomed = false;
 
       // Recalculate data with appropriate transformation
       const dataToUse = isLog10View ? log10Data : rawData;
-      const dataWithCounts = dataUtils.addDetectionCountAndSum(
+      const dataWithMeta = dataUtils.addDetectionCountAndSum(
         dataToUse,
         sampleHeaders
       );
-      const sortedData = dataUtils.sortFeatures(dataWithCounts);
+      const sortedData = dataUtils.sortFeatures(dataWithMeta);
       const newDataFlat = dataUtils.getFlattenedData(
         sortedData,
         sampleHeaders,
@@ -248,19 +232,13 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
       );
 
       // Update colors and legend
-      updateHeatmapColors(
-        newDataFlat,
-        redMesh,
-        greyMesh,
-        whiteMesh,
-        dimsObject
-      );
+      updateHeatmapColors(newDataFlat, coloredMesh, whiteMesh, dimsObject);
 
-      const newRedValues = newDataFlat
-        .filter((cell) => cell.color === "red")
+      const newColoredValues = newDataFlat
+        .filter((cell) => cell.color === "colored")
         .map((cell) => cell.value);
-      const newMinValue = Math.min(...newRedValues);
-      const newMaxValue = Math.max(...newRedValues);
+      const newMinValue = Math.min(...newColoredValues);
+      const newMaxValue = Math.max(...newColoredValues);
       heatmapUtils.updateColorLegend(newMinValue, newMaxValue, isLog10View);
 
       // Update dataFlat reference for tooltips
@@ -281,16 +259,16 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
     const yAxisTooltip = heatmapUtils.buildYAxisTooltip();
     const tooltip = heatmapUtils.buildTooltip();
 
-    // add event listeners for title (show tooltip on-hover; highlight red cells on click)
+    // add event listeners for title (show tooltip on-hover; highlight colored cells on click)
     const heatmapTitleDiv = document.querySelector(".title");
 
-    var redCellZoomed = false;
+    var coloredCellZoomed = false;
     heatmapTitleDiv.addEventListener("click", (e) => {
-      redCellZoomed = heatmapUtils.clickTitleEvent(
+      coloredCellZoomed = heatmapUtils.clickTitleEvent(
         e,
-        redCellInstances,
-        redMesh,
-        redCellZoomed
+        coloredCellInstances,
+        coloredMesh,
+        coloredCellZoomed
       );
     });
 
@@ -301,7 +279,7 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
         heatmapUtils.mouseenterYAxisLabelEvent(
           e,
           label,
-          sampleCounts,
+          featureCounts,
           yAxisTooltip,
           dimsObject
         );
@@ -313,9 +291,6 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
     });
 
     // now add event listeners for the cells. First set some needed variables
-    var greenCheck = "&#x2705;";
-    var redX = "&#x274c";
-
     let startX, startY, zoomBoxGeometry, zoomBox, line;
     let cachedZoomBox = null;
     let zoomed = false;
@@ -345,9 +320,8 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
         e,
         renderer,
         heatmapGroup,
-        redMesh,
+        coloredMesh,
         whiteMesh,
-        greyMesh,
         mousePos,
         raycaster,
         dataFlat,
@@ -360,14 +334,12 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
         line,
         scene,
         camera,
-        cameraDefaults,
-        redX,
-        greenCheck
+        cameraDefaults
       );
     });
 
     canvas.addEventListener("mouseup", (e) => {
-      [zoomBox, cachedZoomBox, zoomed, redCellZoomed] =
+      [zoomBox, cachedZoomBox, zoomed, coloredCellZoomed] =
         heatmapUtils.mouseupCellEvent(
           e,
           scene,
@@ -377,10 +349,10 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
           orbitControls,
           cachedZoomBox,
           graphMesh,
-          redMesh,
+          coloredMesh,
           zoomed,
-          redCellZoomed,
-          redCellInstances,
+          coloredCellZoomed,
+          coloredCellInstances,
           vertLineObjects,
           vertLineLimit,
           dimsObject
@@ -389,7 +361,7 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
 
     // add event listener to toggle back and forth between last zoom
     document.addEventListener("keydown", async (e) => {
-      [zoomed, redCellZoomed] = await heatmapUtils.keydownDocEvent(
+      [zoomed, coloredCellZoomed] = await heatmapUtils.keydownDocEvent(
         e,
         scene,
         camera,
@@ -402,9 +374,9 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
         vertLineLimit,
         dimsObject,
         cachedOrbitControl,
-        redMesh,
-        redCellInstances,
-        redCellZoomed
+        coloredMesh,
+        coloredCellInstances,
+        coloredCellZoomed
       );
     });
 

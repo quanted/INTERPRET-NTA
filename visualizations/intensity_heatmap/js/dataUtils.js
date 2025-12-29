@@ -22,13 +22,13 @@ export async function getIntensityData(fileUrl) {
 export function getUniqueHeaders(dataArr) {
   // iterate over all keys and store unique keys
   let uniqueHeaders = ["Feature ID"];
-  let data = [dataArr[0]]; // only need to check the first row
   Object.keys(dataArr[0]).forEach((key) => {
+    // only need to check the first row
     // iterate over column headers
     if (!uniqueHeaders.includes(key)) {
       // let strippedKey = key.replace("BlankSub Mean ", "").slice(0, -1); // remove the underscore at the end
-      let strippedKey = key.replace("BlankSub Mean ", "");
-      uniqueHeaders.push(strippedKey);
+      let strippedKey = key.replace("BlankSub Mean ", ""); // Remove 'BlankSub Mean' prefix from the sample name
+      uniqueHeaders.push(strippedKey); // Add each sample name to the list of unique headers.
     }
   });
 
@@ -37,17 +37,16 @@ export function getUniqueHeaders(dataArr) {
 
 /**
  * Returns the unique sample header columns from dataArr.
- * This isolates the sample columns from the statistics columns.
+ * This isolates the sample columns from the Feature ID column.
  *
  * @param {object[]} dataArr The array of object who each represent one row of data.
  * @returns {string[]} An array of the unique sample header column names.
  */
 export function getUniqueSampleHeaders(dataArr) {
-  // get all headers grouped together by similarity
-
+  // get all headers
   let allHeaders = getUniqueHeaders(dataArr);
 
-  // clean headers to only have the header names
+  // clean headers to only have the sample names
   let sampleGroups = allHeaders.filter((item) => item != "Feature ID");
 
   // order our samples. pooled last, and anything in form <number><unit> should be chronological (not alphabetical)
@@ -80,8 +79,8 @@ export function getUniqueSampleHeaders(dataArr) {
 
 /**
  *
- * @param {object[]} data The full data structure imported from the webapp output, containing all columns & MRL values.
- * @returns {object[]} The transformed data structure after sorting by # of passed samples,
+ * @param {object[]} data The full data structure imported from the webapp output, containing all columns
+ * @returns {object[]} The transformed data structure after replacing null values with 0,
  */
 export function GetTransformedData(data) {
   const transformedData = data.map((row) =>
@@ -96,10 +95,14 @@ export function GetTransformedData(data) {
   return transformedData;
 }
 
+/**
+ *
+ * @param {object[]} data Data structure containing all sample and metadata columns
+ * @returns {object[]} The data structure sorted in order of features occurring in least to most number of samples.
+ */
 export function sortFeatures(data) {
-  // sort data by number of detects present
-  // const sortedData = data.sort((a, b) => a.featureSum - b.featureSum);
-  const sortedData = data.sort((a, b) => a.num_detections - b.num_detections);
+  // const sortedData = data.sort((a, b) => a.featureSum - b.featureSum); // sort data by total feature abundance in all samples.
+  const sortedData = data.sort((a, b) => a.num_detections - b.num_detections); // sort data by number of detects present
   return sortedData;
 }
 
@@ -107,8 +110,8 @@ export function sortFeatures(data) {
  * This is the final step in data processing before generating the heatmap itself. Returns a flattened form of our
  * preprocessed data in the form of [{featureIndex: x, sampleIndex: y, value: z}, ...] with length nFeatures*nSamples.
  *
- * @param {object[]} data The full data structure imported from the webapp output, containing all columns & MRL values.
- * @returns {object[]} An array of object containing the feature index, sample index and value (-1, 0, 1) for
+ * @param {object[]} data The cleaned and sorted data structure , containing all columns.
+ * @returns {object[]} An array of object containing the feature index, sample index and intensity value for
  * each sample to be plotted on the heatmap.
  */
 export function getFlattenedData(data, sampleHeaders, sampleGroups) {
@@ -126,7 +129,7 @@ export function getFlattenedData(data, sampleHeaders, sampleGroups) {
           featureIndex: featureIndex,
           sampleIndex: sampleIndex,
           value: intensityValue,
-          color: intensityValue > 0 ? "red" : "white",
+          color: intensityValue > 0 ? "colored" : "white",
           sampleName: s_name,
           featureId: feature["Feature ID"],
           featureSum: feature["featureSum"],
@@ -139,56 +142,66 @@ export function getFlattenedData(data, sampleHeaders, sampleGroups) {
   return dataFlat;
 }
 
-export function getSampleCounts(dataFlat) {
-  let sampleCounts = {};
+/**
+ *
+ * @param {object[]} dataFlat The flattened data structure of heatmap cells
+ * @returns {object[]} An array of object containing the number of features present in each sample.
+ */
+export function getFeatureCounts(dataFlat) {
+  let featureCounts = {};
   dataFlat.forEach((item, index) => {
     // ensure sample name is present
     const sampleName = item["sampleName"];
-    if (!Object.keys(sampleCounts).includes(sampleName)) {
-      sampleCounts[sampleName] = {
+    if (!Object.keys(featureCounts).includes(sampleName)) {
+      featureCounts[sampleName] = {
         nPresent: 0,
       };
     }
 
-    // add counts
-    const detected = item["value"] > 1 ? true : false;
+    // count the number cells for the current sample for which intensity value is greater than 0
+    const detected = item["value"] > 0 ? true : false;
     if (detected) {
-      sampleCounts[sampleName]["nPresent"]++;
+      featureCounts[sampleName]["nPresent"]++;
     }
   });
 
-  return sampleCounts;
+  return featureCounts;
 }
 
 /**
- * Get the occurrence counts for pass, fail and non-detects.
+ * Get the number of detected (colored) and non-detected (white) occurrences
  *
  * @param {object[]} dataFlat Our cleaned data structure array with one object for each occurrence.
- * @returns {number[]} The number of occurrences who failed (red), are non-detects (grey), and passed (white).
+ * @returns {number[]} The number of occurrences that have an intensity value (colored) and are not present (white).
  */
 export function getColorCounts(dataFlat) {
-  let redCount = 0;
-  let greyCount = 0;
+  let coloredCount = 0;
   let whiteCount = 0;
   dataFlat.forEach((instance, index) => {
-    if (instance.color === "red") {
-      redCount++;
-    } else if (instance.color === "grey") {
-      greyCount++;
+    if (instance.color === "colored") {
+      coloredCount++;
     } else if (instance.color === "white") {
       whiteCount++;
     }
   });
 
-  return [redCount, greyCount, whiteCount];
+  return [coloredCount, whiteCount];
 }
 
+/**
+ *
+ * @param {object[]} data Cleaned and sorted (but unflattened) dataset
+ * @param {object[]} sampleHeaders List of raw sample headers
+ * @returns {object[]} Returns the data structure with metadata columns added
+ */
 export function addDetectionCountAndSum(data, sampleHeaders) {
   return data.map((row) => ({
     ...row,
+    // Add a column containing the number of samples in which each feature occurrs.
     num_detections: sampleHeaders.filter(
       (col) => row[col] !== null && row[col] !== 0
     ).length,
+    // Add a column containing the total summed abundance accross all samples for each feature.
     featureSum: sampleHeaders.reduce((acc, col) => acc + (row[col] || 0), 0),
   }));
 }

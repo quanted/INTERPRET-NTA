@@ -167,20 +167,15 @@ export function getGeometries(dimsObject) {
  * THREE.LineBasicMaterial]} An array of Material objects for the different cells, the graph and lines.
  */
 export function getMaterials(
-  maxIntensityC = 0xf64f00,
-  nonDetectC = 0xc7c8c9,
   minIntensityC = 0xffffff,
   zoomBoxColor = 0x000000
 ) {
-  const redMaterial = new THREE.MeshBasicMaterial({
+  const coloredMaterial = new THREE.MeshBasicMaterial({
     // color: maxIntensityC,
     // opacity: 0.5,
     // transparent: true,
     color: 0xffffff, // Set to white so instance colors show through
     // vertexColors: true, // Enable per-instance coloring
-  });
-  const greyMaterial = new THREE.MeshBasicMaterial({
-    color: nonDetectC,
   });
   const whiteMaterial = new THREE.MeshBasicMaterial({
     color: minIntensityC,
@@ -194,8 +189,7 @@ export function getMaterials(
   const zoomBoxMaterial = new THREE.LineBasicMaterial({ color: zoomBoxColor }); // 0x00ffff
 
   return [
-    redMaterial,
-    greyMaterial,
+    coloredMaterial,
     whiteMaterial,
     clearMaterial,
     zoomBoxMaterial,
@@ -215,10 +209,19 @@ export function createInstancedMesh(geometry, material, n) {
   return new THREE.InstancedMesh(geometry, material, n);
 }
 
+/**
+ * Creates a THREE.Color object on the yellow to orange gradient corresponding to intensity value
+ *
+ * @param {number} value The inensity value of the cell
+ * @param {number} minValue The smallest non-zero intensity value accross all occurrences in the data
+ * @param {number} maxValue The largest intensity value accross all occurrences in the data
+ * @returns {THREE.Color}
+ */
 export function valueToColor(value, minValue, maxValue) {
   // Normalize value to 0-1 range
   const normalized = (value - minValue) / (maxValue - minValue);
 
+  // set the lightest and darkest colors on the gradient
   const lightYellow = { r: 0.96, g: 0.95, b: 0.15 };
   const darkOrange = { r: 1.0, g: 0.2, b: 0.0 };
 
@@ -232,37 +235,34 @@ export function valueToColor(value, minValue, maxValue) {
 
 /**
  * Determines and sets the positions and colors for each occurrence (cell) and returns an array of objects
- * containing data about each red cell to be used for animations later in code.
+ * containing data about each colored cell to be used for animations later in code.
  *
  * @param {object[]} dataFlat Our cleaned data structure with one object per occurrence.
  * @param {object} dimsObject The object containing the widths/heights of graph and cells.
- * @param {THREE.InstancedMesh} greyMesh Mesh for non-detects.
- * @param {THREE.InstancedMesh} redMesh Mesh for fails.
- * @param {THREE.InstancedMesh} whiteMesh Mesh for passes.
- * @returns {object[]} An object with index and location data for the red cells, to be used for animations.
+ * @param {THREE.InstancedMesh} coloredMesh Mesh for colored cells.
+ * @param {THREE.InstancedMesh} whiteMesh Mesh for cells with 0 intensity.
+ * @returns {object[]} An object with index and location data for the colored cells, to be used for animations.
  */
 export function setCellColorAndPos(
   dataFlat,
   dimsObject,
-  greyMesh,
-  redMesh,
+  coloredMesh,
   whiteMesh
 ) {
   // Find min and max values for color scaling
 
-  const redValues = dataFlat
-    .filter((cell) => cell.color === "red")
+  const coloredValues = dataFlat
+    .filter((cell) => cell.color === "colored")
     .map((cell) => cell.value);
 
-  const minValue = Math.min(...redValues);
-  const maxValue = Math.max(...redValues);
+  const minValue = Math.min(...coloredValues);
+  const maxValue = Math.max(...coloredValues);
 
   // setup needed variables
   let dummy = new THREE.Object3D();
-  let redIndex = 0;
-  let greyIndex = 0;
+  let coloredIndex = 0;
   let whiteIndex = 0;
-  let redCellInstances = []; // for animating the red cells later
+  let coloredCellInstances = []; // for animating the colored cells later
 
   // iterate over data to calculate positions and colors for each cell
   dataFlat.forEach((cell, index) => {
@@ -279,29 +279,24 @@ export function setCellColorAndPos(
     dummy.updateMatrix();
 
     // add cells to appropriate mesh based on color value, add needed data
-    if (cell.color === "grey") {
-      // if non-detect (grey)
-      greyMesh.setMatrixAt(greyIndex, dummy.matrix);
-      cell.meshIndex = greyIndex;
-      greyIndex++;
-    } else if (cell.color === "red") {
-      // if fail (red)
-      redMesh.setMatrixAt(redIndex, dummy.matrix);
+    if (cell.color === "colored") {
+      // if has intensity value > 0 (colored)
+      coloredMesh.setMatrixAt(coloredIndex, dummy.matrix);
 
       // Set the color for this instance
       const color = valueToColor(cell.value, minValue, maxValue);
 
-      redMesh.setColorAt(redIndex, color);
+      coloredMesh.setColorAt(coloredIndex, color);
 
-      cell.meshIndex = redIndex;
-      redCellInstances.push({
-        index: redIndex,
+      cell.meshIndex = coloredIndex;
+      coloredCellInstances.push({
+        index: coloredIndex,
         scaleX: 1,
         scaleY: 1,
         x: x,
         y: y,
-      }); // for animating red cells
-      redIndex++;
+      }); // for animating colored cells
+      coloredIndex++;
     } else if (cell.color === "white") {
       // if pass (white)
       whiteMesh.setMatrixAt(whiteIndex, dummy.matrix);
@@ -310,11 +305,11 @@ export function setCellColorAndPos(
     }
   });
 
-  // this line is needed to animate the red cells
-  redMesh.instanceMatrix.needsUpdate = true;
-  redMesh.instanceColor.needsUpdate = true;
+  // this line is needed to animate the colored cells
+  coloredMesh.instanceMatrix.needsUpdate = true;
+  coloredMesh.instanceColor.needsUpdate = true;
 
-  return redCellInstances;
+  return coloredCellInstances;
 }
 
 /**
@@ -326,40 +321,14 @@ export function setCellColorAndPos(
  * @param {THREE.Mesh} graphMesh The Mesh that is made to hold title and axes labels.
  */
 export function addTitle(canvas, dimsObject, graphMesh) {
-  // create and style div
-  // const titleDiv = document.createElement("div");
   const titleDiv = document.getElementById("heatmap-title");
-  // titleDiv.style.whiteSpace = "pre";
   titleDiv.className = "title";
-  // titleDiv.style.color = "black";
-  // titleDiv.style.fontSize = "30px";
-  // titleDiv.style.backgroundColor = "transparent";
-  // titleDiv.style.width = "auto";
-  // titleDiv.style.display = "inline-block";
 
   // add the innerHTML
   titleDiv.innerHTML = `Occurrence Intensity Heatmap\n`;
-  // titleDiv.innerHTML += `<span class="subTitle">Sample Rep. Threshold: ${thresholdData.minReplicateHitsPercent}%&emsp; `;
-  // titleDiv.innerHTML += `<span class="subTitle">Blank Rep. Threshold: ${thresholdData.minReplicateBlankHitPercent}%&emsp; `;
-  // titleDiv.innerHTML += `<span class="subTitle">CV Threshold: ${thresholdData.maxReplicateCvValue}&emsp; `;
-  // titleDiv.innerHTML += `<span class="subTitle">MRL Multiplier: ${thresholdData.MrlMult}</span>`;
 
   // set the position
   const canvRect = canvas.getBoundingClientRect();
-
-  // let titleX =
-  //   -(dimsObject.actualWidth / 2) + canvRect.left + dimsObject.paddingWidth; // shift to left of graph
-  // titleX += dimsObject.width / 2; // center to the actual graph
-
-  // let titleY = dimsObject.actualHeight; // value of 0 sets top to be `height` below graph?? shift up by this amount
-  // titleY += dimsObject.height / 2 + dimsObject.paddingHeight * 0.8; // shift to top of graph, account for padding
-
-  // const titleLabel = new CSS2DObject(titleDiv);
-  // titleLabel.position.set(titleX, titleY, 0);
-
-  // // add to mesh
-  // graphMesh.add(titleLabel);
-  // titleLabel.layers.set(0);
 }
 
 /**
@@ -578,29 +547,29 @@ export function buildTooltip() {
 }
 
 /**
- * Handles the click event for title. If ctrl is held, will cause red cells to spin one full rotation.
- * If ctrl is not held, it will toggle between "zooming" the red cells (increasing their width by some factor).
+ * Handles the click event for title. If ctrl is held, will cause colored cells to spin one full rotation.
+ * If ctrl is not held, it will toggle between "zooming" the colored cells (increasing their width by some factor).
  *
  * @param {MouseEvent} event The mouse event object invoked by the click event.
- * @param {object[]} redCellInstances An object with index and location data for the red cells.
- * @param {THREE.InstancedMesh} redMesh The red mesh containing failed occurrence cells.
- * @param {boolean} redCellZoomed True if red cells are "zoomed", otherwise false.
- * @returns {boolean} Generally !redCellZoomed -- whether or not the red cells are now "zoomed".
+ * @param {object[]} coloredCellInstances An object with index and location data for the colored cells.
+ * @param {THREE.InstancedMesh} coloredMesh The colored mesh containing occurrence cells with intensity > 0.
+ * @param {boolean} coloredCellZoomed True if colored cells are "zoomed", otherwise false.
+ * @returns {boolean} Generally !coloredCellZoomed -- whether or not the colored cells are now "zoomed".
  */
 export function clickTitleEvent(
   event,
-  redCellInstances,
-  redMesh,
-  redCellZoomed
+  coloredCellInstances,
+  coloredMesh,
+  coloredCellZoomed
 ) {
   let dummy = new THREE.Object3D();
 
   // if ctrl is held, spinny animation
   if (event.ctrlKey) {
-    // iterate over each redCell instance and apply tween individually
-    redCellInstances.forEach((instance) => {
+    // iterate over each coloredCell instance and apply tween individually
+    coloredCellInstances.forEach((instance) => {
       // first half of rotation while getting big
-      const redCellTweenIn = new TWEEN.Tween({
+      const coloredCellTweenIn = new TWEEN.Tween({
         scaleX: instance.scaleX,
         scaleY: instance.scaleY,
         rotX: 0,
@@ -618,12 +587,12 @@ export function clickTitleEvent(
           dummy.scale.set(updated.scaleX, updated.scaleY, 1);
           dummy.rotation.set(0, 0, updated.rotX);
           dummy.updateMatrix();
-          redMesh.setMatrixAt(instance.index, dummy.matrix);
-          redMesh.instanceMatrix.needsUpdate = true;
+          coloredMesh.setMatrixAt(instance.index, dummy.matrix);
+          coloredMesh.instanceMatrix.needsUpdate = true;
         });
 
       // last half of rotation while going back to original size
-      const redCellTweenOut = new TWEEN.Tween({
+      const coloredCellTweenOut = new TWEEN.Tween({
         scaleX: instance.scaleX * 30,
         scaleY: instance.scaleY * 2,
         rotX: Math.PI,
@@ -641,25 +610,25 @@ export function clickTitleEvent(
           dummy.scale.set(updated.scaleX, updated.scaleY, 1);
           dummy.rotation.set(0, 0, updated.rotX);
           dummy.updateMatrix();
-          redMesh.setMatrixAt(instance.index, dummy.matrix);
-          redMesh.instanceMatrix.needsUpdate = true;
+          coloredMesh.setMatrixAt(instance.index, dummy.matrix);
+          coloredMesh.instanceMatrix.needsUpdate = true;
         });
 
       // chain the tweens together and run
-      redCellTweenIn.chain(redCellTweenOut);
-      redCellTweenIn.start();
+      coloredCellTweenIn.chain(coloredCellTweenOut);
+      coloredCellTweenIn.start();
 
       // if we were zoomed in, set to zoomed out.
-      if (redCellZoomed) {
-        redCellZoomed = !redCellZoomed;
+      if (coloredCellZoomed) {
+        coloredCellZoomed = !coloredCellZoomed;
       }
     });
   } else {
-    // if ctrl not held, toggle red cell width increase
-    if (!redCellZoomed) {
+    // if ctrl not held, toggle colored cell width increase
+    if (!coloredCellZoomed) {
       // "zoom" into red cells
-      redCellInstances.forEach((instance) => {
-        const redCellTween = new TWEEN.Tween({
+      coloredCellInstances.forEach((instance) => {
+        const coloredCellTween = new TWEEN.Tween({
           scaleX: instance.scaleX,
           scaleY: instance.scaleY,
           rotX: 0,
@@ -673,16 +642,16 @@ export function clickTitleEvent(
             dummy.scale.set(updated.scaleX, updated.scaleY, 1);
             dummy.rotation.set(0, 0, updated.rotX);
             dummy.updateMatrix();
-            redMesh.setMatrixAt(instance.index, dummy.matrix);
-            redMesh.instanceMatrix.needsUpdate = true;
+            coloredMesh.setMatrixAt(instance.index, dummy.matrix);
+            coloredMesh.instanceMatrix.needsUpdate = true;
           })
           .start();
       });
-      redCellZoomed = !redCellZoomed;
+      coloredCellZoomed = !coloredCellZoomed;
     } else {
-      // "zoom" out of red cells
-      redCellInstances.forEach((instance) => {
-        const redCellTween = new TWEEN.Tween({
+      // "zoom" out of colored cells
+      coloredCellInstances.forEach((instance) => {
+        const coloredCellTween = new TWEEN.Tween({
           scaleX: instance.scaleX * 22,
           scaleY: instance.scaleY,
           rotX: 0,
@@ -696,16 +665,16 @@ export function clickTitleEvent(
             dummy.scale.set(updated.scaleX, updated.scaleY, 1);
             dummy.rotation.set(0, 0, updated.rotX);
             dummy.updateMatrix();
-            redMesh.setMatrixAt(instance.index, dummy.matrix);
-            redMesh.instanceMatrix.needsUpdate = true;
+            coloredMesh.setMatrixAt(instance.index, dummy.matrix);
+            coloredMesh.instanceMatrix.needsUpdate = true;
           })
           .start();
       });
-      redCellZoomed = !redCellZoomed;
+      coloredCellZoomed = !coloredCellZoomed;
     }
   }
 
-  return redCellZoomed;
+  return coloredCellZoomed;
 }
 
 /**
@@ -720,12 +689,12 @@ export function clickTitleEvent(
 export function mouseenterYAxisLabelEvent(
   event,
   label,
-  sampleCounts,
+  featureCounts,
   yAxisTooltip,
   dimsObject
 ) {
   const sampleName = label.innerHTML;
-  const sampleData = sampleCounts[sampleName + "_"];
+  const sampleData = featureCounts[sampleName + "_"];
 
   if (sampleData) {
     yAxisTooltip.innerHTML = `<div style="background-color: white; color: black; padding: 5px; border-radius: 3px; border: solid 1px white;"><b>Sample Name</b>: ${sampleName}</div><span>${sampleData["nPresent"]} features detected</span>`;
@@ -776,9 +745,8 @@ export function mousemoveCellEvent(
   event,
   renderer,
   heatmapGroup,
-  redMesh,
+  coloredMesh,
   whiteMesh,
-  greyMesh,
   mousePos,
   raycaster,
   dataFlat,
@@ -791,9 +759,7 @@ export function mousemoveCellEvent(
   line,
   scene,
   camera,
-  cameraDefaults,
-  redX,
-  greenCheck
+  cameraDefaults
 ) {
   // first handle on-hover tooltips, get mouse position
   const rect = renderer.domElement.getBoundingClientRect();
@@ -811,17 +777,13 @@ export function mousemoveCellEvent(
 
     // determine which mesh was intersected
     let cellData;
-    if (intersectedObject === redMesh) {
+    if (intersectedObject === coloredMesh) {
       cellData = dataFlat.find(
-        (cell, i) => cell.color === "red" && cell.meshIndex === instanceId
+        (cell, i) => cell.color === "colored" && cell.meshIndex === instanceId
       );
     } else if (intersectedObject === whiteMesh) {
       cellData = dataFlat.find(
         (cell, i) => cell.color === "white" && cell.meshIndex === instanceId
-      );
-    } else if (intersectedObject === greyMesh) {
-      cellData = dataFlat.find(
-        (cell, i) => cell.color === "grey" && cell.meshIndex === instanceId
       );
     }
 
@@ -921,10 +883,10 @@ export function mouseupCellEvent(
   orbitControls,
   cachedZoomBox,
   graphMesh,
-  redMesh,
+  coloredMesh,
   zoomed,
-  redCellZoomed,
-  redCellInstances,
+  coloredCellZoomed,
+  coloredCellInstances,
   vertLineObjects,
   vertLineLimit,
   dimsObject
@@ -957,10 +919,10 @@ export function mouseupCellEvent(
 
     graphMesh.visible = false;
 
-    if (redCellZoomed) {
+    if (coloredCellZoomed) {
       let dummy = new THREE.Object3D();
-      redCellInstances.forEach((instance) => {
-        const redCellTween = new TWEEN.Tween({
+      coloredCellInstances.forEach((instance) => {
+        const coloredCellTween = new TWEEN.Tween({
           scaleX: instance.scaleX * 22,
           scaleY: instance.scaleY,
           rotX: 0,
@@ -974,16 +936,16 @@ export function mouseupCellEvent(
             dummy.scale.set(updated.scaleX, updated.scaleY, 1);
             dummy.rotation.set(0, 0, updated.rotX);
             dummy.updateMatrix();
-            redMesh.setMatrixAt(instance.index, dummy.matrix);
-            redMesh.instanceMatrix.needsUpdate = true;
+            coloredMesh.setMatrixAt(instance.index, dummy.matrix);
+            coloredMesh.instanceMatrix.needsUpdate = true;
           })
           .start();
       });
-      redCellZoomed = !redCellZoomed;
+      coloredCellZoomed = !coloredCellZoomed;
     }
   }
 
-  return [zoomBox, cachedZoomBox, zoomed, redCellZoomed];
+  return [zoomBox, cachedZoomBox, zoomed, coloredCellZoomed];
 }
 
 export async function keydownDocEvent(
@@ -999,9 +961,9 @@ export async function keydownDocEvent(
   vertLineLimit,
   dimsObject,
   cachedOrbitControl,
-  redMesh,
-  redCellInstances,
-  redCellZoomed
+  coloredMesh,
+  coloredCellInstances,
+  coloredCellZoomed
 ) {
   // reset zoom functionality
   if (event.ctrlKey && event.code === "Space") {
@@ -1026,11 +988,11 @@ export async function keydownDocEvent(
       zoomed = !zoomed;
       graphMesh.visible = true;
     } else if (cachedZoomBox) {
-      // unzoom red cells if zoomed
-      if (redCellZoomed) {
+      // unzoom colored cells if zoomed
+      if (coloredCellZoomed) {
         let dummy = new THREE.Object3D();
-        redCellInstances.forEach((instance) => {
-          const redCellTween = new TWEEN.Tween({
+        coloredCellInstances.forEach((instance) => {
+          const coloredCellTween = new TWEEN.Tween({
             scaleX: instance.scaleX * 22,
             scaleY: instance.scaleY,
             rotX: 0,
@@ -1044,12 +1006,12 @@ export async function keydownDocEvent(
               dummy.scale.set(updated.scaleX, updated.scaleY, 1);
               dummy.rotation.set(0, 0, updated.rotX);
               dummy.updateMatrix();
-              redMesh.setMatrixAt(instance.index, dummy.matrix);
-              redMesh.instanceMatrix.needsUpdate = true;
+              coloredMesh.setMatrixAt(instance.index, dummy.matrix);
+              coloredMesh.instanceMatrix.needsUpdate = true;
             })
             .start();
         });
-        redCellZoomed = !redCellZoomed;
+        coloredCellZoomed = !coloredCellZoomed;
       }
 
       // unzoom camera
@@ -1073,7 +1035,7 @@ export async function keydownDocEvent(
     }
   }
 
-  return [zoomed, redCellZoomed];
+  return [zoomed, coloredCellZoomed];
 }
 
 export async function zoomTween(
@@ -1139,7 +1101,14 @@ export async function zoomTween(
   }
 }
 
-export function addLog10Data(data, sampleHeaders) {
+/**
+ * converts raw intensity values to log10 intensity values.
+ *
+ * @param {object[]} data data scructure containing raw intensity values
+ * @param {string[]} sampleHeaders list of raw sample headers
+ * @returns {object[]} data structure with raw intensity values conterted to log10 values
+ */
+export function Log10Data(data, sampleHeaders) {
   return data.map((row) => {
     const newRow = { ...row };
 
@@ -1151,6 +1120,15 @@ export function addLog10Data(data, sampleHeaders) {
   });
 }
 
+/**
+ * Adds the color gradient legend to the canvas
+ *
+ * @param {HTMLCanvasElement} canvas The canvas object that holds the heatmap.
+ * @param {object} dimsObject The object containing the graph/cell dims.
+ * @param {THREE.Mesh} graphMesh The graph mesh used to hold titles, labels, etc.
+ * @param {number} minValue The smallest non-zero intensity value accross all occurrences in the data
+ * @param {number} maxValue The largest intensity value accross all occurrences in the data
+ */
 export function addColorLegend(
   canvas,
   dimsObject,
@@ -1215,6 +1193,14 @@ export function addColorLegend(
   legendLabel.layers.set(0);
 }
 
+/**
+ * Adds button to toggle between raw intensity values and log10 intensity values.
+ *
+ * @param {THREE.Mesh} graphMesh The graph mesh used to hold titles, labels, etc.
+ * @param {HTMLCanvasElement} canvas The canvas object that holds the heatmap.
+ * @param {object} dimsObject The object containing the graph/cell dims.
+ * @param {function} onToggle The function defining toggle action
+ */
 export function addToggleButton(graphMesh, canvas, dimsObject, onToggle) {
   const buttonDiv = document.createElement("div");
   buttonDiv.id = "toggleButton";
@@ -1241,7 +1227,6 @@ export function addToggleButton(graphMesh, canvas, dimsObject, onToggle) {
   function onClick() {
     if (button.textContent === "Toggle: Log10 → Raw") {
       button.textContent = "Toggle: Raw → Log10";
-      console.log("clicked");
     } else {
       button.textContent = "Toggle: Log10 → Raw";
     }
@@ -1273,6 +1258,13 @@ export function addToggleButton(graphMesh, canvas, dimsObject, onToggle) {
   buttonLabel.layers.set(0);
 }
 
+/**
+ * Updates the color gradient legend with new min and max values depending on whether raw or log10 data is used
+ *
+ * @param {number} minValue The smallest non-zero intensity value accross all occurrences in the data
+ * @param {number} maxValue The largest intensity value accross all occurrences in the data
+ * @param {boolean} isLog10 true if heatmap is currently showing log10 values.
+ */
 export function updateColorLegend(minValue, maxValue, isLog10) {
   const legendDiv = document.getElementById("intensityLegend");
 
