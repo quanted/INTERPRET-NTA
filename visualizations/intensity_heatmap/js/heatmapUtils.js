@@ -698,6 +698,7 @@ export function mouseenterYAxisLabelEvent(
   hasTrailingUnderscores
 ) {
   const sampleName = label.innerHTML;
+
   const sampleData = hasTrailingUnderscores
     ? featureCounts[sampleName + "_"]
     : featureCounts[sampleName];
@@ -765,7 +766,8 @@ export function mousemoveCellEvent(
   line,
   scene,
   camera,
-  cameraDefaults
+  cameraDefaults,
+  hasTrailingUnderscores
 ) {
   // first handle on-hover tooltips, get mouse position
   const rect = renderer.domElement.getBoundingClientRect();
@@ -795,6 +797,10 @@ export function mousemoveCellEvent(
 
     // display info box
     if (cellData) {
+      const sampleName = hasTrailingUnderscores
+        ? cellData.sampleName.slice(0, -1)
+        : cellData.sampleName;
+
       const heatmapElement = document.getElementById("heatmap");
       const heatmapRect = heatmapElement.getBoundingClientRect();
       const heatmapTop = heatmapRect.top + window.scrollY + 80;
@@ -802,13 +808,11 @@ export function mousemoveCellEvent(
         heatmapRect.left + heatmapRect.width + window.scrollX + 5;
       tooltip.innerHTML = `<div style="background-color: white; color: black; padding: 5px; border-radius: 3px; border: solid 1px white; margin-bottom: 0px"><b>Feature ID</b>: ${
         cellData.featureId
-      }\n<b>Sample Name</b>: ${
-        cellData.sampleName
-      }\n<b>Intensity</b>: <span style="color: black; padding: ${
+      }\n<b>Sample Name</b>: ${sampleName}\n<b>Intensity</b>: <span style="color: black; padding: ${
         cellData.color === "white" ? "1px 8px" : "1px"
-      }; border-radius: 3px; margin-top: 4px;">${
-        cellData["value"]
-      }</span></div>This feature occurs in \n${
+      }; border-radius: 3px; margin-top: 4px;">${cellData.value.toFixed(
+        2
+      )}</span></div>This feature occurs in \n${
         cellData["num_detections"]
       } sample(s)`;
       tooltip.style.left = heatmapLeft + "px";

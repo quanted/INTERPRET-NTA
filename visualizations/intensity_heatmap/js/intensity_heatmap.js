@@ -340,7 +340,8 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
         line,
         scene,
         camera,
-        cameraDefaults
+        cameraDefaults,
+        hasTrailingUnderscores
       );
     });
 
