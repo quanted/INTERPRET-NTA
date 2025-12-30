@@ -22,7 +22,9 @@ On VS Code, install the plugin **Live Server (Five Server)**. To run the visuali
 
 ## Functionality
 
-This plot shows a heatmap of occurrence intensities from an INTERPRET NTA job. Each column represents a feature, and each row represents a sample. The color intensity of each cell corresponds to the blank-subtracted mean abundance value of the occurrence for a respective sample.
+This plot shows a heatmap of occurrence intensities from an INTERPRET NTA job.
+Ths input file is the INTERPRET_NTA_QAQC.xlsx file from an INTERPRET NTA job output.
+Each column represents a feature, and each row represents a sample. The color intensity of each cell corresponds to the blank-subtracted mean abundance value of the occurrence for a respective sample.
 
 ![Static image of heatmap](./resources/static_heatmap.png)
 

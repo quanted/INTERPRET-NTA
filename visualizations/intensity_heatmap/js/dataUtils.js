@@ -1,17 +1,58 @@
-export async function getIntensityData(fileUrl) {
+// ~~~~ UNCOMMENT BELOW WHEN USING CSV FILE ~~~~~~~~~
+// export async function getIntensityData(fileUrl) {
+//   try {
+//     // Load and parse the CSV file
+//     const data = await d3.csv(fileUrl, d3.autoType);
+
+//     // d3.csv automatically parses the CSV into an array of objects
+//     // where each object represents a row with keys as column headers
+
+//     return data;
+//   } catch (error) {
+//     console.error("Error loading CSV:", error);
+//     throw error;
+//   }
+// }
+// ~~~~ UNCOMMENT ABOVE WHEN USING CSV FILE ~~~~~~~~~
+
+// ~~~~ UNCOMMENT BELOW WHEN USING XLSX FILE ~~~~~~~~~
+/**
+ * @param {reader.WorkBook} file WorkBook
+ * @returns {object[]} An array of objects.
+ */
+export function getIntensityData(file) {
   try {
-    // Load and parse the CSV file
-    const data = await d3.csv(fileUrl, d3.autoType);
+    // now store the necessary columns from the "Final Occurrence Matrix" sheet
+    const sheetName = "Final Occurrence Matrix";
+    // Does not matter if sheetName is missing
+    const data = XLSX.utils.sheet_to_json(file.Sheets[sheetName], {
+      defval: "",
+    });
 
-    // d3.csv automatically parses the CSV into an array of objects
-    // where each object represents a row with keys as column headers
+    const keepColumns = Object.keys(data[0]).filter(
+      (col) => col === "Feature ID" || col.startsWith("BlankSub Mean")
+    );
 
-    return data;
+    const filteredData = data.map((row) =>
+      Object.fromEntries(keepColumns.map((col) => [col, row[col]]))
+    );
+
+    filteredData.forEach((d) => {
+      for (const key in d) {
+        if (key.startsWith("BlankSub Mean")) {
+          d[key] = Number(d[key]);
+        }
+      }
+    });
+    filteredData.columns = Object.keys(filteredData[0]);
+
+    return filteredData;
   } catch (error) {
-    console.error("Error loading CSV:", error);
+    console.error("Error loading XLSX:", error);
     throw error;
   }
 }
+// ~~~~ UNCOMMENT ABOVE WHEN USING XLSX FILE ~~~~~~~~~
 
 /**
  * Returns a list of unique headers. Note that these are not just the sample headers.

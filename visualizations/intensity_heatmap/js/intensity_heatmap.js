@@ -2,11 +2,11 @@ import * as dataUtils from "./dataUtils.js";
 import * as heatmapUtils from "./heatmapUtils.js";
 import * as THREE from "three";
 
-async function createIntensityHeatmap(csvPathIntensity, data = null) {
-  // read in and parse data from csv file
+async function createIntensityHeatmap(path, data = null) {
+  // read in and parse data from input data file
   try {
     // Use the variables declared outside the block for destructuring
-    data = await dataUtils.getIntensityData(csvPathIntensity);
+    data = await dataUtils.getIntensityData(path);
   } catch (error) {
     console.error("Error loading data:", error);
   }
@@ -422,12 +422,29 @@ async function createIntensityHeatmap(csvPathIntensity, data = null) {
   }
 }
 
+// ~~~~ UNCOMMENT BELOW WHEN USING CSV FILE ~~~~~~~~~
+// function loadHeatmap() {
+//   // const path = "./data/intensity_data.csv";
+//   const path = "./data/pooled_blood_intensity.csv";
+//   // const path = "./data/WW2DW_intensity.csv";
+//   createIntensityHeatmap(path);
+// }
+// ~~~~ UNCOMMENT ABOVE WHEN USING CSV FILE ~~~~~~~~~
+
+// ~~~~ UNCOMMENT BELOW WHEN USING XLSX FILE ~~~~~~~~~
+// // Use the global XLSX object provided by the CDN
 function loadHeatmap() {
-  const csvPathIntensity = "./data/intensity_data.csv";
-  // const csvPathIntensity = "./data/pooled_blood_intensity.csv";
-  // const csvPathIntensity = "./data/WW2DW_intensity.csv";
-  createIntensityHeatmap(csvPathIntensity);
+  // fetch("./data/pooled_blood_INTERPRET_NTA_QAQC.xlsx")
+  fetch("./data/WW2DW_INTERPRET_NTA_QAQC.xlsx")
+    .then((response) => response.arrayBuffer()) // read file as array buffer
+    .then((data) => {
+      const workbook = XLSX.read(data, { type: "array" });
+
+      // call the main function that cleans data and draws heatmap
+      createIntensityHeatmap(workbook);
+    });
 }
+// ~~~~ UNCOMMENT ABOVE WHEN USING XLSX FILE ~~~~~~~~~
 
 document.addEventListener("DOMContentLoaded", () => {
   // Call your function here
