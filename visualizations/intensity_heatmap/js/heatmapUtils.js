@@ -217,13 +217,21 @@ export function createInstancedMesh(geometry, material, n) {
  * @param {number} maxValue The largest intensity value accross all occurrences in the data
  * @returns {THREE.Color}
  */
-export function valueToColor(value, minValue, maxValue) {
+export function valueToColor(value, minValue, maxValue, Color) {
   // Normalize value to 0-1 range
   const normalized = (value - minValue) / (maxValue - minValue);
 
   // set the lightest and darkest colors on the gradient
-  const lightYellow = { r: 0.96, g: 0.95, b: 0.15 };
-  const darkOrange = { r: 1.0, g: 0.2, b: 0.0 };
+  const lightYellow = {
+    r: Color[0][0] / 255,
+    g: Color[0][1] / 255,
+    b: Color[0][2] / 255,
+  };
+  const darkOrange = {
+    r: Color[1][0] / 255,
+    g: Color[1][1] / 255,
+    b: Color[1][2] / 255,
+  };
 
   // Interpolate between colors
   const r = lightYellow.r + (darkOrange.r - lightYellow.r) * normalized;
@@ -247,7 +255,8 @@ export function setCellColorAndPos(
   dataFlat,
   dimsObject,
   coloredMesh,
-  whiteMesh
+  whiteMesh,
+  Color
 ) {
   // Find min and max values for color scaling
 
@@ -284,7 +293,7 @@ export function setCellColorAndPos(
       coloredMesh.setMatrixAt(coloredIndex, dummy.matrix);
 
       // Set the color for this instance
-      const color = valueToColor(cell.value, minValue, maxValue);
+      const color = valueToColor(cell.value, minValue, maxValue, Color);
 
       coloredMesh.setColorAt(coloredIndex, color);
 
@@ -1138,13 +1147,17 @@ export function Log10Data(data, sampleHeaders) {
  * @param {THREE.Mesh} graphMesh The graph mesh used to hold titles, labels, etc.
  * @param {number} minValue The smallest non-zero intensity value accross all occurrences in the data
  * @param {number} maxValue The largest intensity value accross all occurrences in the data
+ * @param {boolean} dataView Boolean indicating if the data should be log10 transformed or not
+ * @param {object[]} Color list of lowest and highest rgb values for the gradient legend
  */
 export function addColorLegend(
   canvas,
   dimsObject,
   graphMesh,
   minValue,
-  maxValue
+  maxValue,
+  dataView,
+  Color
 ) {
   const legendDiv = document.createElement("div");
   legendDiv.className = "colorLegend";
@@ -1160,8 +1173,7 @@ export function addColorLegend(
   const gradientBar = document.createElement("div");
   gradientBar.style.width = "200px";
   gradientBar.style.height = "20px";
-  gradientBar.style.background =
-    "linear-gradient(to right, rgb(245, 242, 38), rgb(255, 51, 0))";
+  gradientBar.style.background = `linear-gradient(to right, rgb(${Color[0][0]}, ${Color[0][1]}, ${Color[0][2]}), rgb(${Color[1][0]}, ${Color[1][1]}, ${Color[1][2]})`;
   gradientBar.style.marginTop = "5px";
   gradientBar.style.marginBottom = "5px";
   gradientBar.style.border = "1px solid #999";
@@ -1260,12 +1272,58 @@ export function addToggleButton(graphMesh, canvas, dimsObject, onToggle) {
   buttonX += dimsObject.width + 210;
   // Position to the right of the graph
   let buttonY = dimsObject.actualHeight / 2 - dimsObject.paddingHeight;
-  buttonY -= dimsObject.height / 2 - 630;
+  buttonY -= dimsObject.height / 2 - 590;
   // Center vertically
   const buttonLabel = new CSS2DObject(buttonDiv);
   buttonLabel.position.set(buttonX, buttonY, 0);
   graphMesh.add(buttonLabel);
   buttonLabel.layers.set(0);
+}
+
+/**
+ * Adds a dropdown menu to select data transformation type to display in the heatmap
+ *
+ * @param {THREE.Mesh} graphMesh The graph mesh used to hold titles, labels, etc.
+ * @param {HTMLCanvasElement} canvas The canvas object that holds the heatmap.
+ * @param {object} dimsObject The object containing the graph/cell dims.
+ * @param {object} onSelect Function to perform on selection from the
+ */
+export function addDropdown(graphMesh, canvas, dimsObject, onSelect) {
+  const dropdownDiv = document.createElement("div");
+  dropdownDiv.id = "dropdown";
+  dropdownDiv.style.position = "absolute";
+  dropdownDiv.style.zIndex = "1000";
+  const menu = document.createElement("select");
+  menu.appendChild(new Option("Log10 Intensity", "Log10"));
+  menu.appendChild(new Option("Raw Intenstity", "Raw"));
+  menu.appendChild(
+    new Option("Imputed Log10 z-score norm Intensity", "Imputed")
+  );
+
+  let selectedValue = null;
+  function handleTransformationChange(event) {
+    selectedValue = event.target.value;
+    if (selectedValue) {
+      onSelect(selectedValue);
+    }
+  }
+
+  menu.addEventListener("change", handleTransformationChange);
+
+  dropdownDiv.appendChild(menu);
+
+  const canvRect = canvas.getBoundingClientRect();
+  let dropdownX =
+    -(dimsObject.actualWidth / 2) + canvRect.left + dimsObject.paddingWidth;
+  dropdownX += dimsObject.width + 210;
+  // Position to the right of the graph
+  let dropdownY = dimsObject.actualHeight / 2 - dimsObject.paddingHeight;
+  dropdownY -= dimsObject.height / 2 - 635;
+  // Center vertically
+  const dropdownLabel = new CSS2DObject(dropdownDiv);
+  dropdownLabel.position.set(dropdownX, dropdownY, 0);
+  graphMesh.add(dropdownLabel);
+  dropdownLabel.layers.set(0);
 }
 
 /**

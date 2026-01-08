@@ -11,6 +11,9 @@ async function createIntensityHeatmap(path, data = null) {
     console.error("Error loading data:", error);
   }
 
+  const lightest_color = [245, 242, 38]; //rgb(245, 242, 38)
+  const darkest_color = [255, 51, 0]; //rgb(255, 51, 0)
+
   // get a list of the raw sample column headers from the csv
   const sampleHeaders = data.columns.filter((col) => col !== "Feature ID");
 
@@ -142,7 +145,8 @@ async function createIntensityHeatmap(path, data = null) {
       dataFlat,
       dimsObject,
       coloredMesh,
-      whiteMesh
+      whiteMesh,
+      [lightest_color, darkest_color]
     );
 
     // add a transparent mesh to house the graph title/labels/partitions
@@ -163,7 +167,6 @@ async function createIntensityHeatmap(path, data = null) {
       hasTrailingUnderscores
     );
 
-    // add color gradient legend
     const coloredValues = dataFlat
       .filter((cell) => cell.color === "colored")
       .map((cell) => cell.value);
@@ -175,7 +178,8 @@ async function createIntensityHeatmap(path, data = null) {
       graphMesh,
       minValue,
       maxValue,
-      isLog10View
+      isLog10View,
+      [lightest_color, darkest_color]
     );
 
     function updateHeatmapColors(newDataFlat, coloredMesh, whiteMesh) {
@@ -203,7 +207,8 @@ async function createIntensityHeatmap(path, data = null) {
           const color = heatmapUtils.valueToColor(
             cell.value,
             minValue,
-            maxValue
+            maxValue,
+            [lightest_color, darkest_color]
           );
           coloredMesh.setColorAt(coloredIndex, color);
           cell.meshIndex = coloredIndex;
@@ -225,6 +230,47 @@ async function createIntensityHeatmap(path, data = null) {
 
       // Recalculate data with appropriate transformation
       const dataToUse = isLog10View ? log10Data : rawData;
+      const dataWithMeta = dataUtils.addDetectionCountAndSum(
+        dataToUse,
+        sampleHeaders
+      );
+      const sortedData = dataUtils.sortFeatures(dataWithMeta);
+      const newDataFlat = dataUtils.getFlattenedData(
+        sortedData,
+        sampleHeaders,
+        sampleGroups
+      );
+
+      // Update colors and legend
+      updateHeatmapColors(newDataFlat, coloredMesh, whiteMesh, dimsObject);
+
+      const newColoredValues = newDataFlat
+        .filter((cell) => cell.color === "colored")
+        .map((cell) => cell.value);
+      const newMinValue = Math.min(...newColoredValues);
+      const newMaxValue = Math.max(...newColoredValues);
+      heatmapUtils.updateColorLegend(newMinValue, newMaxValue, isLog10View);
+
+      // Update dataFlat reference for tooltips
+      dataFlat = newDataFlat;
+    });
+
+    // Add dropdown menu
+    heatmapUtils.addDropdown(graphMesh, canvas, dimsObject, (selection) => {
+      console.log(selection);
+
+      coloredCellZoomed = false;
+
+      // Recalculate data with appropriate transformation
+      const dataToUse =
+        selection === "Log10"
+          ? log10Data
+          : selection === "Raw"
+          ? rawData
+          : selection === "Inputed"
+          ? rawData
+          : null;
+
       const dataWithMeta = dataUtils.addDetectionCountAndSum(
         dataToUse,
         sampleHeaders
