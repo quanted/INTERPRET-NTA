@@ -824,8 +824,8 @@ export function mousemoveCellEvent(
       )}</span></div>This feature occurs in \n${
         cellData["num_detections"]
       } sample(s)`;
-      tooltip.style.left = heatmapLeft + "px";
-      tooltip.style.top = heatmapTop + "px";
+      tooltip.style.left = heatmapLeft - 50 + "px";
+      tooltip.style.top = heatmapTop + 20 + "px";
       tooltip.style.display = "block";
     } else {
       tooltip.style.display = "none";
@@ -1205,7 +1205,7 @@ export function addColorLegend(
   const canvRect = canvas.getBoundingClientRect();
   let legendX =
     -(dimsObject.actualWidth / 2) + canvRect.left + dimsObject.paddingWidth;
-  legendX += dimsObject.width + 210;
+  legendX += dimsObject.width + 180;
   // Position to the right of the graph
   let legendY = dimsObject.actualHeight / 2 - dimsObject.paddingHeight;
   legendY -= dimsObject.height / 2 - 700;
@@ -1229,7 +1229,13 @@ export function addDropdown(graphMesh, canvas, dimsObject, onSelect) {
   dropdownDiv.id = "dropdown";
   dropdownDiv.style.position = "absolute";
   dropdownDiv.style.zIndex = "1000";
+  dropdownDiv.style.alignItems = "center";
+
   const menu = document.createElement("select");
+  menu.style.height = "30px";
+  menu.style.border = "1px solid rgb(204, 204, 204)";
+  menu.style.borderRadius = "5px";
+
   menu.appendChild(new Option("Log10 Intensity", "Log10"));
   menu.appendChild(new Option("Raw Intenstity", "Raw"));
   menu.appendChild(
@@ -1251,10 +1257,10 @@ export function addDropdown(graphMesh, canvas, dimsObject, onSelect) {
   const canvRect = canvas.getBoundingClientRect();
   let dropdownX =
     -(dimsObject.actualWidth / 2) + canvRect.left + dimsObject.paddingWidth;
-  dropdownX += dimsObject.width + 210;
+  dropdownX += dimsObject.width + 180;
   // Position to the right of the graph
   let dropdownY = dimsObject.actualHeight / 2 - dimsObject.paddingHeight;
-  dropdownY -= dimsObject.height / 2 - 635;
+  dropdownY -= dimsObject.height / 2 - 630;
   // Center vertically
   const dropdownLabel = new CSS2DObject(dropdownDiv);
   dropdownLabel.position.set(dropdownX, dropdownY, 0);
