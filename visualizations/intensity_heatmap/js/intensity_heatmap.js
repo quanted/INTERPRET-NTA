@@ -11,9 +11,6 @@ async function createIntensityHeatmap(path, data = null) {
     console.error("Error loading data:", error);
   }
 
-  const lightest_color = [245, 242, 38]; //rgb(245, 242, 38)
-  const darkest_color = [255, 51, 0]; //rgb(255, 51, 0)
-
   // get a list of the raw sample column headers from the csv
   const sampleHeaders = data.columns.filter((col) => col !== "Feature ID");
 
@@ -25,16 +22,41 @@ async function createIntensityHeatmap(path, data = null) {
     dataUtils.hasTrailingUnderscores(sampleHeaders);
 
   // replace null intensity values with 0
-  var rawData = dataUtils.GetTransformedData(data);
+  const rawData = dataUtils.GetTransformedData(data);
 
   // Get the log transformed data
   const log10Data = heatmapUtils.Log10Data(rawData, sampleHeaders);
-  var isLog10View = true;
+
+  // TODO get the Imputed Log10 z-score normalize intensity data
+  const imputedData = log10Data;
+
+  const dataDict = {
+    Raw: rawData,
+    Log10: log10Data,
+    Imputed: imputedData,
+  };
+
+  const colorDict = {
+    Raw: [
+      [245, 242, 38], //rgb(245, 242, 38)
+      [255, 51, 0], //rgb(255, 51, 0)
+    ],
+    Log10: [
+      [245, 242, 38], //rgb(245, 242, 38)
+      [255, 51, 0], //rgb(255, 51, 0)
+    ],
+    Imputed: [
+      [0, 81, 255], //rgb(0, 81, 255)
+      [255, 51, 0], //rgb(255, 51, 0)
+    ],
+  };
+
+  var dataToShow = "Log10";
 
   // For each feature ID, add a column containing the number of samples with intensity values greater than 0
   // and add a column containing sum abundance of all sample columns
   const dataWithMeta = dataUtils.addDetectionCountAndSum(
-    log10Data,
+    dataDict[dataToShow],
     sampleHeaders
   );
 
@@ -146,7 +168,8 @@ async function createIntensityHeatmap(path, data = null) {
       dimsObject,
       coloredMesh,
       whiteMesh,
-      [lightest_color, darkest_color]
+      // [lightest_color, darkest_color]
+      colorDict[dataToShow]
     );
 
     // add a transparent mesh to house the graph title/labels/partitions
@@ -178,11 +201,16 @@ async function createIntensityHeatmap(path, data = null) {
       graphMesh,
       minValue,
       maxValue,
-      isLog10View,
-      [lightest_color, darkest_color]
+      dataToShow,
+      colorDict[dataToShow]
     );
 
-    function updateHeatmapColors(newDataFlat, coloredMesh, whiteMesh) {
+    function updateHeatmapColors(
+      newDataFlat,
+      coloredMesh,
+      whiteMesh,
+      color_range
+    ) {
       const newColoredValues = newDataFlat
         .filter((cell) => cell.color === "colored")
         .map((cell) => cell.value);
@@ -208,7 +236,7 @@ async function createIntensityHeatmap(path, data = null) {
             cell.value,
             minValue,
             maxValue,
-            [lightest_color, darkest_color]
+            color_range
           );
           coloredMesh.setColorAt(coloredIndex, color);
           cell.meshIndex = coloredIndex;
@@ -223,54 +251,21 @@ async function createIntensityHeatmap(path, data = null) {
       coloredMesh.instanceColor.needsUpdate = true;
     }
 
-    // Add toggle button
-    heatmapUtils.addToggleButton(graphMesh, canvas, dimsObject, () => {
-      isLog10View = !isLog10View;
-      coloredCellZoomed = false;
-
-      // Recalculate data with appropriate transformation
-      const dataToUse = isLog10View ? log10Data : rawData;
-      const dataWithMeta = dataUtils.addDetectionCountAndSum(
-        dataToUse,
-        sampleHeaders
-      );
-      const sortedData = dataUtils.sortFeatures(dataWithMeta);
-      const newDataFlat = dataUtils.getFlattenedData(
-        sortedData,
-        sampleHeaders,
-        sampleGroups
-      );
-
-      // Update colors and legend
-      updateHeatmapColors(newDataFlat, coloredMesh, whiteMesh, dimsObject);
-
-      const newColoredValues = newDataFlat
-        .filter((cell) => cell.color === "colored")
-        .map((cell) => cell.value);
-      const newMinValue = Math.min(...newColoredValues);
-      const newMaxValue = Math.max(...newColoredValues);
-      heatmapUtils.updateColorLegend(newMinValue, newMaxValue, isLog10View);
-
-      // Update dataFlat reference for tooltips
-      dataFlat = newDataFlat;
-    });
-
     // Add dropdown menu
     heatmapUtils.addDropdown(graphMesh, canvas, dimsObject, (selection) => {
-      console.log(selection);
-
       coloredCellZoomed = false;
 
       // Recalculate data with appropriate transformation
-      const dataToUse =
+      dataToShow =
         selection === "Log10"
-          ? log10Data
+          ? "Log10"
           : selection === "Raw"
-          ? rawData
-          : selection === "Inputed"
-          ? rawData
+          ? "Raw"
+          : selection === "Imputed"
+          ? "Imputed"
           : null;
 
+      const dataToUse = dataDict[dataToShow];
       const dataWithMeta = dataUtils.addDetectionCountAndSum(
         dataToUse,
         sampleHeaders
@@ -282,15 +277,25 @@ async function createIntensityHeatmap(path, data = null) {
         sampleGroups
       );
 
-      // Update colors and legend
-      updateHeatmapColors(newDataFlat, coloredMesh, whiteMesh, dimsObject);
+      // Update colors
+      updateHeatmapColors(
+        newDataFlat,
+        coloredMesh,
+        whiteMesh,
+        // dimsObject,
+        colorDict[dataToShow]
+      );
+
+      // Update the color of the intensity legend gradient bar.
+      const gradientBar = document.getElementById("legendGradientBar");
+      gradientBar.style.background = `linear-gradient(to right, rgb(${colorDict[dataToShow][0][0]}, ${colorDict[dataToShow][0][1]}, ${colorDict[dataToShow][0][2]}), rgb(${colorDict[dataToShow][1][0]}, ${colorDict[dataToShow][1][1]}, ${colorDict[dataToShow][1][2]})`;
 
       const newColoredValues = newDataFlat
         .filter((cell) => cell.color === "colored")
         .map((cell) => cell.value);
       const newMinValue = Math.min(...newColoredValues);
       const newMaxValue = Math.max(...newColoredValues);
-      heatmapUtils.updateColorLegend(newMinValue, newMaxValue, isLog10View);
+      heatmapUtils.updateColorLegend(newMinValue, newMaxValue, dataToShow);
 
       // Update dataFlat reference for tooltips
       dataFlat = newDataFlat;

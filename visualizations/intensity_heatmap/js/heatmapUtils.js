@@ -1147,7 +1147,7 @@ export function Log10Data(data, sampleHeaders) {
  * @param {THREE.Mesh} graphMesh The graph mesh used to hold titles, labels, etc.
  * @param {number} minValue The smallest non-zero intensity value accross all occurrences in the data
  * @param {number} maxValue The largest intensity value accross all occurrences in the data
- * @param {boolean} dataView Boolean indicating if the data should be log10 transformed or not
+ * @param {boolean} dataView Data Type displayed in the visualization.
  * @param {object[]} Color list of lowest and highest rgb values for the gradient legend
  */
 export function addColorLegend(
@@ -1171,6 +1171,7 @@ export function addColorLegend(
   legendDiv.style.border = "1px solid #ccc";
   // Create gradient bar
   const gradientBar = document.createElement("div");
+  gradientBar.id = "legendGradientBar";
   gradientBar.style.width = "200px";
   gradientBar.style.height = "20px";
   gradientBar.style.background = `linear-gradient(to right, rgb(${Color[0][0]}, ${Color[0][1]}, ${Color[0][2]}), rgb(${Color[1][0]}, ${Color[1][1]}, ${Color[1][2]})`;
@@ -1193,7 +1194,7 @@ export function addColorLegend(
   // Add title
   const titleSpan = document.createElement("div");
   titleSpan.className = "legendTitle";
-  titleSpan.textContent = "Log10 Intensity";
+  titleSpan.textContent = `${dataView} Intensity`;
   titleSpan.style.fontWeight = "bold";
   titleSpan.style.marginBottom = "5px";
 
@@ -1213,71 +1214,6 @@ export function addColorLegend(
   legendLabel.position.set(legendX, legendY, 0);
   graphMesh.add(legendLabel);
   legendLabel.layers.set(0);
-}
-
-/**
- * Adds button to toggle between raw intensity values and log10 intensity values.
- *
- * @param {THREE.Mesh} graphMesh The graph mesh used to hold titles, labels, etc.
- * @param {HTMLCanvasElement} canvas The canvas object that holds the heatmap.
- * @param {object} dimsObject The object containing the graph/cell dims.
- * @param {function} onToggle The function defining toggle action
- */
-export function addToggleButton(graphMesh, canvas, dimsObject, onToggle) {
-  const buttonDiv = document.createElement("div");
-  buttonDiv.id = "toggleButton";
-  buttonDiv.style.position = "absolute";
-  buttonDiv.style.zIndex = "1000";
-  const button = document.createElement("button");
-  button.textContent = "Toggle: Log10 → Raw";
-  button.style.padding = "10px 20px";
-  button.style.fontSize = "14px";
-  button.style.backgroundColor = "#1a1a1aff";
-  button.style.color = "white";
-  button.style.border = "none";
-  button.style.borderRadius = "4px";
-  button.style.cursor = "pointer";
-  button.style.fontWeight = "bold";
-  button.style.boxShadow = "0 2px 4px rgba(0,0,0,0.2)";
-  button.addEventListener("mouseenter", () => {
-    button.style.backgroundColor = "#585858ff";
-  });
-  button.addEventListener("mouseleave", () => {
-    button.style.backgroundColor = "#1a1a1aff";
-  });
-
-  function onClick() {
-    if (button.textContent === "Toggle: Log10 → Raw") {
-      button.textContent = "Toggle: Raw → Log10";
-    } else {
-      button.textContent = "Toggle: Log10 → Raw";
-    }
-    onToggle();
-  }
-
-  // button.addEventListener("click", onToggle);
-  button.addEventListener("click", onClick);
-  buttonDiv.appendChild(button);
-  // Add to the heatmap container
-  const heatmapContainer = document.getElementById("heatmap-container");
-  if (heatmapContainer) {
-    heatmapContainer.appendChild(buttonDiv);
-  } else {
-    document.body.appendChild(buttonDiv);
-  }
-
-  const canvRect = canvas.getBoundingClientRect();
-  let buttonX =
-    -(dimsObject.actualWidth / 2) + canvRect.left + dimsObject.paddingWidth;
-  buttonX += dimsObject.width + 210;
-  // Position to the right of the graph
-  let buttonY = dimsObject.actualHeight / 2 - dimsObject.paddingHeight;
-  buttonY -= dimsObject.height / 2 - 590;
-  // Center vertically
-  const buttonLabel = new CSS2DObject(buttonDiv);
-  buttonLabel.position.set(buttonX, buttonY, 0);
-  graphMesh.add(buttonLabel);
-  buttonLabel.layers.set(0);
 }
 
 /**
@@ -1333,14 +1269,14 @@ export function addDropdown(graphMesh, canvas, dimsObject, onSelect) {
  * @param {number} maxValue The largest intensity value accross all occurrences in the data
  * @param {boolean} isLog10 true if heatmap is currently showing log10 values.
  */
-export function updateColorLegend(minValue, maxValue, isLog10) {
+export function updateColorLegend(minValue, maxValue, dataType) {
   const legendDiv = document.getElementById("intensityLegend");
 
   if (legendDiv) {
     // Update title
     const titleSpan = legendDiv.querySelector(".legendTitle");
     if (titleSpan) {
-      titleSpan.textContent = isLog10 ? "Log10 Intensity" : "Raw Intensity";
+      titleSpan.textContent = `${dataType} Intensity`;
     }
 
     // Update min Label
