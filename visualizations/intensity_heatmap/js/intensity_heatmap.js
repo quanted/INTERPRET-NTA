@@ -29,7 +29,6 @@ async function createIntensityHeatmap(path, data = null) {
 
   // TODO get the Imputed Log10 z-score normalize intensity data
   const imputedData = dataUtils.imputedZdata(rawData, sampleHeaders);
-  console.log(imputedData);
 
   const dataDict = {
     Raw: rawData,
@@ -171,7 +170,8 @@ async function createIntensityHeatmap(path, data = null) {
       coloredMesh,
       whiteMesh,
       // [lightest_color, darkest_color]
-      colorDict[dataToShow]
+      colorDict[dataToShow],
+      dataToShow
     );
 
     // add a transparent mesh to house the graph title/labels/partitions
@@ -266,7 +266,8 @@ async function createIntensityHeatmap(path, data = null) {
         dimsObject,
         coloredMesh,
         whiteMesh,
-        colorDict[dataToShow]
+        colorDict[dataToShow],
+        dataToShow
       );
 
       // Update the global coloredCellInstances reference
@@ -275,7 +276,18 @@ async function createIntensityHeatmap(path, data = null) {
 
       // Update the color of the intensity legend gradient bar
       const gradientBar = document.getElementById("legendGradientBar");
-      gradientBar.style.background = `linear-gradient(to right, rgb(${colorDict[dataToShow][0][0]}, ${colorDict[dataToShow][0][1]}, ${colorDict[dataToShow][0][2]}), rgb(${colorDict[dataToShow][1][0]}, ${colorDict[dataToShow][1][1]}, ${colorDict[dataToShow][1][2]})`;
+
+      if (dataToShow === "Imputed") {
+        gradientBar.style.background = `linear-gradient(to right, 
+          rgb(${colorDict[dataToShow][0][0]}, ${colorDict[dataToShow][0][1]}, ${colorDict[dataToShow][0][2]}), 
+        rgb(255, 255, 255),
+          rgb(${colorDict[dataToShow][1][0]}, ${colorDict[dataToShow][1][1]}, ${colorDict[dataToShow][1][2]})`;
+      } else {
+        gradientBar.style.background = `linear-gradient(to right, 
+          rgb(${colorDict[dataToShow][0][0]}, ${colorDict[dataToShow][0][1]}, ${colorDict[dataToShow][0][2]}), 
+          rgb(${colorDict[dataToShow][1][0]}, ${colorDict[dataToShow][1][1]}, ${colorDict[dataToShow][1][2]})`;
+      }
+
       const newColoredValues = newDataFlat
         .filter((cell) => cell.color === "colored")
         .map((cell) => cell.value);

@@ -209,36 +209,97 @@ export function createInstancedMesh(geometry, material, n) {
   return new THREE.InstancedMesh(geometry, material, n);
 }
 
-/**
- * Creates a THREE.Color object on the yellow to orange gradient corresponding to intensity value
- *
- * @param {number} value The inensity value of the cell
- * @param {number} minValue The smallest non-zero intensity value accross all occurrences in the data
- * @param {number} maxValue The largest intensity value accross all occurrences in the data
- * @returns {THREE.Color}
- */
-export function valueToColor(value, minValue, maxValue, Color) {
-  // Normalize value to 0-1 range
-  const normalized = (value - minValue) / (maxValue - minValue);
+// /**
+//  * Creates a THREE.Color object on the light to dark gradient corresponding to intensity value
+//  *
+//  * @param {number} value The intensity value of the cell
+//  * @param {number} minValue The smallest non-zero intensity value accross all occurrences in the data
+//  * @param {number} maxValue The largest intensity value accross all occurrences in the data
+//  * @returns {THREE.Color}
+//  */
+// export function valueToColor(value, minValue, maxValue, Color) {
+//   // Normalize value to 0-1 range
+//   const normalized = (value - minValue) / (maxValue - minValue);
 
-  // set the lightest and darkest colors on the gradient
-  const lightYellow = {
+//   // set the lightest and darkest colors on the gradient
+//   const light = {
+//     r: Color[0][0] / 255,
+//     g: Color[0][1] / 255,
+//     b: Color[0][2] / 255,
+//   };
+
+//   // const white = {
+//   //   r: 255,
+//   //   g: 255,
+//   //   b: 255,
+//   // };
+
+//   const dark = {
+//     r: Color[1][0] / 255,
+//     g: Color[1][1] / 255,
+//     b: Color[1][2] / 255,
+//   };
+
+//   // Interpolate between colors
+//   const r = light.r + (dark.r - light.r) * normalized;
+//   const g = light.g + (dark.g - light.g) * normalized;
+//   const b = light.b + (dark.b - light.b) * normalized;
+
+//   return new THREE.Color(r, g, b);
+// }
+
+export function valueToColor(value, minValue, maxValue, Color, dataToShow) {
+  // End colors
+  const colorLow = {
     r: Color[0][0] / 255,
     g: Color[0][1] / 255,
     b: Color[0][2] / 255,
   };
-  const darkOrange = {
+
+  const colorHigh = {
     r: Color[1][0] / 255,
     g: Color[1][1] / 255,
     b: Color[1][2] / 255,
   };
 
-  // Interpolate between colors
-  const r = lightYellow.r + (darkOrange.r - lightYellow.r) * normalized;
-  const g = lightYellow.g + (darkOrange.g - lightYellow.g) * normalized;
-  const b = lightYellow.b + (darkOrange.b - lightYellow.b) * normalized;
+  // Middle color (white)
+  const white = { r: 1, g: 1, b: 1 };
 
-  return new THREE.Color(r, g, b);
+  if (dataToShow === "Imputed") {
+    // Normalize value to 0–1 and clamp
+    const normalized = Math.min(
+      Math.max((value - minValue) / (maxValue - minValue), 0),
+      1
+    );
+
+    let r, g, b;
+
+    if (normalized <= 0.5) {
+      // Interpolate from low color → white
+      const t = normalized / 0.5;
+      r = colorLow.r + (white.r - colorLow.r) * t;
+      g = colorLow.g + (white.g - colorLow.g) * t;
+      b = colorLow.b + (white.b - colorLow.b) * t;
+    } else {
+      // Interpolate from white → high color
+      const t = (normalized - 0.5) / 0.5;
+      r = white.r + (colorHigh.r - white.r) * t;
+      g = white.g + (colorHigh.g - white.g) * t;
+      b = white.b + (colorHigh.b - white.b) * t;
+    }
+
+    return new THREE.Color(r, g, b);
+  } else {
+    // Normalize value to 0-1 range
+    const normalized = (value - minValue) / (maxValue - minValue);
+
+    // Interpolate between colors
+    const r = colorLow.r + (colorHigh.r - colorLow.r) * normalized;
+    const g = colorLow.g + (colorHigh.g - colorLow.g) * normalized;
+    const b = colorLow.b + (colorHigh.b - colorLow.b) * normalized;
+
+    return new THREE.Color(r, g, b);
+  }
 }
 
 /**
@@ -256,7 +317,8 @@ export function setCellColorAndPos(
   dimsObject,
   coloredMesh,
   whiteMesh,
-  Color
+  Color,
+  dataToShow
 ) {
   // Find min and max values for color scaling
 
@@ -293,7 +355,13 @@ export function setCellColorAndPos(
       coloredMesh.setMatrixAt(coloredIndex, dummy.matrix);
 
       // Set the color for this instance
-      const color = valueToColor(cell.value, minValue, maxValue, Color);
+      const color = valueToColor(
+        cell.value,
+        minValue,
+        maxValue,
+        Color,
+        dataToShow
+      );
 
       coloredMesh.setColorAt(coloredIndex, color);
 
@@ -1155,7 +1223,9 @@ export function addColorLegend(
   gradientBar.id = "legendGradientBar";
   gradientBar.style.width = "200px";
   gradientBar.style.height = "20px";
-  gradientBar.style.background = `linear-gradient(to right, rgb(${Color[0][0]}, ${Color[0][1]}, ${Color[0][2]}), rgb(${Color[1][0]}, ${Color[1][1]}, ${Color[1][2]})`;
+  gradientBar.style.background = `linear-gradient(to right, 
+    rgb(${Color[0][0]}, ${Color[0][1]}, ${Color[0][2]}), 
+    rgb(${Color[1][0]}, ${Color[1][1]}, ${Color[1][2]})`;
   gradientBar.style.marginTop = "5px";
   gradientBar.style.marginBottom = "5px";
   gradientBar.style.border = "1px solid #999";
