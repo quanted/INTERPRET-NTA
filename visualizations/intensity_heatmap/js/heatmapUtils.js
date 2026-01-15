@@ -209,45 +209,6 @@ export function createInstancedMesh(geometry, material, n) {
   return new THREE.InstancedMesh(geometry, material, n);
 }
 
-// /**
-//  * Creates a THREE.Color object on the light to dark gradient corresponding to intensity value
-//  *
-//  * @param {number} value The intensity value of the cell
-//  * @param {number} minValue The smallest non-zero intensity value accross all occurrences in the data
-//  * @param {number} maxValue The largest intensity value accross all occurrences in the data
-//  * @returns {THREE.Color}
-//  */
-// export function valueToColor(value, minValue, maxValue, Color) {
-//   // Normalize value to 0-1 range
-//   const normalized = (value - minValue) / (maxValue - minValue);
-
-//   // set the lightest and darkest colors on the gradient
-//   const light = {
-//     r: Color[0][0] / 255,
-//     g: Color[0][1] / 255,
-//     b: Color[0][2] / 255,
-//   };
-
-//   // const white = {
-//   //   r: 255,
-//   //   g: 255,
-//   //   b: 255,
-//   // };
-
-//   const dark = {
-//     r: Color[1][0] / 255,
-//     g: Color[1][1] / 255,
-//     b: Color[1][2] / 255,
-//   };
-
-//   // Interpolate between colors
-//   const r = light.r + (dark.r - light.r) * normalized;
-//   const g = light.g + (dark.g - light.g) * normalized;
-//   const b = light.b + (dark.b - light.b) * normalized;
-
-//   return new THREE.Color(r, g, b);
-// }
-
 export function valueToColor(value, minValue, maxValue, Color, dataToShow) {
   // End colors
   const colorLow = {
@@ -266,6 +227,7 @@ export function valueToColor(value, minValue, maxValue, Color, dataToShow) {
   const white = { r: 1, g: 1, b: 1 };
 
   if (dataToShow === "Imputed") {
+    //three-color gradient
     // Normalize value to 0–1 and clamp
     const normalized = Math.min(
       Math.max((value - minValue) / (maxValue - minValue), 0),

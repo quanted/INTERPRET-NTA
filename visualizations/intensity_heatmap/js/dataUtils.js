@@ -163,6 +163,8 @@ export function Log10Data(data, sampleHeaders) {
  * @returns {object[]} data structure with imputed, log10-transformed, and z-score normalized values
  */
 export function imputedZdata(data, sampleHeaders) {
+  // const d1 = addDetectionCountAndSum(data, sampleHeaders);
+
   // Step 1: Impute zeros with row minimum/sqrt(2)
   const imputedData = data.map((row) => {
     const newRow = { ...row };
@@ -194,30 +196,17 @@ export function imputedZdata(data, sampleHeaders) {
     return newRow;
   });
 
-  // return log10Data;
-
-  // Step 3: Z-score normalization (per sample/column)
-  const means = {};
-  const stdDevs = {};
-
-  // Calculate mean and standard deviation for each sample
-  sampleHeaders.forEach((header) => {
-    const values = log10Data.map((row) => row[header]);
-    means[header] = values.reduce((sum, val) => sum + val, 0) / values.length;
-
-    const variance =
-      values.reduce((sum, val) => sum + Math.pow(val - means[header], 2), 0) /
-      values.length;
-    stdDevs[header] = Math.sqrt(variance);
-  });
-
-  // Apply z-score normalization
+  // Step 3: Z-score normalization (per feature / row)
   return log10Data.map((row) => {
     const newRow = { ...row };
+    const values = sampleHeaders.map((header) => row[header]);
+    const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
+    const variance =
+      values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) /
+      values.length;
+    const stdDev = Math.sqrt(variance);
     sampleHeaders.forEach((header) => {
-      const stdDev = stdDevs[header];
-      newRow[header] =
-        stdDev !== 0 ? (row[header] - means[header]) / stdDev : 0;
+      newRow[header] = stdDev !== 0 ? (row[header] - mean) / stdDev : 0;
     });
     return newRow;
   });
@@ -256,7 +245,8 @@ export function getFlattenedData(data, sampleHeaders, sampleGroups) {
         dataFlat.push({
           featureIndex: featureIndex,
           sampleIndex: sampleIndex,
-          originalValue: intensityValue,
+          // rowMin: ??,
+          // rowMax: ??,
           value: intensityValue,
           color: intensityValue == 0 ? "white" : "colored",
           sampleName: s_name,
