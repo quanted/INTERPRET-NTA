@@ -194,37 +194,33 @@ export function imputedZdata(data, sampleHeaders) {
     return newRow;
   });
 
-  return log10Data;
+  // return log10Data;
 
-  // // Step 3: Z-score normalization (per sample/column)
-  // const means = {};
-  // const stdDevs = {};
+  // Step 3: Z-score normalization (per sample/column)
+  const means = {};
+  const stdDevs = {};
 
-  // // Calculate mean for each sample
-  // sampleHeaders.forEach((header) => {
-  //   const values = log10Data.map((row) => row[header]);
-  //   means[header] = values.reduce((sum, val) => sum + val, 0) / values.length;
-  // });
+  // Calculate mean and standard deviation for each sample
+  sampleHeaders.forEach((header) => {
+    const values = log10Data.map((row) => row[header]);
+    means[header] = values.reduce((sum, val) => sum + val, 0) / values.length;
 
-  // // Calculate standard deviation for each sample
-  // sampleHeaders.forEach((header) => {
-  //   const values = log10Data.map((row) => row[header]);
-  //   const variance =
-  //     values.reduce((sum, val) => sum + Math.pow(val - means[header], 2), 0) /
-  //     values.length;
-  //   stdDevs[header] = Math.sqrt(variance);
-  // });
+    const variance =
+      values.reduce((sum, val) => sum + Math.pow(val - means[header], 2), 0) /
+      values.length;
+    stdDevs[header] = Math.sqrt(variance);
+  });
 
-  // // Apply z-score normalization
-  // return log10Data.map((row) => {
-  //   const newRow = { ...row };
-  //   sampleHeaders.forEach((header) => {
-  //     const stdDev = stdDevs[header];
-  //     newRow[header] =
-  //       stdDev !== 0 ? (row[header] - means[header]) / stdDev : 0;
-  //   });
-  //   return newRow;
-  // });
+  // Apply z-score normalization
+  return log10Data.map((row) => {
+    const newRow = { ...row };
+    sampleHeaders.forEach((header) => {
+      const stdDev = stdDevs[header];
+      newRow[header] =
+        stdDev !== 0 ? (row[header] - means[header]) / stdDev : 0;
+    });
+    return newRow;
+  });
 }
 
 /**
@@ -233,8 +229,8 @@ export function imputedZdata(data, sampleHeaders) {
  * @returns {object[]} The data structure sorted in order of features occurring in least to most number of samples.
  */
 export function sortFeatures(data) {
-  // const sortedData = data.sort((a, b) => a.featureSum - b.featureSum); // sort data by total feature abundance in all samples.
-  const sortedData = data.sort((a, b) => a.num_detections - b.num_detections); // sort data by number of detects present
+  const sortedData = data.sort((a, b) => a.featureSum - b.featureSum); // sort data by total feature abundance in all samples.
+  // const sortedData = data.sort((a, b) => a.num_detections - b.num_detections); // sort data by number of detects present
   return sortedData;
 }
 
@@ -260,6 +256,7 @@ export function getFlattenedData(data, sampleHeaders, sampleGroups) {
         dataFlat.push({
           featureIndex: featureIndex,
           sampleIndex: sampleIndex,
+          originalValue: intensityValue,
           value: intensityValue,
           color: intensityValue == 0 ? "white" : "colored",
           sampleName: s_name,

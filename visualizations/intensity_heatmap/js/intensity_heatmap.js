@@ -52,8 +52,8 @@ async function createIntensityHeatmap(path, data = null) {
     ],
   };
 
-  // var dataToShow = "Log10";
-  var dataToShow = "Imputed";
+  var dataToShow = "Log10";
+  // var dataToShow = "Imputed";
 
   // For each feature ID, add a column containing the number of samples with intensity values greater than 0
   // and add a column containing sum abundance of all sample columns
@@ -207,53 +207,7 @@ async function createIntensityHeatmap(path, data = null) {
       colorDict[dataToShow]
     );
 
-    function updateHeatmapColors(
-      newDataFlat,
-      coloredMesh,
-      whiteMesh,
-      color_range
-    ) {
-      const newColoredValues = newDataFlat
-        .filter((cell) => cell.color === "colored")
-        .map((cell) => cell.value);
-      const minValue = Math.min(...newColoredValues);
-      const maxValue = Math.max(...newColoredValues);
-      let dummy = new THREE.Object3D();
-      let coloredIndex = 0;
-      let whiteIndex = 0;
-      newDataFlat.forEach((cell) => {
-        let x = -(dimsObject.actualWidth / 2) + dimsObject.paddingWidth;
-        x +=
-          cell.featureIndex * dimsObject.cellWidth + dimsObject.cellWidth / 2;
-        let y = dimsObject.actualHeight / 2 - dimsObject.paddingHeight;
-        y +=
-          -(cell.sampleIndex * dimsObject.cellHeight) +
-          dimsObject.cellHeight / 2;
-        dummy.position.set(x, y, 0);
-        dummy.scale.set(1, 1, 1);
-        dummy.updateMatrix();
-        if (cell.color === "colored") {
-          coloredMesh.setMatrixAt(coloredIndex, dummy.matrix);
-          const color = heatmapUtils.valueToColor(
-            cell.value,
-            minValue,
-            maxValue,
-            color_range
-          );
-          coloredMesh.setColorAt(coloredIndex, color);
-          cell.meshIndex = coloredIndex;
-          coloredIndex++;
-        } else if (cell.color === "white") {
-          whiteMesh.setMatrixAt(whiteIndex, dummy.matrix);
-          cell.meshIndex = whiteIndex;
-          whiteIndex++;
-        }
-      });
-      coloredMesh.instanceMatrix.needsUpdate = true;
-      coloredMesh.instanceColor.needsUpdate = true;
-    }
-
-    // Add dropdown menu
+    // Add dropdown menu with proper mesh recreation
     heatmapUtils.addDropdown(graphMesh, canvas, dimsObject, (selection) => {
       coloredCellZoomed = false;
 
@@ -279,26 +233,55 @@ async function createIntensityHeatmap(path, data = null) {
         sampleGroups
       );
 
-      // Update colors
-      updateHeatmapColors(
+      // Get new color counts for the selected data type
+      const [newColoredCount, newWhiteCount] =
+        dataUtils.getColorCounts(newDataFlat);
+      // Remove old meshes from the scene
+      heatmapGroup.remove(coloredMesh);
+      heatmapGroup.remove(whiteMesh);
+      // Dispose of old geometries and materials to free memory
+      coloredMesh.dispose();
+      whiteMesh.dispose();
+      // Create new meshes with correct counts
+      coloredMesh = heatmapUtils.createInstancedMesh(
+        cellGeometry,
+        coloredMaterial,
+        newColoredCount
+      );
+
+      whiteMesh = heatmapUtils.createInstancedMesh(
+        cellGeometry,
+        whiteMaterial,
+        newWhiteCount
+      );
+
+      coloredMesh.renderOrder = 998;
+      // Add new meshes to the group
+      heatmapGroup.add(coloredMesh);
+      heatmapGroup.add(whiteMesh);
+      // Set positions and colors for the new meshes
+
+      const newColoredCellInstances = heatmapUtils.setCellColorAndPos(
         newDataFlat,
+        dimsObject,
         coloredMesh,
         whiteMesh,
-        // dimsObject,
         colorDict[dataToShow]
       );
 
-      // Update the color of the intensity legend gradient bar.
+      // Update the global coloredCellInstances reference
+      coloredCellInstances.length = 0;
+      coloredCellInstances.push(...newColoredCellInstances);
+
+      // Update the color of the intensity legend gradient bar
       const gradientBar = document.getElementById("legendGradientBar");
       gradientBar.style.background = `linear-gradient(to right, rgb(${colorDict[dataToShow][0][0]}, ${colorDict[dataToShow][0][1]}, ${colorDict[dataToShow][0][2]}), rgb(${colorDict[dataToShow][1][0]}, ${colorDict[dataToShow][1][1]}, ${colorDict[dataToShow][1][2]})`;
-
       const newColoredValues = newDataFlat
         .filter((cell) => cell.color === "colored")
         .map((cell) => cell.value);
       const newMinValue = Math.min(...newColoredValues);
       const newMaxValue = Math.max(...newColoredValues);
       heatmapUtils.updateColorLegend(newMinValue, newMaxValue, dataToShow);
-
       // Update dataFlat reference for tooltips
       dataFlat = newDataFlat;
     });
