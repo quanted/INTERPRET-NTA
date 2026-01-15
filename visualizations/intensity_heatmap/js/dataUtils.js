@@ -156,51 +156,75 @@ export function Log10Data(data, sampleHeaders) {
 }
 
 /**
- * Imputes missing/zero values and applies z-score normalization to log10-transformed data.
- * In the resulting data, each sample has a mean of 0 and a standard deviation of 1
+ * Imputes zero values with row minimum, converts to log10, and z-score normalizes.
  *
- * @param {object[]} log10data data scructure containing log10-transformed intensity values
+ * @param {object[]} data data structure containing raw intensity values
  * @param {string[]} sampleHeaders list of raw sample headers
- * @returns {object[]} data structure with imputed and z-score normalized values
+ * @returns {object[]} data structure with imputed, log10-transformed, and z-score normalized values
  */
-export function inputedZData(log10data, sampleHeaders) {
-  // Step 1: Calcualte mean and std dev for each sample (column-wise)
-  const stats = {};
-
-  // Calculate the mean and standard deviation for each column
-  sampleHeaders.forEach((header) => {
-    const values = log10data.map((row) => row[header]).filter((v) => v > 0); // exclude zeros for stats calculation.
-
-    if (values.length === 0) {
-      stats[header] = { mean: 0, stdDev: 0 };
-      return;
-    }
-
-    const mean = values.reduceRight((sum, v) => sum + v, 0) / values.length;
-    const variance =
-      values.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / values.length;
-    const stdDev = Math.sqrt(variance);
-
-    stats[header] = { mean, stdDev: stdDev || 1 }; //Avoid division by 0
-  });
-
-  // Step 2: Impute zeros with mean and apply z-score normalization
-  return log10data.map((row) => {
+export function imputedZdata(data, sampleHeaders) {
+  // Step 1: Impute zeros with row minimum/sqrt(2)
+  const imputedData = data.map((row) => {
     const newRow = { ...row };
 
+    // Find minimum non-zero value in the current feature row
+    const nonZeroValues = sampleHeaders
+      .map((header) => row[header])
+      .filter((val) => val != null && val > 0);
+
+    // Default to minimum
+    const minValue = Math.min(...nonZeroValues);
+    const imputeValue = minValue / Math.sqrt(2);
+
+    // Replace zeros with the impute value AKA minimum/sqrt(2)
     sampleHeaders.forEach((header) => {
-      let value = row[header];
+      const value = row[header];
+      newRow[header] = value != null && value > 0 ? value : imputeValue;
+    });
 
-      // Impute zeros with mean
-      if (value === 0) {
-        value = stats[header].mean;
-      }
+    return newRow;
+  });
 
-      // Z-score normalization
-      newRow[header] = (value - stats[header].mean) / stats[header].stdDev;
+  // Step 2: Log10 transform all values
+  const log10Data = imputedData.map((row) => {
+    const newRow = { ...row };
+    sampleHeaders.forEach((header) => {
+      newRow[header] = Math.log10(row[header]);
     });
     return newRow;
   });
+
+  return log10Data;
+
+  // // Step 3: Z-score normalization (per sample/column)
+  // const means = {};
+  // const stdDevs = {};
+
+  // // Calculate mean for each sample
+  // sampleHeaders.forEach((header) => {
+  //   const values = log10Data.map((row) => row[header]);
+  //   means[header] = values.reduce((sum, val) => sum + val, 0) / values.length;
+  // });
+
+  // // Calculate standard deviation for each sample
+  // sampleHeaders.forEach((header) => {
+  //   const values = log10Data.map((row) => row[header]);
+  //   const variance =
+  //     values.reduce((sum, val) => sum + Math.pow(val - means[header], 2), 0) /
+  //     values.length;
+  //   stdDevs[header] = Math.sqrt(variance);
+  // });
+
+  // // Apply z-score normalization
+  // return log10Data.map((row) => {
+  //   const newRow = { ...row };
+  //   sampleHeaders.forEach((header) => {
+  //     const stdDev = stdDevs[header];
+  //     newRow[header] =
+  //       stdDev !== 0 ? (row[header] - means[header]) / stdDev : 0;
+  //   });
+  //   return newRow;
+  // });
 }
 
 /**

@@ -28,7 +28,7 @@ async function createIntensityHeatmap(path, data = null) {
   const log10Data = dataUtils.Log10Data(rawData, sampleHeaders);
 
   // TODO get the Imputed Log10 z-score normalize intensity data
-  const imputedData = dataUtils.inputedZData(log10Data, sampleHeaders);
+  const imputedData = dataUtils.imputedZdata(rawData, sampleHeaders);
   console.log(imputedData);
 
   const dataDict = {
@@ -52,7 +52,8 @@ async function createIntensityHeatmap(path, data = null) {
     ],
   };
 
-  var dataToShow = "Log10";
+  // var dataToShow = "Log10";
+  var dataToShow = "Imputed";
 
   // For each feature ID, add a column containing the number of samples with intensity values greater than 0
   // and add a column containing sum abundance of all sample columns
