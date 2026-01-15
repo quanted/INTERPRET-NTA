@@ -137,6 +137,73 @@ export function GetTransformedData(data) {
 }
 
 /**
+ * converts raw intensity values to log10 intensity values.
+ *
+ * @param {object[]} data data scructure containing raw intensity values
+ * @param {string[]} sampleHeaders list of raw sample headers
+ * @returns {object[]} data structure with raw intensity values conterted to log10 values
+ */
+export function Log10Data(data, sampleHeaders) {
+  return data.map((row) => {
+    const newRow = { ...row };
+
+    sampleHeaders.forEach((header) => {
+      const value = row[header];
+      newRow[header] = value != null && value > 0 ? Math.log10(value) : 0;
+    });
+    return newRow;
+  });
+}
+
+/**
+ * Imputes missing/zero values and applies z-score normalization to log10-transformed data.
+ * In the resulting data, each sample has a mean of 0 and a standard deviation of 1
+ *
+ * @param {object[]} log10data data scructure containing log10-transformed intensity values
+ * @param {string[]} sampleHeaders list of raw sample headers
+ * @returns {object[]} data structure with imputed and z-score normalized values
+ */
+export function inputedZData(log10data, sampleHeaders) {
+  // Step 1: Calcualte mean and std dev for each sample (column-wise)
+  const stats = {};
+
+  // Calculate the mean and standard deviation for each column
+  sampleHeaders.forEach((header) => {
+    const values = log10data.map((row) => row[header]).filter((v) => v > 0); // exclude zeros for stats calculation.
+
+    if (values.length === 0) {
+      stats[header] = { mean: 0, stdDev: 0 };
+      return;
+    }
+
+    const mean = values.reduceRight((sum, v) => sum + v, 0) / values.length;
+    const variance =
+      values.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / values.length;
+    const stdDev = Math.sqrt(variance);
+
+    stats[header] = { mean, stdDev: stdDev || 1 }; //Avoid division by 0
+  });
+
+  // Step 2: Impute zeros with mean and apply z-score normalization
+  return log10data.map((row) => {
+    const newRow = { ...row };
+
+    sampleHeaders.forEach((header) => {
+      let value = row[header];
+
+      // Impute zeros with mean
+      if (value === 0) {
+        value = stats[header].mean;
+      }
+
+      // Z-score normalization
+      newRow[header] = (value - stats[header].mean) / stats[header].stdDev;
+    });
+    return newRow;
+  });
+}
+
+/**
  *
  * @param {object[]} data Data structure containing all sample and metadata columns
  * @returns {object[]} The data structure sorted in order of features occurring in least to most number of samples.
@@ -170,7 +237,7 @@ export function getFlattenedData(data, sampleHeaders, sampleGroups) {
           featureIndex: featureIndex,
           sampleIndex: sampleIndex,
           value: intensityValue,
-          color: intensityValue > 0 ? "colored" : "white",
+          color: intensityValue == 0 ? "white" : "colored",
           sampleName: s_name,
           featureId: feature["Feature ID"],
           featureSum: feature["featureSum"],

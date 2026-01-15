@@ -25,10 +25,11 @@ async function createIntensityHeatmap(path, data = null) {
   const rawData = dataUtils.GetTransformedData(data);
 
   // Get the log transformed data
-  const log10Data = heatmapUtils.Log10Data(rawData, sampleHeaders);
+  const log10Data = dataUtils.Log10Data(rawData, sampleHeaders);
 
   // TODO get the Imputed Log10 z-score normalize intensity data
-  const imputedData = log10Data;
+  const imputedData = dataUtils.inputedZData(log10Data, sampleHeaders);
+  console.log(imputedData);
 
   const dataDict = {
     Raw: rawData,

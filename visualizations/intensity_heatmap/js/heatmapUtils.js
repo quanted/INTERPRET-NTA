@@ -1121,25 +1121,6 @@ export async function zoomTween(
 }
 
 /**
- * converts raw intensity values to log10 intensity values.
- *
- * @param {object[]} data data scructure containing raw intensity values
- * @param {string[]} sampleHeaders list of raw sample headers
- * @returns {object[]} data structure with raw intensity values conterted to log10 values
- */
-export function Log10Data(data, sampleHeaders) {
-  return data.map((row) => {
-    const newRow = { ...row };
-
-    sampleHeaders.forEach((header) => {
-      const value = row[header];
-      newRow[header] = value != null && value > 0 ? Math.log10(value) : 0;
-    });
-    return newRow;
-  });
-}
-
-/**
  * Adds the color gradient legend to the canvas
  *
  * @param {HTMLCanvasElement} canvas The canvas object that holds the heatmap.
@@ -1238,9 +1219,7 @@ export function addDropdown(graphMesh, canvas, dimsObject, onSelect) {
 
   menu.appendChild(new Option("Log10 Intensity", "Log10"));
   menu.appendChild(new Option("Raw Intenstity", "Raw"));
-  menu.appendChild(
-    new Option("Imputed Log10 z-score norm Intensity", "Imputed")
-  );
+  menu.appendChild(new Option("Imputed Log10 z-score normalized", "Imputed"));
 
   let selectedValue = null;
   function handleTransformationChange(event) {
@@ -1277,7 +1256,6 @@ export function addDropdown(graphMesh, canvas, dimsObject, onSelect) {
  */
 export function updateColorLegend(minValue, maxValue, dataType) {
   const legendDiv = document.getElementById("intensityLegend");
-
   if (legendDiv) {
     // Update title
     const titleSpan = legendDiv.querySelector(".legendTitle");
