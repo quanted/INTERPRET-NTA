@@ -163,8 +163,6 @@ export function Log10Data(data, sampleHeaders) {
  * @returns {object[]} data structure with imputed, log10-transformed, and z-score normalized values
  */
 export function imputedZdata(data, sampleHeaders) {
-  // const d1 = addDetectionCountAndSum(data, sampleHeaders);
-
   // Step 1: Impute zeros with row minimum/sqrt(2)
   const imputedData = data.map((row) => {
     const newRow = { ...row };
@@ -218,8 +216,9 @@ export function imputedZdata(data, sampleHeaders) {
  * @returns {object[]} The data structure sorted in order of features occurring in least to most number of samples.
  */
 export function sortFeatures(data) {
-  const sortedData = data.sort((a, b) => a.featureSum - b.featureSum); // sort data by total feature abundance in all samples.
+  // const sortedData = data.sort((a, b) => a.featureSum - b.featureSum); // sort data by total feature abundance in all samples.
   // const sortedData = data.sort((a, b) => a.num_detections - b.num_detections); // sort data by number of detects present
+  const sortedData = data.sort((a, b) => a.featureMean - b.featureMean); // sort data by feature mean accross all samples
   return sortedData;
 }
 
@@ -321,16 +320,30 @@ export function getColorCounts(dataFlat) {
  * @param {object[]} sampleHeaders List of raw sample headers
  * @returns {object[]} Returns the data structure with metadata columns added
  */
-export function addDetectionCountAndSum(data, sampleHeaders) {
-  return data.map((row) => ({
-    ...row,
-    // Add a column containing the number of samples in which each feature occurrs.
-    num_detections: sampleHeaders.filter(
-      (col) => row[col] !== null && row[col] !== 0
-    ).length,
-    // Add a column containing the total summed abundance accross all samples for each feature.
-    featureSum: sampleHeaders.reduce((acc, col) => acc + (row[col] || 0), 0),
-  }));
+export function addDetectionCountSumMean(data, sampleHeaders, rawData) {
+  return data.map((row, index) => {
+    // Get the corresponding raw data row for mean calculation
+    const rawRow = rawData[index];
+
+    // Calculate mean abundance from raw data (NOT including zeros)
+    const rawValues = sampleHeaders
+      .map((col) => rawRow[col] || 0)
+      .filter((val) => val > 0);
+    const featureMean =
+      rawValues.reduce((acc, val) => acc + val, 0) / rawValues.length;
+
+    return {
+      ...row,
+      // Add a column containing the number of samples in which each feature occurrs.
+      num_detections: sampleHeaders.filter(
+        (col) => row[col] !== null && row[col] !== 0
+      ).length,
+      // Add a column containing the total summed abundance accross all samples for each feature.
+      featureSum: sampleHeaders.reduce((acc, col) => acc + (row[col] || 0), 0),
+      // Add a column containing the mean abundance accross all samples for each feature.
+      featureMean: featureMean,
+    };
+  });
 }
 
 /**

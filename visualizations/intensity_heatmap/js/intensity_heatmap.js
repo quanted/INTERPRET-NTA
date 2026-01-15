@@ -57,12 +57,15 @@ async function createIntensityHeatmap(path, data = null) {
 
   // For each feature ID, add a column containing the number of samples with intensity values greater than 0
   // and add a column containing sum abundance of all sample columns
-  const dataWithMeta = dataUtils.addDetectionCountAndSum(
+  const dataWithMeta = dataUtils.addDetectionCountSumMean(
     dataDict[dataToShow],
-    sampleHeaders
+    sampleHeaders,
+    dataDict["Raw"]
   );
 
   const sortedData = dataUtils.sortFeatures(dataWithMeta);
+  console.log(dataWithMeta);
+
   // flatten data for generating three.js heatmap. Each entry is a cell in the heatmap.
   let dataFlat;
   dataFlat = dataUtils.getFlattenedData(
@@ -223,9 +226,10 @@ async function createIntensityHeatmap(path, data = null) {
           : null;
 
       const dataToUse = dataDict[dataToShow];
-      const dataWithMeta = dataUtils.addDetectionCountAndSum(
+      const dataWithMeta = dataUtils.addDetectionCountSumMean(
         dataToUse,
-        sampleHeaders
+        sampleHeaders,
+        dataDict["Raw"]
       );
       const sortedData = dataUtils.sortFeatures(dataWithMeta);
       const newDataFlat = dataUtils.getFlattenedData(
