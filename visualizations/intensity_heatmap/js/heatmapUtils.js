@@ -210,7 +210,7 @@ export function createInstancedMesh(geometry, material, n) {
 }
 
 export function valueToColor(value, minValue, maxValue, Color, dataToShow) {
-  if (dataToShow === "Imputed") {
+  if (dataToShow === "Relative Feature") {
     // five-color gradient
     // Normalize value to 0–1 and clamp
     const normalized = Math.min(
@@ -336,7 +336,7 @@ export function setCellColorAndPos(
       // if has intensity value > 0 (colored)
       coloredMesh.setMatrixAt(coloredIndex, dummy.matrix);
 
-      if (dataToShow === "Imputed") {
+      if (dataToShow === "Relative Feature") {
         // Set the color for this instance
         var color = valueToColor(
           cell.value,
@@ -878,7 +878,7 @@ export function mousemoveCellEvent(
         heatmapRect.left + heatmapRect.width + window.scrollX + 5;
       tooltip.innerHTML = `<div style="background-color: white; color: black; padding: 5px; border-radius: 3px; border: solid 1px white; margin-bottom: 0px"><b>Feature ID</b>: ${
         cellData.featureId
-      }\n<b>Sample Name</b>: ${sampleName}\n<b>Intensity</b>: <span style="color: black; padding: ${
+      }\n<b>Sample Name</b>: ${sampleName}\n<b>Abundance</b>: <span style="color: black; padding: ${
         cellData.color === "white" ? "1px 8px" : "1px"
       }; border-radius: 3px; margin-top: 4px;">${cellData.value.toFixed(
         2
@@ -1230,15 +1230,19 @@ export function addColorLegend(
   const minLabel = document.createElement("span");
   minLabel.textContent = minValue.toFixed(2);
   minLabel.className = "minLabel";
+  const midLabel = document.createElement("span");
+  midLabel.textContent = ((minValue + maxValue) / 2).toFixed(2);
+  midLabel.className = "midLabel";
   const maxLabel = document.createElement("span");
   maxLabel.textContent = maxValue.toFixed(2);
   maxLabel.className = "maxLabel";
   labelsDiv.appendChild(minLabel);
+  labelsDiv.appendChild(midLabel);
   labelsDiv.appendChild(maxLabel);
   // Add title
   const titleSpan = document.createElement("div");
   titleSpan.className = "legendTitle";
-  titleSpan.textContent = `${dataView} Intensity`;
+  titleSpan.textContent = `${dataView} Abundance`;
   titleSpan.style.fontWeight = "bold";
   titleSpan.style.marginBottom = "5px";
 
@@ -1280,9 +1284,11 @@ export function addDropdown(graphMesh, canvas, dimsObject, onSelect) {
   menu.style.border = "1px solid rgb(204, 204, 204)";
   menu.style.borderRadius = "5px";
 
-  menu.appendChild(new Option("Log10 Intensity", "Log10"));
-  menu.appendChild(new Option("Raw Intenstity", "Raw"));
-  menu.appendChild(new Option("Imputed Log10 z-score normalized", "Imputed"));
+  menu.appendChild(new Option("Log10 Abundance", "Log10"));
+  menu.appendChild(new Option("Raw Abundance", "Raw"));
+  menu.appendChild(
+    new Option("Relative Feature Abundance", "Relative Feature")
+  );
 
   let selectedValue = null;
   function handleTransformationChange(event) {
@@ -1315,7 +1321,7 @@ export function addDropdown(graphMesh, canvas, dimsObject, onSelect) {
  *
  * @param {number} minValue The smallest non-zero intensity value accross all occurrences in the data
  * @param {number} maxValue The largest intensity value accross all occurrences in the data
- * @param {boolean} isLog10 true if heatmap is currently showing log10 values.
+ * @param {boolean} dataType true if heatmap is currently showing log10 values.
  */
 export function updateColorLegend(minValue, maxValue, dataType) {
   const legendDiv = document.getElementById("intensityLegend");
@@ -1323,15 +1329,22 @@ export function updateColorLegend(minValue, maxValue, dataType) {
     // Update title
     const titleSpan = legendDiv.querySelector(".legendTitle");
     if (titleSpan) {
-      titleSpan.textContent = `${dataType} Intensity`;
+      titleSpan.textContent = `${dataType} Abundance`;
     }
 
-    // Update min Label
+    // Update labels
     const minLabel = legendDiv.querySelector(".minLabel");
-    minLabel.textContent = minValue.toFixed(2);
-
-    // Update min Label
+    const midLabel = legendDiv.querySelector(".midLabel");
     const maxLabel = legendDiv.querySelector(".maxLabel");
-    maxLabel.textContent = maxValue.toFixed(2);
+
+    if (dataType === "Relative Feature") {
+      minLabel.textContent = "-SD";
+      midLabel.textContent = "0";
+      maxLabel.textContent = "+SD";
+    } else {
+      minLabel.textContent = minValue.toFixed(2);
+      midLabel.textContent = ((minValue + maxValue) / 2).toFixed(2);
+      maxLabel.textContent = maxValue.toFixed(2);
+    }
   }
 }

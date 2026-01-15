@@ -28,14 +28,12 @@ async function createIntensityHeatmap(path, data = null) {
   const log10Data = dataUtils.Log10Data(rawData, sampleHeaders);
 
   // TODO get the Imputed Log10 z-score normalize intensity data
-  const imputedData = dataUtils.imputedZdata(rawData, sampleHeaders);
-  console.log(imputedData);
-  console.log(imputedData.filter((row) => row["Feature ID"] == "1330"));
+  const relativeData = dataUtils.imputedZdata(rawData, sampleHeaders);
 
   const dataDict = {
     Raw: rawData,
     Log10: log10Data,
-    Imputed: imputedData,
+    "Relative Feature": relativeData,
   };
 
   const colorDict = {
@@ -47,7 +45,7 @@ async function createIntensityHeatmap(path, data = null) {
       [245, 242, 38], //rgb(245, 242, 38)
       [255, 51, 0], //rgb(255, 51, 0)
     ],
-    Imputed: [
+    "Relative Feature": [
       [21, 0, 207], //rgba(21, 0, 207, 1)
       [137, 129, 255], //rgba(137, 129, 255, 1)
       [253, 0, 0], //rgba(253, 0, 0, 1)
@@ -56,7 +54,6 @@ async function createIntensityHeatmap(path, data = null) {
   };
 
   var dataToShow = "Log10";
-  // var dataToShow = "Imputed";
 
   // For each feature ID, add a column containing the number of samples with intensity values greater than 0
   // and add a column containing sum abundance of all sample columns
@@ -221,8 +218,8 @@ async function createIntensityHeatmap(path, data = null) {
           ? "Log10"
           : selection === "Raw"
           ? "Raw"
-          : selection === "Imputed"
-          ? "Imputed"
+          : selection === "Relative Feature"
+          ? "Relative Feature"
           : null;
 
       const dataToUse = dataDict[dataToShow];
@@ -281,7 +278,7 @@ async function createIntensityHeatmap(path, data = null) {
       // Update the color of the intensity legend gradient bar
       const gradientBar = document.getElementById("legendGradientBar");
 
-      if (dataToShow === "Imputed") {
+      if (dataToShow === "Relative Feature") {
         gradientBar.style.background = `linear-gradient(to right, 
           rgb(${colorDict[dataToShow][0][0]}, ${colorDict[dataToShow][0][1]}, ${colorDict[dataToShow][0][2]}), 
           rgb(${colorDict[dataToShow][1][0]}, ${colorDict[dataToShow][1][1]}, ${colorDict[dataToShow][1][2]}), 
