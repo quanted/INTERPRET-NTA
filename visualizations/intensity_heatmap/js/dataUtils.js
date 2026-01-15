@@ -234,6 +234,14 @@ export function sortFeatures(data) {
 export function getFlattenedData(data, sampleHeaders, sampleGroups) {
   let dataFlat = [];
   data.forEach((feature, featureIndex) => {
+    // Collect intensity values for this feature (row)
+    const featureValues = sampleHeaders
+      .map((h) => feature[h])
+      .filter((v) => typeof v === "number" && !Number.isNaN(v));
+
+    const featureMin = Math.min(...featureValues);
+    const featureMax = Math.max(...featureValues);
+
     Object.entries(feature).forEach(([sample, value], k) => {
       // skip over featureID keys
       if (sampleHeaders.includes(sample)) {
@@ -245,8 +253,8 @@ export function getFlattenedData(data, sampleHeaders, sampleGroups) {
         dataFlat.push({
           featureIndex: featureIndex,
           sampleIndex: sampleIndex,
-          // rowMin: ??,
-          // rowMax: ??,
+          featureMin: featureMin,
+          featureMax: featureMax,
           value: intensityValue,
           color: intensityValue == 0 ? "white" : "colored",
           sampleName: s_name,

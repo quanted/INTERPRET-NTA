@@ -210,48 +210,68 @@ export function createInstancedMesh(geometry, material, n) {
 }
 
 export function valueToColor(value, minValue, maxValue, Color, dataToShow) {
-  // End colors
-  const colorLow = {
-    r: Color[0][0] / 255,
-    g: Color[0][1] / 255,
-    b: Color[0][2] / 255,
-  };
-
-  const colorHigh = {
-    r: Color[1][0] / 255,
-    g: Color[1][1] / 255,
-    b: Color[1][2] / 255,
-  };
-
-  // Middle color (white)
-  const white = { r: 1, g: 1, b: 1 };
-
   if (dataToShow === "Imputed") {
-    //three-color gradient
+    // five-color gradient
     // Normalize value to 0–1 and clamp
     const normalized = Math.min(
       Math.max((value - minValue) / (maxValue - minValue), 0),
       1
     );
 
-    let r, g, b;
+    // Colors
+    const colors = [
+      {
+        r: Color[0][0] / 255,
+        g: Color[0][1] / 255,
+        b: Color[0][2] / 255,
+      },
+      {
+        r: Color[1][0] / 255,
+        g: Color[1][1] / 255,
+        b: Color[1][2] / 255,
+      },
+      { r: 1, g: 1, b: 1 }, //white
+      {
+        r: Color[2][0] / 255,
+        g: Color[2][1] / 255,
+        b: Color[2][2] / 255,
+      },
+      {
+        r: Color[3][0] / 255,
+        g: Color[3][1] / 255,
+        b: Color[3][2] / 255,
+      },
+    ];
 
-    if (normalized <= 0.5) {
-      // Interpolate from low color → white
-      const t = normalized / 0.5;
-      r = colorLow.r + (white.r - colorLow.r) * t;
-      g = colorLow.g + (white.g - colorLow.g) * t;
-      b = colorLow.b + (white.b - colorLow.b) * t;
-    } else {
-      // Interpolate from white → high color
-      const t = (normalized - 0.5) / 0.5;
-      r = white.r + (colorHigh.r - white.r) * t;
-      g = white.g + (colorHigh.g - white.g) * t;
-      b = white.b + (colorHigh.b - white.b) * t;
-    }
+    const numSegments = colors.length - 1;
+
+    const segment = Math.min(
+      Math.floor(normalized * numSegments),
+      numSegments - 1
+    );
+    const t = (normalized - segment / numSegments) * numSegments;
+    const c1 = colors[segment];
+    const c2 = colors[segment + 1];
+
+    const r = c1.r + (c2.r - c1.r) * t;
+    const g = c1.g + (c2.g - c1.g) * t;
+    const b = c1.b + (c2.b - c1.b) * t;
 
     return new THREE.Color(r, g, b);
   } else {
+    // End colors
+    const colorLow = {
+      r: Color[0][0] / 255,
+      g: Color[0][1] / 255,
+      b: Color[0][2] / 255,
+    };
+
+    const colorHigh = {
+      r: Color[1][0] / 255,
+      g: Color[1][1] / 255,
+      b: Color[1][2] / 255,
+    };
+
     // Normalize value to 0-1 range
     const normalized = (value - minValue) / (maxValue - minValue);
 
@@ -316,14 +336,25 @@ export function setCellColorAndPos(
       // if has intensity value > 0 (colored)
       coloredMesh.setMatrixAt(coloredIndex, dummy.matrix);
 
-      // Set the color for this instance
-      const color = valueToColor(
-        cell.value,
-        minValue,
-        maxValue,
-        Color,
-        dataToShow
-      );
+      if (dataToShow === "Imputed") {
+        // Set the color for this instance
+        var color = valueToColor(
+          cell.value,
+          cell.featureMin,
+          cell.featureMax,
+          Color,
+          dataToShow
+        );
+      } else {
+        // Set the color for this instance
+        var color = valueToColor(
+          cell.value,
+          minValue,
+          maxValue,
+          Color,
+          dataToShow
+        );
+      }
 
       coloredMesh.setColorAt(coloredIndex, color);
 

@@ -29,6 +29,8 @@ async function createIntensityHeatmap(path, data = null) {
 
   // TODO get the Imputed Log10 z-score normalize intensity data
   const imputedData = dataUtils.imputedZdata(rawData, sampleHeaders);
+  console.log(imputedData);
+  console.log(imputedData.filter((row) => row["Feature ID"] == "1330"));
 
   const dataDict = {
     Raw: rawData,
@@ -46,8 +48,10 @@ async function createIntensityHeatmap(path, data = null) {
       [255, 51, 0], //rgb(255, 51, 0)
     ],
     Imputed: [
-      [0, 81, 255], //rgb(0, 81, 255)
-      [255, 51, 0], //rgb(255, 51, 0)
+      [21, 0, 207], //rgba(21, 0, 207, 1)
+      [137, 129, 255], //rgba(137, 129, 255, 1)
+      [253, 0, 0], //rgba(253, 0, 0, 1)
+      [146, 0, 0], //rgba(146, 0, 0, 1)
     ],
   };
 
@@ -280,8 +284,10 @@ async function createIntensityHeatmap(path, data = null) {
       if (dataToShow === "Imputed") {
         gradientBar.style.background = `linear-gradient(to right, 
           rgb(${colorDict[dataToShow][0][0]}, ${colorDict[dataToShow][0][1]}, ${colorDict[dataToShow][0][2]}), 
+          rgb(${colorDict[dataToShow][1][0]}, ${colorDict[dataToShow][1][1]}, ${colorDict[dataToShow][1][2]}), 
         rgb(255, 255, 255),
-          rgb(${colorDict[dataToShow][1][0]}, ${colorDict[dataToShow][1][1]}, ${colorDict[dataToShow][1][2]})`;
+          rgb(${colorDict[dataToShow][2][0]}, ${colorDict[dataToShow][2][1]}, ${colorDict[dataToShow][2][2]}),
+          rgb(${colorDict[dataToShow][3][0]}, ${colorDict[dataToShow][3][1]}, ${colorDict[dataToShow][3][2]})`;
       } else {
         gradientBar.style.background = `linear-gradient(to right, 
           rgb(${colorDict[dataToShow][0][0]}, ${colorDict[dataToShow][0][1]}, ${colorDict[dataToShow][0][2]}), 
