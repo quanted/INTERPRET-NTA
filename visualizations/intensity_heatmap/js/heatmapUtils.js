@@ -167,7 +167,10 @@ export function getGeometries(dimsObject) {
  * THREE.LineBasicMaterial]} An array of Material objects for the different cells, the graph and lines.
  */
 export function getMaterials(
-  minIntensityC = 0xffffff,
+  // minIntensityC = 0xffffff,
+  minIntensityC = 0x3e424b,
+  // minIntensityC = 0x9498b3,
+  // minIntensityC = 0x000000,
   zoomBoxColor = 0x000000,
 ) {
   const coloredMaterial = new THREE.MeshBasicMaterial({
