@@ -619,137 +619,6 @@ export function buildTooltip() {
 }
 
 /**
- * Handles the click event for title. If ctrl is held, will cause colored cells to spin one full rotation.
- * If ctrl is not held, it will toggle between "zooming" the colored cells (increasing their width by some factor).
- *
- * @param {MouseEvent} event The mouse event object invoked by the click event.
- * @param {object[]} coloredCellInstances An object with index and location data for the colored cells.
- * @param {THREE.InstancedMesh} coloredMesh The colored mesh containing occurrence cells with intensity > 0.
- * @param {boolean} coloredCellZoomed True if colored cells are "zoomed", otherwise false.
- * @returns {boolean} Generally !coloredCellZoomed -- whether or not the colored cells are now "zoomed".
- */
-export function clickTitleEvent(
-  event,
-  coloredCellInstances,
-  coloredMesh,
-  coloredCellZoomed,
-) {
-  let dummy = new THREE.Object3D();
-
-  // if ctrl is held, spinny animation
-  if (event.ctrlKey) {
-    // iterate over each coloredCell instance and apply tween individually
-    coloredCellInstances.forEach((instance) => {
-      // first half of rotation while getting big
-      const coloredCellTweenIn = new TWEEN.Tween({
-        scaleX: instance.scaleX,
-        scaleY: instance.scaleY,
-        rotX: 0,
-      })
-        .to(
-          {
-            scaleX: instance.scaleX * 30,
-            scaleY: instance.scaleY * 2,
-            rotX: Math.PI,
-          },
-          800,
-        )
-        .onUpdate((updated) => {
-          dummy.position.set(instance.x, instance.y, 0);
-          dummy.scale.set(updated.scaleX, updated.scaleY, 1);
-          dummy.rotation.set(0, 0, updated.rotX);
-          dummy.updateMatrix();
-          coloredMesh.setMatrixAt(instance.index, dummy.matrix);
-          coloredMesh.instanceMatrix.needsUpdate = true;
-        });
-
-      // last half of rotation while going back to original size
-      const coloredCellTweenOut = new TWEEN.Tween({
-        scaleX: instance.scaleX * 30,
-        scaleY: instance.scaleY * 2,
-        rotX: Math.PI,
-      })
-        .to(
-          {
-            scaleX: instance.scaleX,
-            scaleY: instance.scaleY,
-            rotX: 2 * Math.PI,
-          },
-          800,
-        )
-        .onUpdate((updated) => {
-          dummy.position.set(instance.x, instance.y, 0);
-          dummy.scale.set(updated.scaleX, updated.scaleY, 1);
-          dummy.rotation.set(0, 0, updated.rotX);
-          dummy.updateMatrix();
-          coloredMesh.setMatrixAt(instance.index, dummy.matrix);
-          coloredMesh.instanceMatrix.needsUpdate = true;
-        });
-
-      // chain the tweens together and run
-      coloredCellTweenIn.chain(coloredCellTweenOut);
-      coloredCellTweenIn.start();
-
-      // if we were zoomed in, set to zoomed out.
-      if (coloredCellZoomed) {
-        coloredCellZoomed = !coloredCellZoomed;
-      }
-    });
-  } else {
-    // if ctrl not held, toggle colored cell width increase
-    if (!coloredCellZoomed) {
-      // "zoom" into red cells
-      coloredCellInstances.forEach((instance) => {
-        const coloredCellTween = new TWEEN.Tween({
-          scaleX: instance.scaleX,
-          scaleY: instance.scaleY,
-          rotX: 0,
-        })
-          .to(
-            { scaleX: instance.scaleX * 22, scaleY: instance.scaleY, rotX: 0 },
-            400,
-          )
-          .onUpdate((updated) => {
-            dummy.position.set(instance.x, instance.y, 0);
-            dummy.scale.set(updated.scaleX, updated.scaleY, 1);
-            dummy.rotation.set(0, 0, updated.rotX);
-            dummy.updateMatrix();
-            coloredMesh.setMatrixAt(instance.index, dummy.matrix);
-            coloredMesh.instanceMatrix.needsUpdate = true;
-          })
-          .start();
-      });
-      coloredCellZoomed = !coloredCellZoomed;
-    } else {
-      // "zoom" out of colored cells
-      coloredCellInstances.forEach((instance) => {
-        const coloredCellTween = new TWEEN.Tween({
-          scaleX: instance.scaleX * 22,
-          scaleY: instance.scaleY,
-          rotX: 0,
-        })
-          .to(
-            { scaleX: instance.scaleX, scaleY: instance.scaleY, rotX: 0 },
-            400,
-          )
-          .onUpdate((updated) => {
-            dummy.position.set(instance.x, instance.y, 0);
-            dummy.scale.set(updated.scaleX, updated.scaleY, 1);
-            dummy.rotation.set(0, 0, updated.rotX);
-            dummy.updateMatrix();
-            coloredMesh.setMatrixAt(instance.index, dummy.matrix);
-            coloredMesh.instanceMatrix.needsUpdate = true;
-          })
-          .start();
-      });
-      coloredCellZoomed = !coloredCellZoomed;
-    }
-  }
-
-  return coloredCellZoomed;
-}
-
-/**
  * Handles mouseenter events for y-axis labels. Causes tooltip to appear and highlights label.
  *
  * @param {MouseEvent} event Mouse event object invoked by mouseenter event.
@@ -965,7 +834,6 @@ export function mouseupCellEvent(
   graphMesh,
   coloredMesh,
   zoomed,
-  coloredCellZoomed,
   coloredCellInstances,
   vertLineObjects,
   vertLineLimit,
@@ -998,34 +866,9 @@ export function mouseupCellEvent(
     zoomed = true;
 
     graphMesh.visible = false;
-
-    if (coloredCellZoomed) {
-      let dummy = new THREE.Object3D();
-      coloredCellInstances.forEach((instance) => {
-        const coloredCellTween = new TWEEN.Tween({
-          scaleX: instance.scaleX * 22,
-          scaleY: instance.scaleY,
-          rotX: 0,
-        })
-          .to(
-            { scaleX: instance.scaleX, scaleY: instance.scaleY, rotX: 0 },
-            100,
-          )
-          .onUpdate((updated) => {
-            dummy.position.set(instance.x, instance.y, 0);
-            dummy.scale.set(updated.scaleX, updated.scaleY, 1);
-            dummy.rotation.set(0, 0, updated.rotX);
-            dummy.updateMatrix();
-            coloredMesh.setMatrixAt(instance.index, dummy.matrix);
-            coloredMesh.instanceMatrix.needsUpdate = true;
-          })
-          .start();
-      });
-      coloredCellZoomed = !coloredCellZoomed;
-    }
   }
 
-  return [zoomBox, cachedZoomBox, zoomed, coloredCellZoomed];
+  return [zoomBox, cachedZoomBox, zoomed];
 }
 
 export async function keydownDocEvent(
@@ -1043,7 +886,6 @@ export async function keydownDocEvent(
   cachedOrbitControl,
   coloredMesh,
   coloredCellInstances,
-  coloredCellZoomed,
 ) {
   // reset zoom functionality
   if (event.ctrlKey && event.code === "Space") {
@@ -1068,32 +910,6 @@ export async function keydownDocEvent(
       zoomed = !zoomed;
       graphMesh.visible = true;
     } else if (cachedZoomBox) {
-      // unzoom colored cells if zoomed
-      if (coloredCellZoomed) {
-        let dummy = new THREE.Object3D();
-        coloredCellInstances.forEach((instance) => {
-          const coloredCellTween = new TWEEN.Tween({
-            scaleX: instance.scaleX * 22,
-            scaleY: instance.scaleY,
-            rotX: 0,
-          })
-            .to(
-              { scaleX: instance.scaleX, scaleY: instance.scaleY, rotX: 0 },
-              100,
-            )
-            .onUpdate((updated) => {
-              dummy.position.set(instance.x, instance.y, 0);
-              dummy.scale.set(updated.scaleX, updated.scaleY, 1);
-              dummy.rotation.set(0, 0, updated.rotX);
-              dummy.updateMatrix();
-              coloredMesh.setMatrixAt(instance.index, dummy.matrix);
-              coloredMesh.instanceMatrix.needsUpdate = true;
-            })
-            .start();
-        });
-        coloredCellZoomed = !coloredCellZoomed;
-      }
-
       // unzoom camera
       let targetBounds = getTargetBoundsFromZoomBox(
         cachedZoomBox,
@@ -1115,7 +931,7 @@ export async function keydownDocEvent(
     }
   }
 
-  return [zoomed, coloredCellZoomed];
+  return [zoomed];
 }
 
 export async function zoomTween(
@@ -1284,11 +1100,14 @@ export function addDropdown(graphMesh, canvas, dimsObject, onSelect) {
   menu.style.border = "1px solid rgb(204, 204, 204)";
   menu.style.borderRadius = "5px";
 
-  menu.appendChild(new Option("Log10 Abundance", "Log10"));
   menu.appendChild(new Option("Raw Abundance", "Raw"));
+  menu.appendChild(new Option("Log10 Abundance", "Log10"));
   menu.appendChild(
     new Option("Relative Feature Abundance", "Relative Feature"),
   );
+
+  // Set the default selected value.
+  menu.value = "Log10";
 
   let selectedValue = null;
   function handleTransformationChange(event) {
@@ -1318,14 +1137,26 @@ export function addDropdown(graphMesh, canvas, dimsObject, onSelect) {
 
 // Function to read the sample order from a CSV file
 async function readSampleOrderFromCSV(file) {
-  console.log("hello read sample order");
-  // const text = await file.text();
+  const text = await file.text();
 
-  // // Split the text into lines
-  // const lines = text
-  //   .split("\n")
-  //   .map((line) => line.trim())
-  //   .filter((line) => line);
+  // Split the text into lines
+  const lines = text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line);
+
+  const hasGroups =
+    lines[0].split(",").length === 2
+      ? true
+      : lines[0].split(",").length === 1
+        ? false
+        : null;
+
+  if (hasGroups) {
+    console.log("Has grouping column. Need to add sample grouping capability");
+  } else {
+    console.log("no groups found. Just sort the samples. ");
+  }
 
   // // Split the first line to get the headers
   // const headers = lines[0].split(",").map((header) => header.trim());
@@ -1351,14 +1182,26 @@ async function readSampleOrderFromCSV(file) {
 
 // Function to read the feature ID order from a CSV file
 async function readFeatureOrderFromCSV(file) {
-  console.log("hello read feature order");
-  // const text = await file.text();
+  const text = await file.text();
 
-  // // Split the text into lines
-  // const lines = text
-  //   .split("\n")
-  //   .map((line) => line.trim())
-  //   .filter((line) => line);
+  // Split the text into lines
+  const lines = text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line);
+
+  const hasGroups =
+    lines[0].split(",").length === 2
+      ? true
+      : lines[0].split(",").length === 1
+        ? false
+        : null;
+
+  if (hasGroups) {
+    console.log("Has grouping column. Need to add feature grouping capability");
+  } else {
+    console.log("no groups found. Just sort the features. ");
+  }
 
   // // Split the first line to get the headers
   // const headers = lines[0].split(",").map((header) => header.trim());

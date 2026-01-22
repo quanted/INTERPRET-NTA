@@ -212,8 +212,6 @@ async function createIntensityHeatmap(path, data = null) {
 
     // Add dropdown menu with proper mesh recreation
     heatmapUtils.addDropdown(graphMesh, canvas, dimsObject, (selection) => {
-      coloredCellZoomed = false;
-
       // Recalculate data with appropriate transformation
       dataToShow =
         selection === "Log10"
@@ -326,19 +324,6 @@ async function createIntensityHeatmap(path, data = null) {
     const yAxisTooltip = heatmapUtils.buildYAxisTooltip();
     const tooltip = heatmapUtils.buildTooltip();
 
-    // add event listeners for title (show tooltip on-hover; highlight colored cells on click)
-    const heatmapTitleDiv = document.querySelector(".title");
-
-    var coloredCellZoomed = false;
-    heatmapTitleDiv.addEventListener("click", (e) => {
-      coloredCellZoomed = heatmapUtils.clickTitleEvent(
-        e,
-        coloredCellInstances,
-        coloredMesh,
-        coloredCellZoomed,
-      );
-    });
-
     // add event listeners for y-axis labels
     const yAxisLabelDivs = document.querySelectorAll(".yAxisLabel");
     yAxisLabelDivs.forEach((label) => {
@@ -408,29 +393,27 @@ async function createIntensityHeatmap(path, data = null) {
     });
 
     canvas.addEventListener("mouseup", (e) => {
-      [zoomBox, cachedZoomBox, zoomed, coloredCellZoomed] =
-        heatmapUtils.mouseupCellEvent(
-          e,
-          scene,
-          zoomBox,
-          camera,
-          cameraDefaults,
-          orbitControls,
-          cachedZoomBox,
-          graphMesh,
-          coloredMesh,
-          zoomed,
-          coloredCellZoomed,
-          coloredCellInstances,
-          vertLineObjects,
-          vertLineLimit,
-          dimsObject,
-        );
+      [zoomBox, cachedZoomBox, zoomed] = heatmapUtils.mouseupCellEvent(
+        e,
+        scene,
+        zoomBox,
+        camera,
+        cameraDefaults,
+        orbitControls,
+        cachedZoomBox,
+        graphMesh,
+        coloredMesh,
+        zoomed,
+        coloredCellInstances,
+        vertLineObjects,
+        vertLineLimit,
+        dimsObject,
+      );
     });
 
     // add event listener to toggle back and forth between last zoom
     document.addEventListener("keydown", async (e) => {
-      [zoomed, coloredCellZoomed] = await heatmapUtils.keydownDocEvent(
+      [zoomed] = await heatmapUtils.keydownDocEvent(
         e,
         scene,
         camera,
@@ -445,7 +428,6 @@ async function createIntensityHeatmap(path, data = null) {
         cachedOrbitControl,
         coloredMesh,
         coloredCellInstances,
-        coloredCellZoomed,
       );
     });
 

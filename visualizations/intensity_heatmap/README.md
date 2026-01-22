@@ -34,8 +34,6 @@ It should be noted that each section below ends with a GIF. It may take a while 
 
 Hovering over a cell will populate the tooltip to the right of the plot with data about that cell (more on this later).
 
-Hovering over the title will display a tooltip with data about the entire plot, like the total number of features, samples, and occurrences.
-
 Hovering over a y-axis label will generate a tooltip that is populated with data about that sample.
 
 ### Zooming and Cell On-Hovers
