@@ -60,7 +60,7 @@ async function createIntensityHeatmap(path, data = null) {
   const dataWithMeta = dataUtils.addDetectionCountSumMean(
     dataDict[dataToShow],
     sampleHeaders,
-    dataDict["Raw"]
+    dataDict["Raw"],
   );
 
   const sortedData = dataUtils.sortFeatures(dataWithMeta);
@@ -71,7 +71,7 @@ async function createIntensityHeatmap(path, data = null) {
   dataFlat = dataUtils.getFlattenedData(
     sortedData,
     sampleHeaders,
-    sampleGroups
+    sampleGroups,
   );
 
   const nFeatures = data.length; // number of unique features in the data
@@ -150,12 +150,12 @@ async function createIntensityHeatmap(path, data = null) {
     let coloredMesh = heatmapUtils.createInstancedMesh(
       cellGeometry,
       coloredMaterial,
-      coloredCount
+      coloredCount,
     );
     let whiteMesh = heatmapUtils.createInstancedMesh(
       cellGeometry,
       whiteMaterial,
-      whiteCount
+      whiteCount,
     );
 
     coloredMesh.renderOrder = 998; // ensure coloredMesh is rendered on top
@@ -175,7 +175,7 @@ async function createIntensityHeatmap(path, data = null) {
       whiteMesh,
       // [lightest_color, darkest_color]
       colorDict[dataToShow],
-      dataToShow
+      dataToShow,
     );
 
     // add a transparent mesh to house the graph title/labels/partitions
@@ -193,7 +193,7 @@ async function createIntensityHeatmap(path, data = null) {
       blackMaterial,
       graphMesh,
       scene,
-      hasTrailingUnderscores
+      hasTrailingUnderscores,
     );
 
     const coloredValues = dataFlat
@@ -208,7 +208,7 @@ async function createIntensityHeatmap(path, data = null) {
       minValue,
       maxValue,
       dataToShow,
-      colorDict[dataToShow]
+      colorDict[dataToShow],
     );
 
     // Add dropdown menu with proper mesh recreation
@@ -220,22 +220,22 @@ async function createIntensityHeatmap(path, data = null) {
         selection === "Log10"
           ? "Log10"
           : selection === "Raw"
-          ? "Raw"
-          : selection === "Relative Feature"
-          ? "Relative Feature"
-          : null;
+            ? "Raw"
+            : selection === "Relative Feature"
+              ? "Relative Feature"
+              : null;
 
       const dataToUse = dataDict[dataToShow];
       const dataWithMeta = dataUtils.addDetectionCountSumMean(
         dataToUse,
         sampleHeaders,
-        dataDict["Raw"]
+        dataDict["Raw"],
       );
       const sortedData = dataUtils.sortFeatures(dataWithMeta);
       const newDataFlat = dataUtils.getFlattenedData(
         sortedData,
         sampleHeaders,
-        sampleGroups
+        sampleGroups,
       );
 
       // Get new color counts for the selected data type
@@ -251,13 +251,13 @@ async function createIntensityHeatmap(path, data = null) {
       coloredMesh = heatmapUtils.createInstancedMesh(
         cellGeometry,
         coloredMaterial,
-        newColoredCount
+        newColoredCount,
       );
 
       whiteMesh = heatmapUtils.createInstancedMesh(
         cellGeometry,
         whiteMaterial,
-        newWhiteCount
+        newWhiteCount,
       );
 
       coloredMesh.renderOrder = 998;
@@ -272,7 +272,7 @@ async function createIntensityHeatmap(path, data = null) {
         coloredMesh,
         whiteMesh,
         colorDict[dataToShow],
-        dataToShow
+        dataToShow,
       );
 
       // Update the global coloredCellInstances reference
@@ -305,11 +305,15 @@ async function createIntensityHeatmap(path, data = null) {
       dataFlat = newDataFlat;
     });
 
+    heatmapUtils.UploadSampleOrderFile(graphMesh, canvas, dimsObject, () => {
+      console.log("hey there");
+    });
+
     let vertLineObjects = heatmapUtils.getVertLines(
       dimsObject,
       nFeatures,
       vertLineGeo,
-      blackMaterial
+      blackMaterial,
     );
 
     // set up rendering loop
@@ -328,7 +332,7 @@ async function createIntensityHeatmap(path, data = null) {
         e,
         coloredCellInstances,
         coloredMesh,
-        coloredCellZoomed
+        coloredCellZoomed,
       );
     });
 
@@ -342,7 +346,7 @@ async function createIntensityHeatmap(path, data = null) {
           featureCounts,
           yAxisTooltip,
           dimsObject,
-          hasTrailingUnderscores
+          hasTrailingUnderscores,
         );
       });
 
@@ -372,7 +376,7 @@ async function createIntensityHeatmap(path, data = null) {
           startY,
           zoomBox,
           zoomBoxGeometry,
-          zoomed
+          zoomed,
         );
     });
 
@@ -396,7 +400,7 @@ async function createIntensityHeatmap(path, data = null) {
         scene,
         camera,
         cameraDefaults,
-        hasTrailingUnderscores
+        hasTrailingUnderscores,
       );
     });
 
@@ -417,7 +421,7 @@ async function createIntensityHeatmap(path, data = null) {
           coloredCellInstances,
           vertLineObjects,
           vertLineLimit,
-          dimsObject
+          dimsObject,
         );
     });
 
@@ -438,7 +442,7 @@ async function createIntensityHeatmap(path, data = null) {
         cachedOrbitControl,
         coloredMesh,
         coloredCellInstances,
-        coloredCellZoomed
+        coloredCellZoomed,
       );
     });
 

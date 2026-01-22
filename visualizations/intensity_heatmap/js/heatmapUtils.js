@@ -95,7 +95,7 @@ export function setTheScene(canvasId, dimsObject) {
     top,
     bottom,
     near,
-    far
+    far,
   );
   camera.zoom = 1;
 
@@ -141,16 +141,16 @@ export function setTheScene(canvasId, dimsObject) {
 export function getGeometries(dimsObject) {
   const graphGeometry = new THREE.PlaneGeometry(
     dimsObject.width,
-    dimsObject.height
+    dimsObject.height,
   );
   const cellGeometry = new THREE.PlaneGeometry(
     dimsObject.apparentCellWidth,
-    dimsObject.cellHeight
+    dimsObject.cellHeight,
   );
   const horzLineGeo = new THREE.PlaneGeometry(dimsObject.width, 0.5);
   const vertLineGeo = new THREE.PlaneGeometry(
     dimsObject.cellWidth / 10,
-    dimsObject.height
+    dimsObject.height,
   );
 
   return [graphGeometry, cellGeometry, horzLineGeo, vertLineGeo];
@@ -168,7 +168,7 @@ export function getGeometries(dimsObject) {
  */
 export function getMaterials(
   minIntensityC = 0xffffff,
-  zoomBoxColor = 0x000000
+  zoomBoxColor = 0x000000,
 ) {
   const coloredMaterial = new THREE.MeshBasicMaterial({
     // color: maxIntensityC,
@@ -215,7 +215,7 @@ export function valueToColor(value, minValue, maxValue, Color, dataToShow) {
     // Normalize value to 0–1 and clamp
     const normalized = Math.min(
       Math.max((value - minValue) / (maxValue - minValue), 0),
-      1
+      1,
     );
 
     // Colors
@@ -247,7 +247,7 @@ export function valueToColor(value, minValue, maxValue, Color, dataToShow) {
 
     const segment = Math.min(
       Math.floor(normalized * numSegments),
-      numSegments - 1
+      numSegments - 1,
     );
     const t = (normalized - segment / numSegments) * numSegments;
     const c1 = colors[segment];
@@ -300,7 +300,7 @@ export function setCellColorAndPos(
   coloredMesh,
   whiteMesh,
   Color,
-  dataToShow
+  dataToShow,
 ) {
   // Find min and max values for color scaling
 
@@ -343,7 +343,7 @@ export function setCellColorAndPos(
           cell.featureMin,
           cell.featureMax,
           Color,
-          dataToShow
+          dataToShow,
         );
       } else {
         // Set the color for this instance
@@ -352,7 +352,7 @@ export function setCellColorAndPos(
           minValue,
           maxValue,
           Color,
-          dataToShow
+          dataToShow,
         );
       }
 
@@ -459,7 +459,7 @@ export function addYAxisLabelsAndHorzLines(
   blackMaterial,
   graphMesh,
   scene,
-  hasTrailingUnderscores
+  hasTrailingUnderscores,
 ) {
   // setup group for yAxis labels
   const yAxisGroup = new THREE.Group();
@@ -546,7 +546,7 @@ export function getVertLines(
   dimsObject,
   nFeatures,
   vertLineGeo,
-  blackMaterial
+  blackMaterial,
 ) {
   // add vertline objects to array to display later after zooming
   let vertLineObjects = [];
@@ -632,7 +632,7 @@ export function clickTitleEvent(
   event,
   coloredCellInstances,
   coloredMesh,
-  coloredCellZoomed
+  coloredCellZoomed,
 ) {
   let dummy = new THREE.Object3D();
 
@@ -652,7 +652,7 @@ export function clickTitleEvent(
             scaleY: instance.scaleY * 2,
             rotX: Math.PI,
           },
-          800
+          800,
         )
         .onUpdate((updated) => {
           dummy.position.set(instance.x, instance.y, 0);
@@ -675,7 +675,7 @@ export function clickTitleEvent(
             scaleY: instance.scaleY,
             rotX: 2 * Math.PI,
           },
-          800
+          800,
         )
         .onUpdate((updated) => {
           dummy.position.set(instance.x, instance.y, 0);
@@ -707,7 +707,7 @@ export function clickTitleEvent(
         })
           .to(
             { scaleX: instance.scaleX * 22, scaleY: instance.scaleY, rotX: 0 },
-            400
+            400,
           )
           .onUpdate((updated) => {
             dummy.position.set(instance.x, instance.y, 0);
@@ -730,7 +730,7 @@ export function clickTitleEvent(
         })
           .to(
             { scaleX: instance.scaleX, scaleY: instance.scaleY, rotX: 0 },
-            400
+            400,
           )
           .onUpdate((updated) => {
             dummy.position.set(instance.x, instance.y, 0);
@@ -765,7 +765,7 @@ export function mouseenterYAxisLabelEvent(
   featureCounts,
   yAxisTooltip,
   dimsObject,
-  hasTrailingUnderscores
+  hasTrailingUnderscores,
 ) {
   const sampleName = label.innerHTML;
 
@@ -803,7 +803,7 @@ export function mousedownCellEvent(
   startY,
   zoomBox,
   zoomBoxGeometry,
-  zoomed
+  zoomed,
 ) {
   // now get zoomBox starting point
   if (!event.ctrlKey && !zoomed) {
@@ -837,7 +837,7 @@ export function mousemoveCellEvent(
   scene,
   camera,
   cameraDefaults,
-  hasTrailingUnderscores
+  hasTrailingUnderscores,
 ) {
   // first handle on-hover tooltips, get mouse position
   const rect = renderer.domElement.getBoundingClientRect();
@@ -857,11 +857,11 @@ export function mousemoveCellEvent(
     let cellData;
     if (intersectedObject === coloredMesh) {
       cellData = dataFlat.find(
-        (cell, i) => cell.color === "colored" && cell.meshIndex === instanceId
+        (cell, i) => cell.color === "colored" && cell.meshIndex === instanceId,
       );
     } else if (intersectedObject === whiteMesh) {
       cellData = dataFlat.find(
-        (cell, i) => cell.color === "white" && cell.meshIndex === instanceId
+        (cell, i) => cell.color === "white" && cell.meshIndex === instanceId,
       );
     }
 
@@ -881,7 +881,7 @@ export function mousemoveCellEvent(
       }\n<b>Sample Name</b>: ${sampleName}\n<b>Abundance</b>: <span style="color: black; padding: ${
         cellData.color === "white" ? "1px 8px" : "1px"
       }; border-radius: 3px; margin-top: 4px;">${cellData.value.toFixed(
-        2
+        2,
       )}</span></div>This feature occurs in \n${
         cellData["num_detections"]
       } sample(s)`;
@@ -944,7 +944,7 @@ export function mousemoveCellEvent(
 
     zoomBoxGeometry.setAttribute(
       "position",
-      new THREE.BufferAttribute(vertices, 3)
+      new THREE.BufferAttribute(vertices, 3),
     );
     line = new THREE.Line(zoomBoxGeometry, zoomBoxMaterial);
     line.renderOrder = 999;
@@ -969,7 +969,7 @@ export function mouseupCellEvent(
   coloredCellInstances,
   vertLineObjects,
   vertLineLimit,
-  dimsObject
+  dimsObject,
 ) {
   const zoomBoxObject = scene.getObjectByName("zoomBox");
   if (zoomBoxObject) {
@@ -977,7 +977,7 @@ export function mouseupCellEvent(
     let targetBounds = getTargetBoundsFromZoomBox(
       zoomBox,
       camera,
-      cameraDefaults
+      cameraDefaults,
     );
 
     zoomTween(
@@ -988,7 +988,7 @@ export function mouseupCellEvent(
       vertLineObjects,
       vertLineLimit,
       dimsObject,
-      null
+      null,
     );
 
     // remove zoomBox
@@ -1009,7 +1009,7 @@ export function mouseupCellEvent(
         })
           .to(
             { scaleX: instance.scaleX, scaleY: instance.scaleY, rotX: 0 },
-            100
+            100,
           )
           .onUpdate((updated) => {
             dummy.position.set(instance.x, instance.y, 0);
@@ -1043,7 +1043,7 @@ export async function keydownDocEvent(
   cachedOrbitControl,
   coloredMesh,
   coloredCellInstances,
-  coloredCellZoomed
+  coloredCellZoomed,
 ) {
   // reset zoom functionality
   if (event.ctrlKey && event.code === "Space") {
@@ -1063,7 +1063,7 @@ export async function keydownDocEvent(
         vertLineLimit,
         dimsObject,
         null,
-        true
+        true,
       );
       zoomed = !zoomed;
       graphMesh.visible = true;
@@ -1079,7 +1079,7 @@ export async function keydownDocEvent(
           })
             .to(
               { scaleX: instance.scaleX, scaleY: instance.scaleY, rotX: 0 },
-              100
+              100,
             )
             .onUpdate((updated) => {
               dummy.position.set(instance.x, instance.y, 0);
@@ -1098,7 +1098,7 @@ export async function keydownDocEvent(
       let targetBounds = getTargetBoundsFromZoomBox(
         cachedZoomBox,
         camera,
-        cameraDefaults
+        cameraDefaults,
       );
       await zoomTween(
         scene,
@@ -1108,7 +1108,7 @@ export async function keydownDocEvent(
         vertLineObjects,
         vertLineLimit,
         dimsObject,
-        cachedOrbitControl
+        cachedOrbitControl,
       );
       zoomed = !zoomed;
       graphMesh.visible = false;
@@ -1128,7 +1128,7 @@ export async function zoomTween(
   dimsObject,
   cachedOrbitControl,
   skipTransformation = false,
-  duration = 500
+  duration = 500,
 ) {
   const initialBounds = {
     left: camera.left,
@@ -1199,7 +1199,7 @@ export function addColorLegend(
   minValue,
   maxValue,
   dataView,
-  Color
+  Color,
 ) {
   const legendDiv = document.createElement("div");
   legendDiv.className = "colorLegend";
@@ -1287,7 +1287,7 @@ export function addDropdown(graphMesh, canvas, dimsObject, onSelect) {
   menu.appendChild(new Option("Log10 Abundance", "Log10"));
   menu.appendChild(new Option("Raw Abundance", "Raw"));
   menu.appendChild(
-    new Option("Relative Feature Abundance", "Relative Feature")
+    new Option("Relative Feature Abundance", "Relative Feature"),
   );
 
   let selectedValue = null;
@@ -1314,6 +1314,102 @@ export function addDropdown(graphMesh, canvas, dimsObject, onSelect) {
   dropdownLabel.position.set(dropdownX, dropdownY, 0);
   graphMesh.add(dropdownLabel);
   dropdownLabel.layers.set(0);
+}
+
+// Function to read the feature IDs from a CSV file
+async function readSampleOrderFromCSV(file) {
+  const text = await file.text();
+
+  // Split the text into lines
+  const lines = text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line);
+
+  // Split the first line to get the headers
+  const headers = lines[0].split(",").map((header) => header.trim());
+
+  // Find the index of the "Feature ID" column
+  const featureIDIndex = headers.indexOf("Feature ID");
+
+  if (featureIDIndex === -1) {
+    throw new Error("Feature ID column not found");
+  }
+
+  // Extract the feature IDs from the subsequent lines
+  const featureIDs = lines
+    .slice(1)
+    .map((line) => {
+      const values = line.split(",").map((value) => value.trim());
+      return Number(values[featureIDIndex]);
+    })
+    .filter((id) => !isNaN(id));
+
+  return featureIDs;
+}
+
+/**
+ * Adds a File Upload Button to select data transformation type to display in the heatmap
+ *
+ * @param {THREE.Mesh} graphMesh The graph mesh used to hold titles, labels, etc.
+ * @param {HTMLCanvasElement} canvas The canvas object that holds the heatmap.
+ * @param {object} dimsObject The object containing the graph/cell dims.
+ * @param {object} onSelect Function to perform on selection from the
+ */
+export function UploadSampleOrderFile(graphMesh, canvas, dimsObject, onSelect) {
+  // Add file input and upload button for feature IDs
+  const sampleOrderDiv = d3
+    .select("div#heatmap-container")
+    .append("div")
+    .attr("id", "SampleOrderDiv")
+    .style("align-items", "center")
+    .style("gap", "10px")
+    .style("margin-top", "10px")
+    .style("position", "absolute");
+  const uploadContainer = sampleOrderDiv
+    .append("div")
+    .style("display", "flex")
+    .style("align-items", "center")
+    .style("gap", "10px");
+
+  uploadContainer
+    .append("input")
+    .attr("type", "file")
+    .attr("id", "featureIDFileInput")
+    .style("display", "none")
+    .on("change", async function (event) {
+      const file = event.target.files[0];
+      if (file) {
+        const featureIDs = await readSampleOrderFromCSV(file);
+        featureIDs.sort((a, b) => a - b); // Sort the feature IDs numerically
+        populateFeatureNumberDatalist(featureIDs);
+        filterScatterplotByFeatureIDs(featureIDs);
+      }
+    });
+
+  uploadContainer
+    .append("button")
+    .text("Upload Sample Order CSV")
+    .attr("class", "upload-button") // Use the new class for styling
+    .on("click", function () {
+      document.getElementById("featureIDFileInput").click();
+      // Add a class to stop the pulsing effect after the button is clicked
+      d3.select(this).classed("clicked", true);
+    });
+
+  // const canvRect = canvas.getBoundingClientRect();
+  // let X =
+  //   -(dimsObject.actualWidth / 2) + canvRect.left + dimsObject.paddingWidth;
+  // X += dimsObject.width + 180;
+  // // Position to the right of the graph
+  // let Y = dimsObject.actualHeight / 2 - dimsObject.paddingHeight;
+  // Y -= dimsObject.height / 2 - 630;
+  // // Center vertically
+  // // sampleOrderDiv.position.set(dropdownX, dropdownY, 0);
+
+  // // sampleOrderDiv
+  // graphMesh.add(sampleOrderDiv);
+  // sampleOrderDiv.layers.set(0);
 }
 
 /**
