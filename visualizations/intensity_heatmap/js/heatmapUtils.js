@@ -1316,36 +1316,70 @@ export function addDropdown(graphMesh, canvas, dimsObject, onSelect) {
   dropdownLabel.layers.set(0);
 }
 
-// Function to read the feature IDs from a CSV file
+// Function to read the sample order from a CSV file
 async function readSampleOrderFromCSV(file) {
-  const text = await file.text();
+  console.log("hello read sample order");
+  // const text = await file.text();
 
-  // Split the text into lines
-  const lines = text
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => line);
+  // // Split the text into lines
+  // const lines = text
+  //   .split("\n")
+  //   .map((line) => line.trim())
+  //   .filter((line) => line);
 
-  // Split the first line to get the headers
-  const headers = lines[0].split(",").map((header) => header.trim());
+  // // Split the first line to get the headers
+  // const headers = lines[0].split(",").map((header) => header.trim());
 
-  // Find the index of the "Feature ID" column
-  const featureIDIndex = headers.indexOf("Feature ID");
+  // // Find the index of the "Feature ID" column
+  // const featureIDIndex = headers.indexOf("Feature ID");
 
-  if (featureIDIndex === -1) {
-    throw new Error("Feature ID column not found");
-  }
+  // if (featureIDIndex === -1) {
+  //   throw new Error("Feature ID column not found");
+  // }
 
-  // Extract the feature IDs from the subsequent lines
-  const featureIDs = lines
-    .slice(1)
-    .map((line) => {
-      const values = line.split(",").map((value) => value.trim());
-      return Number(values[featureIDIndex]);
-    })
-    .filter((id) => !isNaN(id));
+  // // Extract the feature IDs from the subsequent lines
+  // const featureIDs = lines
+  //   .slice(1)
+  //   .map((line) => {
+  //     const values = line.split(",").map((value) => value.trim());
+  //     return Number(values[featureIDIndex]);
+  //   })
+  //   .filter((id) => !isNaN(id));
 
-  return featureIDs;
+  // return featureIDs;
+}
+
+// Function to read the feature ID order from a CSV file
+async function readFeatureOrderFromCSV(file) {
+  console.log("hello read feature order");
+  // const text = await file.text();
+
+  // // Split the text into lines
+  // const lines = text
+  //   .split("\n")
+  //   .map((line) => line.trim())
+  //   .filter((line) => line);
+
+  // // Split the first line to get the headers
+  // const headers = lines[0].split(",").map((header) => header.trim());
+
+  // // Find the index of the "Feature ID" column
+  // const featureIDIndex = headers.indexOf("Feature ID");
+
+  // if (featureIDIndex === -1) {
+  //   throw new Error("Feature ID column not found");
+  // }
+
+  // // Extract the feature IDs from the subsequent lines
+  // const featureIDs = lines
+  //   .slice(1)
+  //   .map((line) => {
+  //     const values = line.split(",").map((value) => value.trim());
+  //     return Number(values[featureIDIndex]);
+  //   })
+  //   .filter((id) => !isNaN(id));
+
+  // return featureIDs;
 }
 
 /**
@@ -1357,59 +1391,138 @@ async function readSampleOrderFromCSV(file) {
  * @param {object} onSelect Function to perform on selection from the
  */
 export function UploadSampleOrderFile(graphMesh, canvas, dimsObject, onSelect) {
-  // Add file input and upload button for feature IDs
-  const sampleOrderDiv = d3
-    .select("div#heatmap-container")
-    .append("div")
-    .attr("id", "SampleOrderDiv")
-    .style("align-items", "center")
-    .style("gap", "10px")
-    .style("margin-top", "10px")
-    .style("position", "absolute");
-  const uploadContainer = sampleOrderDiv
-    .append("div")
-    .style("display", "flex")
-    .style("align-items", "center")
-    .style("gap", "10px");
+  // Create the container div
+  const sampleOrderDiv = document.createElement("div");
+  sampleOrderDiv.id = "sampleOrderDiv";
+  sampleOrderDiv.style.position = "absolute";
+  sampleOrderDiv.style.zIndex = "1000";
+  sampleOrderDiv.style.alignItems = "center";
 
-  uploadContainer
-    .append("input")
-    .attr("type", "file")
-    .attr("id", "featureIDFileInput")
-    .style("display", "none")
-    .on("change", async function (event) {
-      const file = event.target.files[0];
-      if (file) {
-        const featureIDs = await readSampleOrderFromCSV(file);
-        featureIDs.sort((a, b) => a - b); // Sort the feature IDs numerically
-        populateFeatureNumberDatalist(featureIDs);
-        filterScatterplotByFeatureIDs(featureIDs);
-      }
-    });
+  // Create the upload container
+  const uploadContainer = document.createElement("div");
+  uploadContainer.style.display = "flex";
+  uploadContainer.style.alignItems = "center";
+  uploadContainer.style.gap = "10px";
 
-  uploadContainer
-    .append("button")
-    .text("Upload Sample Order CSV")
-    .attr("class", "upload-button") // Use the new class for styling
-    .on("click", function () {
-      document.getElementById("featureIDFileInput").click();
-      // Add a class to stop the pulsing effect after the button is clicked
-      d3.select(this).classed("clicked", true);
-    });
+  // Create the file input
+  const fileInput = document.createElement("input");
+  fileInput.type = "file";
+  fileInput.id = "sampleOrderFileInput";
+  fileInput.style.display = "none";
+  fileInput.addEventListener("change", async function (event) {
+    const file = event.target.files[0];
+    if (file) {
+      const featureIDs = await readSampleOrderFromCSV(file);
+      featureIDs.sort((a, b) => a - b); // Sort the feature IDs numerically
+      populateFeatureNumberDatalist(featureIDs);
+      filterScatterplotByFeatureIDs(featureIDs);
+    }
+  });
 
-  // const canvRect = canvas.getBoundingClientRect();
-  // let X =
-  //   -(dimsObject.actualWidth / 2) + canvRect.left + dimsObject.paddingWidth;
-  // X += dimsObject.width + 180;
-  // // Position to the right of the graph
-  // let Y = dimsObject.actualHeight / 2 - dimsObject.paddingHeight;
-  // Y -= dimsObject.height / 2 - 630;
-  // // Center vertically
-  // // sampleOrderDiv.position.set(dropdownX, dropdownY, 0);
+  // Create upload button
+  const uploadButton = document.createElement("button");
+  uploadButton.textContent = "Upload Sample Order CSV";
+  uploadButton.className = "upload-button";
+  uploadButton.style.height = "30px";
+  uploadButton.style.border = "1px solid rgb(204, 204, 204)";
+  uploadButton.style.borderRadius = "5px";
+  uploadButton.addEventListener("click", function () {
+    fileInput.click();
+  });
 
-  // // sampleOrderDiv
-  // graphMesh.add(sampleOrderDiv);
-  // sampleOrderDiv.layers.set(0);
+  // Append elements
+  uploadContainer.appendChild(fileInput);
+  uploadContainer.appendChild(uploadButton);
+  sampleOrderDiv.appendChild(uploadContainer);
+
+  // Calculate position
+  const canvRect = canvas.getBoundingClientRect();
+  let X =
+    -(dimsObject.actualWidth / 2) + canvRect.left + dimsObject.paddingWidth;
+  X += dimsObject.width - 1320; // Position to the right of the graph
+
+  let Y = dimsObject.actualHeight / 2 - dimsObject.paddingHeight;
+  Y -= dimsObject.height / 2 - 1010; // Center vertically
+
+  // Create CSS2DObject and add to scene
+  const uploadLabel = new CSS2DObject(sampleOrderDiv);
+  uploadLabel.position.set(X, Y, 0);
+  graphMesh.add(uploadLabel);
+  uploadLabel.layers.set(0);
+}
+
+/**
+ * Adds a File Upload Button to select data transformation type to display in the heatmap
+ *
+ * @param {THREE.Mesh} graphMesh The graph mesh used to hold titles, labels, etc.
+ * @param {HTMLCanvasElement} canvas The canvas object that holds the heatmap.
+ * @param {object} dimsObject The object containing the graph/cell dims.
+ * @param {object} onSelect Function to perform on selection from the
+ */
+export function UploadFeatureOrderFile(
+  graphMesh,
+  canvas,
+  dimsObject,
+  onSelect,
+) {
+  // Create the container div
+  const featureOrderDiv = document.createElement("div");
+  featureOrderDiv.id = "featureOrderDiv";
+  featureOrderDiv.style.position = "absolute";
+  featureOrderDiv.style.zIndex = "1000";
+  featureOrderDiv.style.alignItems = "center";
+
+  // Create the upload container
+  const uploadContainer = document.createElement("div");
+  uploadContainer.style.display = "flex";
+  uploadContainer.style.alignItems = "center";
+  uploadContainer.style.gap = "10px";
+
+  // Create the file input
+  const fileInput = document.createElement("input");
+  fileInput.type = "file";
+  fileInput.id = "featureOrderFileInput";
+  fileInput.style.display = "none";
+  fileInput.addEventListener("change", async function (event) {
+    const file = event.target.files[0];
+    if (file) {
+      const featureIDs = await readFeatureOrderFromCSV(file);
+      featureIDs.sort((a, b) => a - b); // Sort the feature IDs numerically
+      populateFeatureNumberDatalist(featureIDs);
+      filterScatterplotByFeatureIDs(featureIDs);
+    }
+  });
+
+  // Create upload button
+  const uploadButton = document.createElement("button");
+  uploadButton.textContent = "Upload Feature Order CSV";
+  uploadButton.className = "upload-button";
+  uploadButton.style.height = "30px";
+  uploadButton.style.border = "1px solid rgb(204, 204, 204)";
+  uploadButton.style.borderRadius = "5px";
+  uploadButton.addEventListener("click", function () {
+    fileInput.click();
+  });
+
+  // Append elements
+  uploadContainer.appendChild(fileInput);
+  uploadContainer.appendChild(uploadButton);
+  featureOrderDiv.appendChild(uploadContainer);
+
+  // Calculate position
+  const canvRect = canvas.getBoundingClientRect();
+  let X =
+    -(dimsObject.actualWidth / 2) + canvRect.left + dimsObject.paddingWidth;
+  X += dimsObject.width - 652; // Position to the right of the graph
+
+  let Y = dimsObject.actualHeight / 2 - dimsObject.paddingHeight;
+  Y -= dimsObject.height / 2 - 330; // Center vertically
+
+  // Create CSS2DObject and add to scene
+  const uploadLabel = new CSS2DObject(featureOrderDiv);
+  uploadLabel.position.set(X, Y, 0);
+  graphMesh.add(uploadLabel);
+  uploadLabel.layers.set(0);
 }
 
 /**

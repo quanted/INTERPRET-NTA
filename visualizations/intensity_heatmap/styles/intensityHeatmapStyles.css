@@ -8,3 +8,8 @@
   margin-bottom: 20px; /* Add margin to separate from the canvas */
 }
 
+.upload-button:hover {
+  background-color: rgb(226, 226, 226);
+  cursor: pointer; /* Changes the cursor to a hand icon */
+}
+

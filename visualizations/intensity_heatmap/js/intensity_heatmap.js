@@ -64,7 +64,6 @@ async function createIntensityHeatmap(path, data = null) {
   );
 
   const sortedData = dataUtils.sortFeatures(dataWithMeta);
-  console.log(dataWithMeta);
 
   // flatten data for generating three.js heatmap. Each entry is a cell in the heatmap.
   let dataFlat;
@@ -306,6 +305,10 @@ async function createIntensityHeatmap(path, data = null) {
     });
 
     heatmapUtils.UploadSampleOrderFile(graphMesh, canvas, dimsObject, () => {
+      console.log("hey there");
+    });
+
+    heatmapUtils.UploadFeatureOrderFile(graphMesh, canvas, dimsObject, () => {
       console.log("hey there");
     });
 
