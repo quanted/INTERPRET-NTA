@@ -754,7 +754,7 @@ export function mousemoveCellEvent(
       )}</span></div>This feature occurs in \n${
         cellData["num_detections"]
       } sample(s)`;
-      tooltip.style.left = heatmapLeft - 50 + "px";
+      tooltip.style.left = heatmapLeft + "px";
       tooltip.style.top = heatmapTop + 20 + "px";
       tooltip.style.display = "block";
     } else {
@@ -1066,18 +1066,16 @@ export function addColorLegend(
   legendDiv.appendChild(gradientBar);
   legendDiv.appendChild(labelsDiv);
 
-  const canvRect = canvas.getBoundingClientRect();
-  let legendX =
-    -(dimsObject.actualWidth / 2) + canvRect.left + dimsObject.paddingWidth;
-  legendX += dimsObject.width + 180;
-  // Position to the right of the graph
-  let legendY = dimsObject.actualHeight / 2 - dimsObject.paddingHeight;
-  legendY -= dimsObject.height / 2 - 700;
-  // Center vertically
-  const legendLabel = new CSS2DObject(legendDiv);
-  legendLabel.position.set(legendX, legendY, 0);
-  graphMesh.add(legendLabel);
-  legendLabel.layers.set(0);
+  const heatmapElement = document.getElementById("heatmap");
+  const heatmapRect = heatmapElement.getBoundingClientRect();
+  const heatmapTop = heatmapRect.top + window.scrollY + 80;
+  const heatmapLeft = heatmapRect.left + heatmapRect.width + window.scrollX + 5;
+
+  legendDiv.style.left = heatmapLeft + "px";
+  legendDiv.style.top = heatmapTop + 159 + "px";
+  legendDiv.style.display = "block";
+
+  document.body.appendChild(legendDiv);
 }
 
 /**
@@ -1121,18 +1119,16 @@ export function addDropdown(graphMesh, canvas, dimsObject, onSelect) {
 
   dropdownDiv.appendChild(menu);
 
-  const canvRect = canvas.getBoundingClientRect();
-  let dropdownX =
-    -(dimsObject.actualWidth / 2) + canvRect.left + dimsObject.paddingWidth;
-  dropdownX += dimsObject.width + 180;
-  // Position to the right of the graph
-  let dropdownY = dimsObject.actualHeight / 2 - dimsObject.paddingHeight;
-  dropdownY -= dimsObject.height / 2 - 630;
-  // Center vertically
-  const dropdownLabel = new CSS2DObject(dropdownDiv);
-  dropdownLabel.position.set(dropdownX, dropdownY, 0);
-  graphMesh.add(dropdownLabel);
-  dropdownLabel.layers.set(0);
+  const heatmapElement = document.getElementById("heatmap");
+  const heatmapRect = heatmapElement.getBoundingClientRect();
+  const heatmapTop = heatmapRect.top + window.scrollY + 80;
+  const heatmapLeft = heatmapRect.left + heatmapRect.width + window.scrollX + 5;
+
+  dropdownDiv.style.left = heatmapLeft + "px";
+  dropdownDiv.style.top = heatmapTop + 250 + "px";
+  dropdownDiv.style.display = "block";
+
+  document.body.appendChild(dropdownDiv);
 }
 
 // Function to read the sample order from a CSV file
