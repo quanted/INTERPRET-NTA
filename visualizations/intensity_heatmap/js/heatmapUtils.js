@@ -1153,30 +1153,21 @@ async function readSampleOrderFromCSV(file) {
 
   if (hasGroups) {
     console.log("Has grouping column. Need to add sample grouping capability");
+    console.log(lines);
+    // // Extract the feature IDs from the subsequent lines
+    // const featureIDs = lines
+    //   .slice(1)
+    //   .map((line) => {
+    //     const values = line.split(",").map((value) => value.trim());
+    //     return Number(values[featureIDIndex]);
+    //   })
+    //   .filter((id) => !isNaN(id));
+
+    // return featureIDs;
   } else {
     console.log("no groups found. Just sort the samples. ");
+    return lines;
   }
-
-  // // Split the first line to get the headers
-  // const headers = lines[0].split(",").map((header) => header.trim());
-
-  // // Find the index of the "Feature ID" column
-  // const featureIDIndex = headers.indexOf("Feature ID");
-
-  // if (featureIDIndex === -1) {
-  //   throw new Error("Feature ID column not found");
-  // }
-
-  // // Extract the feature IDs from the subsequent lines
-  // const featureIDs = lines
-  //   .slice(1)
-  //   .map((line) => {
-  //     const values = line.split(",").map((value) => value.trim());
-  //     return Number(values[featureIDIndex]);
-  //   })
-  //   .filter((id) => !isNaN(id));
-
-  // return featureIDs;
 }
 
 // Function to read the feature ID order from a CSV file
@@ -1198,30 +1189,21 @@ async function readFeatureOrderFromCSV(file) {
 
   if (hasGroups) {
     console.log("Has grouping column. Need to add feature grouping capability");
+    // // Extract the feature IDs from the subsequent lines
+    // const featureIDs = lines
+    //   .slice(1)
+    //   .map((line) => {
+    //     const values = line.split(",").map((value) => value.trim());
+    //     return Number(values[featureIDIndex]);
+    //   })
+    //   .filter((id) => !isNaN(id));
+
+    // return featureIDs;
   } else {
     console.log("no groups found. Just sort the features. ");
+    console.log(lines);
+    return lines;
   }
-
-  // // Split the first line to get the headers
-  // const headers = lines[0].split(",").map((header) => header.trim());
-
-  // // Find the index of the "Feature ID" column
-  // const featureIDIndex = headers.indexOf("Feature ID");
-
-  // if (featureIDIndex === -1) {
-  //   throw new Error("Feature ID column not found");
-  // }
-
-  // // Extract the feature IDs from the subsequent lines
-  // const featureIDs = lines
-  //   .slice(1)
-  //   .map((line) => {
-  //     const values = line.split(",").map((value) => value.trim());
-  //     return Number(values[featureIDIndex]);
-  //   })
-  //   .filter((id) => !isNaN(id));
-
-  // return featureIDs;
 }
 
 /**
@@ -1254,10 +1236,8 @@ export function UploadSampleOrderFile(graphMesh, canvas, dimsObject, onSelect) {
   fileInput.addEventListener("change", async function (event) {
     const file = event.target.files[0];
     if (file) {
-      const featureIDs = await readSampleOrderFromCSV(file);
-      featureIDs.sort((a, b) => a - b); // Sort the feature IDs numerically
-      populateFeatureNumberDatalist(featureIDs);
-      filterScatterplotByFeatureIDs(featureIDs);
+      const sampleOrder = await readSampleOrderFromCSV(file);
+      onSelect(sampleOrder);
     }
   });
 
@@ -1328,10 +1308,8 @@ export function UploadFeatureOrderFile(
   fileInput.addEventListener("change", async function (event) {
     const file = event.target.files[0];
     if (file) {
-      const featureIDs = await readFeatureOrderFromCSV(file);
-      featureIDs.sort((a, b) => a - b); // Sort the feature IDs numerically
-      populateFeatureNumberDatalist(featureIDs);
-      filterScatterplotByFeatureIDs(featureIDs);
+      const featureOrder = await readFeatureOrderFromCSV(file);
+      onSelect(featureOrder);
     }
   });
 

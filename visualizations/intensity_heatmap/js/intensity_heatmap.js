@@ -302,13 +302,23 @@ async function createIntensityHeatmap(path, data = null) {
       dataFlat = newDataFlat;
     });
 
-    heatmapUtils.UploadSampleOrderFile(graphMesh, canvas, dimsObject, () => {
-      console.log("hey there");
-    });
+    heatmapUtils.UploadSampleOrderFile(
+      graphMesh,
+      canvas,
+      dimsObject,
+      (sampleOrder) => {
+        console.log(sampleOrder);
+      },
+    );
 
-    heatmapUtils.UploadFeatureOrderFile(graphMesh, canvas, dimsObject, () => {
-      console.log("hey there");
-    });
+    heatmapUtils.UploadFeatureOrderFile(
+      graphMesh,
+      canvas,
+      dimsObject,
+      (featureOrder) => {
+        console.log(featureOrder);
+      },
+    );
 
     let vertLineObjects = heatmapUtils.getVertLines(
       dimsObject,
