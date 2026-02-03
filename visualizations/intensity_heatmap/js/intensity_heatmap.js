@@ -17,10 +17,6 @@ async function createIntensityHeatmap(path, data = null) {
   // get a list of the sorted unique sample names from the csv.
   const sampleGroups = dataUtils.getUniqueSampleHeaders(data);
 
-  // determine if sample names have training underscores
-  const hasTrailingUnderscores =
-    dataUtils.hasTrailingUnderscores(sampleHeaders);
-
   // replace null intensity values with 0
   const rawData = dataUtils.GetTransformedData(data);
 
@@ -194,7 +190,6 @@ async function createIntensityHeatmap(path, data = null) {
       blackMaterial,
       graphMesh,
       scene,
-      hasTrailingUnderscores,
     );
 
     const coloredValues = dataFlat
@@ -346,10 +341,6 @@ async function createIntensityHeatmap(path, data = null) {
           graphMesh.remove(group);
         });
 
-        // determine if sample names have training underscores
-        const TrailingUnderscores =
-          dataUtils.hasTrailingUnderscores(sampleOrder);
-
         // re-render Y-axis labels and horizontal lines with new sample order
         heatmapUtils.addYAxisLabelsAndHorzLines(
           canvas,
@@ -359,7 +350,6 @@ async function createIntensityHeatmap(path, data = null) {
           blackMaterial,
           graphMesh,
           scene,
-          TrailingUnderscores,
         );
 
         // Recalculate data with appropriate transformation
@@ -434,7 +424,6 @@ async function createIntensityHeatmap(path, data = null) {
                 featureCounts,
                 yAxisTooltip,
                 dimsObject,
-                hasTrailingUnderscores,
               );
             });
 
@@ -481,7 +470,6 @@ async function createIntensityHeatmap(path, data = null) {
           featureCounts,
           yAxisTooltip,
           dimsObject,
-          hasTrailingUnderscores,
         );
       });
 
@@ -535,7 +523,6 @@ async function createIntensityHeatmap(path, data = null) {
         scene,
         camera,
         cameraDefaults,
-        hasTrailingUnderscores,
       );
     });
 

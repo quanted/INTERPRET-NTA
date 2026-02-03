@@ -452,7 +452,6 @@ export function addXAxisLabel(canvas, dimsObject, graphMesh) {
  * @param {THREE.PlaneGeometry} horzLineGeo Geometry for horizontal lines that separate rows.
  * @param {THREE.MeshBasicMaterial} blackMaterial Black material for horizontal lines
  * @param {THREE.Mesh} graphMesh The graph mesh used to hold titles, labels, etc.
- * @param {boolean} hasTrailingUnderscores boolean value indicating if the sample headers contain trailing underscores
  */
 export function addYAxisLabelsAndHorzLines(
   canvas,
@@ -462,7 +461,6 @@ export function addYAxisLabelsAndHorzLines(
   blackMaterial,
   graphMesh,
   scene,
-  hasTrailingUnderscores,
 ) {
   // setup group for yAxis labels
   const yAxisGroup = new THREE.Group();
@@ -474,12 +472,7 @@ export function addYAxisLabelsAndHorzLines(
     const labelDiv = document.createElement("div");
     labelDiv.className = "yAxisLabel";
 
-    // clean sample names by removing underscore suffix
-    if (hasTrailingUnderscores) {
-      labelDiv.textContent = header.slice(0, header.length - 1);
-    } else {
-      labelDiv.textContent = header;
-    }
+    labelDiv.textContent = header;
 
     // style div
     labelDiv.style.color = "black";
@@ -629,7 +622,6 @@ export function buildTooltip() {
  * @param {object} samplePassCounts An object containing meta-data like total number of passes, fails, etc...
  * @param {HTMLDivElement} yAxisTooltip Dive element corresponding to y-axis labels on-hover tooltip.
  * @param {object} dimsObject Object containing dims data for graph and cells.
- * @param {boolean} hasTrailingUnderscores boolean indicating whether or not sample headers contain trailing underscores
  */
 export function mouseenterYAxisLabelEvent(
   event,
@@ -637,13 +629,10 @@ export function mouseenterYAxisLabelEvent(
   featureCounts,
   yAxisTooltip,
   dimsObject,
-  hasTrailingUnderscores,
 ) {
   const sampleName = label.innerHTML;
 
-  const sampleData = hasTrailingUnderscores
-    ? featureCounts[sampleName + "_"]
-    : featureCounts[sampleName];
+  const sampleData = featureCounts[sampleName];
 
   if (sampleData) {
     yAxisTooltip.innerHTML = `<div style="background-color: white; color: black; padding: 5px; border-radius: 3px; border: solid 1px white;"><b>Sample Name</b>: ${sampleName}</div><span>${sampleData["nPresent"]} features detected</span>`;
@@ -709,7 +698,6 @@ export function mousemoveCellEvent(
   scene,
   camera,
   cameraDefaults,
-  hasTrailingUnderscores,
 ) {
   // first handle on-hover tooltips, get mouse position
   const rect = renderer.domElement.getBoundingClientRect();
@@ -739,9 +727,7 @@ export function mousemoveCellEvent(
 
     // display info box
     if (cellData) {
-      const sampleName = hasTrailingUnderscores
-        ? cellData.sampleName.slice(0, -1)
-        : cellData.sampleName;
+      const sampleName = cellData.sampleName;
 
       const heatmapElement = document.getElementById("heatmap");
       const heatmapRect = heatmapElement.getBoundingClientRect();

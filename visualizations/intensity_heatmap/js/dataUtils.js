@@ -30,11 +30,11 @@ export function getIntensityData(file) {
     });
 
     const keepColumns = Object.keys(data[0]).filter(
-      (col) => col === "Feature ID" || col.startsWith("BlankSub Mean")
+      (col) => col === "Feature ID" || col.startsWith("BlankSub Mean"),
     );
 
     const filteredData = data.map((row) =>
-      Object.fromEntries(keepColumns.map((col) => [col, row[col]]))
+      Object.fromEntries(keepColumns.map((col) => [col, row[col]])),
     );
 
     filteredData.forEach((d) => {
@@ -69,6 +69,9 @@ export function getUniqueHeaders(dataArr) {
     if (!uniqueHeaders.includes(key)) {
       // let strippedKey = key.replace("BlankSub Mean ", "").slice(0, -1); // remove the underscore at the end
       let strippedKey = key.replace("BlankSub Mean ", ""); // Remove 'BlankSub Mean' prefix from the sample name
+      strippedKey = strippedKey.endsWith("_")
+        ? strippedKey.slice(0, -1)
+        : strippedKey;
       uniqueHeaders.push(strippedKey); // Add each sample name to the list of unique headers.
     }
   });
@@ -129,8 +132,8 @@ export function GetTransformedData(data) {
       Object.entries(row).map(([key, value]) => [
         key,
         key !== "Feature ID" && value === null ? 0 : value,
-      ])
-    )
+      ]),
+    ),
   );
 
   return transformedData;
@@ -244,7 +247,9 @@ export function getFlattenedData(data, sampleHeaders, sampleGroups) {
     Object.entries(feature).forEach(([sample, value], k) => {
       // skip over featureID keys
       if (sampleHeaders.includes(sample)) {
-        const s_name = sample.replace("BlankSub Mean ", "");
+        let s_name = sample.replace("BlankSub Mean ", "");
+        s_name = s_name.endsWith("_") ? s_name.slice(0, -1) : s_name;
+
         const sampleIndex = sampleGroups.indexOf(s_name);
 
         const intensityValue = feature[sample];
@@ -336,7 +341,7 @@ export function addDetectionCountSumMean(data, sampleHeaders, rawData) {
       ...row,
       // Add a column containing the number of samples in which each feature occurrs.
       num_detections: sampleHeaders.filter(
-        (col) => row[col] !== null && row[col] !== 0
+        (col) => row[col] !== null && row[col] !== 0,
       ).length,
       // Add a column containing the total summed abundance accross all samples for each feature.
       featureSum: sampleHeaders.reduce((acc, col) => acc + (row[col] || 0), 0),
@@ -344,20 +349,4 @@ export function addDetectionCountSumMean(data, sampleHeaders, rawData) {
       featureMean: featureMean,
     };
   });
-}
-
-/**
- *
- * @param {object[]} sampleHeaders List of raw sample headers
- * @returns {boolean} true if sample headers have trailing underscores.
- */
-export function hasTrailingUnderscores(sampleHeaders) {
-  let hasTrailingUnderscores = true;
-  sampleHeaders.forEach((header, index) => {
-    // clean sample names by removing underscore suffix
-    if (header[header.length - 1] !== "_") {
-      hasTrailingUnderscores = false;
-    }
-  });
-  return hasTrailingUnderscores;
 }
