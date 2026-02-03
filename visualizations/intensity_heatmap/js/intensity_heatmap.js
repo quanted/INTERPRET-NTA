@@ -65,6 +65,8 @@ async function createIntensityHeatmap(path, data = null) {
 
   const sortedData = dataUtils.sortFeatures(dataWithMeta);
 
+  // ======================================================================================================================
+
   // flatten data for generating three.js heatmap. Each entry is a cell in the heatmap.
   let dataFlat;
   dataFlat = dataUtils.getFlattenedData(
@@ -307,7 +309,142 @@ async function createIntensityHeatmap(path, data = null) {
       canvas,
       dimsObject,
       (sampleOrder) => {
-        console.log(sampleOrder);
+        // Remove existing horizontal lines from the scene
+        const linesToRemove = [];
+        scene.traverse((object) => {
+          if (
+            object instanceof THREE.Mesh &&
+            object.geometry === horzLineGeo &&
+            object.material === blackMaterial
+          ) {
+            linesToRemove.push(object);
+          }
+        });
+        linesToRemove.forEach((line) => {
+          scene.remove(line);
+        });
+
+        // Remove the existing YAxisGroup from graphMesh
+        const groupsToRemove = [];
+        graphMesh.traverse((object) => {
+          if (
+            object instanceof THREE.Group &&
+            object.children.some(
+              (child) =>
+                child.element && child.element.className === "yAxisLabel",
+            )
+          ) {
+            groupsToRemove.push(object);
+          }
+        });
+        groupsToRemove.forEach((group) => {
+          group.children.forEach((child) => {
+            if (child.element && child.element.className === "yAxisLabel") {
+              child.element.remove();
+            }
+          });
+          graphMesh.remove(group);
+        });
+
+        // determine if sample names have training underscores
+        const TrailingUnderscores =
+          dataUtils.hasTrailingUnderscores(sampleOrder);
+
+        // re-render Y-axis labels and horizontal lines with new sample order
+        heatmapUtils.addYAxisLabelsAndHorzLines(
+          canvas,
+          sampleOrder,
+          dimsObject,
+          horzLineGeo,
+          blackMaterial,
+          graphMesh,
+          scene,
+          TrailingUnderscores,
+        );
+
+        // Recalculate data with appropriate transformation
+        const dataToUse = dataDict[dataToShow];
+        console.log(dataToShow);
+        console.log(dataToUse);
+        const dataWithMeta = dataUtils.addDetectionCountSumMean(
+          dataToUse,
+          sampleHeaders,
+          dataDict["Raw"],
+        );
+        const sortedData = dataUtils.sortFeatures(dataWithMeta);
+        const newDataFlat = dataUtils.getFlattenedData(
+          sortedData,
+          sampleHeaders,
+          sampleOrder,
+        );
+
+        // Get new color counts for the selected data type
+        const [newColoredCount, newWhiteCount] =
+          dataUtils.getColorCounts(newDataFlat);
+        // Remove old meshes from the scene
+        heatmapGroup.remove(coloredMesh);
+        heatmapGroup.remove(whiteMesh);
+        // Dispose of old geometries and materials to free memory
+        coloredMesh.dispose();
+        whiteMesh.dispose();
+        // Create new meshes with correct counts
+        coloredMesh = heatmapUtils.createInstancedMesh(
+          cellGeometry,
+          coloredMaterial,
+          newColoredCount,
+        );
+
+        whiteMesh = heatmapUtils.createInstancedMesh(
+          cellGeometry,
+          whiteMaterial,
+          newWhiteCount,
+        );
+
+        coloredMesh.renderOrder = 998;
+        // Add new meshes to the group
+        heatmapGroup.add(coloredMesh);
+        heatmapGroup.add(whiteMesh);
+        // Set positions and colors for the new meshes
+
+        const newColoredCellInstances = heatmapUtils.setCellColorAndPos(
+          newDataFlat,
+          dimsObject,
+          coloredMesh,
+          whiteMesh,
+          colorDict[dataToShow],
+          dataToShow,
+        );
+
+        // Update the global coloredCellInstances reference
+        coloredCellInstances.length = 0;
+        coloredCellInstances.push(...newColoredCellInstances);
+        // Update dataFlat reference for tooltips
+        dataFlat = newDataFlat;
+
+        // ===================================================================================================================
+
+        requestAnimationFrame(() => {
+          // re-attach event listeners for the new y-axis labels
+          const yAxisLabelDivs = document.querySelectorAll(".yAxisLabel");
+          yAxisLabelDivs.forEach((label) => {
+            label.addEventListener("mouseenter", (e) => {
+              heatmapUtils.mouseenterYAxisLabelEvent(
+                e,
+                label,
+                featureCounts,
+                yAxisTooltip,
+                dimsObject,
+                hasTrailingUnderscores,
+              );
+            });
+
+            label.addEventListener("mouseout", () => {
+              heatmapUtils.mouseoutYAxisLabelEvent(null, label, yAxisTooltip);
+            });
+          });
+        });
+
+        // TODO get the actual data rows to render in the correct order now.
       },
     );
 
