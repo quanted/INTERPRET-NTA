@@ -1139,7 +1139,6 @@ async function readSampleOrderFromCSV(file) {
 
   if (hasGroups) {
     console.log("Has grouping column. Need to add sample grouping capability");
-    console.log(lines);
     // // Extract the feature IDs from the subsequent lines
     // const featureIDs = lines
     //   .slice(1)
@@ -1151,7 +1150,6 @@ async function readSampleOrderFromCSV(file) {
 
     // return featureIDs;
   } else {
-    console.log("no groups found. Just sort the samples. ");
     return lines;
   }
 }
@@ -1186,8 +1184,6 @@ async function readFeatureOrderFromCSV(file) {
 
     // return featureIDs;
   } else {
-    console.log("no groups found. Just sort the features. ");
-    console.log(lines);
     return lines;
   }
 }

@@ -15,7 +15,7 @@ async function createIntensityHeatmap(path, data = null) {
   const sampleHeaders = data.columns.filter((col) => col !== "Feature ID");
 
   // get a list of the sorted unique sample names from the csv.
-  const sampleGroups = dataUtils.getUniqueSampleHeaders(data);
+  let sampleGroups = dataUtils.getUniqueSampleHeaders(data);
 
   // replace null intensity values with 0
   const rawData = dataUtils.GetTransformedData(data);
@@ -304,6 +304,7 @@ async function createIntensityHeatmap(path, data = null) {
       canvas,
       dimsObject,
       (sampleOrder) => {
+        sampleGroups = sampleOrder;
         // Remove existing horizontal lines from the scene
         const linesToRemove = [];
         scene.traverse((object) => {
@@ -344,7 +345,7 @@ async function createIntensityHeatmap(path, data = null) {
         // re-render Y-axis labels and horizontal lines with new sample order
         heatmapUtils.addYAxisLabelsAndHorzLines(
           canvas,
-          sampleOrder,
+          sampleGroups,
           dimsObject,
           horzLineGeo,
           blackMaterial,
@@ -354,8 +355,6 @@ async function createIntensityHeatmap(path, data = null) {
 
         // Recalculate data with appropriate transformation
         const dataToUse = dataDict[dataToShow];
-        console.log(dataToShow);
-        console.log(dataToUse);
         const dataWithMeta = dataUtils.addDetectionCountSumMean(
           dataToUse,
           sampleHeaders,
@@ -365,7 +364,7 @@ async function createIntensityHeatmap(path, data = null) {
         const newDataFlat = dataUtils.getFlattenedData(
           sortedData,
           sampleHeaders,
-          sampleOrder,
+          sampleGroups,
         );
 
         // Get new color counts for the selected data type
@@ -432,8 +431,6 @@ async function createIntensityHeatmap(path, data = null) {
             });
           });
         });
-
-        // TODO get the actual data rows to render in the correct order now.
       },
     );
 
