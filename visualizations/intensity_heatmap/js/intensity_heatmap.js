@@ -14,8 +14,6 @@ async function createIntensityHeatmap(path, data = null) {
   // get a list of the raw sample column headers from the csv
   const sampleHeaders = data.columns.filter((col) => col !== "Feature ID");
 
-  const clusterDividingHeaders = ["1000ppb", "D1S4", "D2S4", "D3S4"];
-
   // get a list of the sorted unique sample names from the csv.
   let sampleGroups = dataUtils.getUniqueSampleHeaders(data);
 
@@ -62,8 +60,10 @@ async function createIntensityHeatmap(path, data = null) {
   );
 
   const sortedData = dataUtils.sortFeatures(dataWithMeta);
-  // Get the order of sortedData
+
   let customFeatureOrder = null;
+  let sampleClusterDividers = null;
+  let featureClusterDividers = null;
 
   // ======================================================================================================================
 
@@ -197,7 +197,7 @@ async function createIntensityHeatmap(path, data = null) {
       dimsObject,
       horzLineGeo,
       horzClusterLineGeo,
-      clusterDividingHeaders,
+      sampleClusterDividers,
       blackMaterial,
       graphMesh,
       scene,
@@ -330,8 +330,9 @@ async function createIntensityHeatmap(path, data = null) {
       graphMesh,
       canvas,
       dimsObject,
-      (sampleOrder) => {
+      (sampleOrder, groups) => {
         sampleGroups = sampleOrder;
+        sampleClusterDividers = groups;
         // Remove existing horizontal lines from the scene
         const linesToRemove = [];
         scene.traverse((object) => {
@@ -375,7 +376,7 @@ async function createIntensityHeatmap(path, data = null) {
           dimsObject,
           horzLineGeo,
           horzClusterLineGeo,
-          clusterDividingHeaders,
+          sampleClusterDividers,
           blackMaterial,
           graphMesh,
           scene,
@@ -479,7 +480,10 @@ async function createIntensityHeatmap(path, data = null) {
       graphMesh,
       canvas,
       dimsObject,
-      (featureOrder) => {
+      (featureOrder, groups) => {
+        console.log("groups: ", groups);
+        featureClusterDividers = groups;
+
         customFeatureOrder = featureOrder;
         // Re-order data according to the feature order array
         const dataToUse = dataDict[dataToShow];

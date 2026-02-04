@@ -552,13 +552,14 @@ export function addYAxisLabelsAndHorzLines(
   headerList.forEach(
     (header, index) => (headerYDict[header] = lineYList[index]),
   );
-
-  clusterDividingHeaders.forEach((header) => {
-    const horzLineCluster = new THREE.Mesh(horzClusterLineGeo, blackMaterial);
-    horzLineCluster.position.set(lineStartX, headerYDict[header], 0);
-    horzLineCluster.renderOrder = 999;
-    scene.add(horzLineCluster);
-  });
+  if (clusterDividingHeaders) {
+    clusterDividingHeaders.forEach((header) => {
+      const horzLineCluster = new THREE.Mesh(horzClusterLineGeo, blackMaterial);
+      horzLineCluster.position.set(lineStartX, headerYDict[header], 0);
+      horzLineCluster.renderOrder = 999;
+      scene.add(horzLineCluster);
+    });
+  }
 
   graphMesh.add(yAxisGroup);
 }
@@ -1155,11 +1156,11 @@ export function addDropdown(graphMesh, canvas, dimsObject, onSelect) {
 }
 
 // Function to read the sample order from a CSV file
-async function readSampleOrderFromCSV(file) {
+async function readOrderFromCSV(file) {
   const text = await file.text();
 
   // Split the text into lines
-  const lines = text
+  let lines = text
     .split("\n")
     .map((line) => line.trim())
     .filter((line) => line);
@@ -1171,55 +1172,25 @@ async function readSampleOrderFromCSV(file) {
         ? false
         : null;
 
+  let groups = null;
   if (hasGroups) {
-    console.log("Has grouping column. Need to add sample grouping capability");
-    // // Extract the feature IDs from the subsequent lines
-    // const featureIDs = lines
-    //   .slice(1)
-    //   .map((line) => {
-    //     const values = line.split(",").map((value) => value.trim());
-    //     return Number(values[featureIDIndex]);
-    //   })
-    //   .filter((id) => !isNaN(id));
+    lines = lines.map((line) => line.split(","));
+    const names = lines.map((line) => line[0]); // Get only the sample names
 
-    // return featureIDs;
-  } else {
-    return lines;
+    groups = [];
+    for (let i = 0; i < lines.length - 1; i++) {
+      const [name, group] = lines[i];
+      const nextGroup = lines[i + 1][1];
+
+      if (group !== nextGroup) {
+        groups.push(name);
+      }
+    }
+    console.log(names);
+    console.log(groups);
+    return [names, groups];
   }
-}
-
-// Function to read the feature ID order from a CSV file
-async function readFeatureOrderFromCSV(file) {
-  const text = await file.text();
-
-  // Split the text into lines
-  const lines = text
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => line);
-
-  const hasGroups =
-    lines[0].split(",").length === 2
-      ? true
-      : lines[0].split(",").length === 1
-        ? false
-        : null;
-
-  if (hasGroups) {
-    console.log("Has grouping column. Need to add feature grouping capability");
-    // // Extract the feature IDs from the subsequent lines
-    // const featureIDs = lines
-    //   .slice(1)
-    //   .map((line) => {
-    //     const values = line.split(",").map((value) => value.trim());
-    //     return Number(values[featureIDIndex]);
-    //   })
-    //   .filter((id) => !isNaN(id));
-
-    // return featureIDs;
-  } else {
-    return lines;
-  }
+  return [lines, groups];
 }
 
 /**
@@ -1252,8 +1223,8 @@ export function UploadSampleOrderFile(graphMesh, canvas, dimsObject, onSelect) {
   fileInput.addEventListener("change", async function (event) {
     const file = event.target.files[0];
     if (file) {
-      const sampleOrder = await readSampleOrderFromCSV(file);
-      onSelect(sampleOrder);
+      const [sampleOrder, groups] = await readOrderFromCSV(file);
+      onSelect(sampleOrder, groups);
     }
   });
 
@@ -1324,8 +1295,8 @@ export function UploadFeatureOrderFile(
   fileInput.addEventListener("change", async function (event) {
     const file = event.target.files[0];
     if (file) {
-      const featureOrder = await readFeatureOrderFromCSV(file);
-      onSelect(featureOrder);
+      const [featureOrder, groups] = await readOrderFromCSV(file);
+      onSelect(featureOrder, groups);
     }
   });
 
