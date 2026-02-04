@@ -147,13 +147,20 @@ export function getGeometries(dimsObject) {
     dimsObject.apparentCellWidth,
     dimsObject.cellHeight,
   );
+  const horzClusterLineGeo = new THREE.PlaneGeometry(dimsObject.width, 3);
   const horzLineGeo = new THREE.PlaneGeometry(dimsObject.width, 0.5);
   const vertLineGeo = new THREE.PlaneGeometry(
     dimsObject.cellWidth / 10,
     dimsObject.height,
   );
 
-  return [graphGeometry, cellGeometry, horzLineGeo, vertLineGeo];
+  return [
+    graphGeometry,
+    cellGeometry,
+    horzLineGeo,
+    horzClusterLineGeo,
+    vertLineGeo,
+  ];
 }
 
 /**
@@ -450,6 +457,8 @@ export function addXAxisLabel(canvas, dimsObject, graphMesh) {
  * @param {string[]} sampleGroups The array of sample names.
  * @param {object} dimsObject The object containing the graph/cell dims.
  * @param {THREE.PlaneGeometry} horzLineGeo Geometry for horizontal lines that separate rows.
+ * @param {THREE.PlaneGeometry} horzClusterLineGeo Geometry for horizontal lines that separate clusters.
+ * @param {string[]} clusterDividingHeaders The array of sample names after which a cluster line is added
  * @param {THREE.MeshBasicMaterial} blackMaterial Black material for horizontal lines
  * @param {THREE.Mesh} graphMesh The graph mesh used to hold titles, labels, etc.
  */
@@ -458,6 +467,8 @@ export function addYAxisLabelsAndHorzLines(
   sampleGroups,
   dimsObject,
   horzLineGeo,
+  horzClusterLineGeo,
+  clusterDividingHeaders,
   blackMaterial,
   graphMesh,
   scene,
@@ -467,6 +478,9 @@ export function addYAxisLabelsAndHorzLines(
 
   // iterate over samples to create labels
   const canvRect = canvas.getBoundingClientRect();
+  let headerList = [];
+  let lineYList = [];
+  let headerYDict = {};
   sampleGroups.forEach((header, index) => {
     // create div for label
     const labelDiv = document.createElement("div");
@@ -513,7 +527,13 @@ export function addYAxisLabelsAndHorzLines(
 
     horzLine.renderOrder = 999;
     scene.add(horzLine);
+
+    // ==========================================================================
+    lineYList.push(lineY);
+    headerList.push(header);
+    // ==========================================================================
   });
+
   // add horizontal line on top
   const lineStartX =
     dimsObject.paddingWidth + dimsObject.width / 2 - dimsObject.actualWidth / 2;
@@ -526,6 +546,20 @@ export function addYAxisLabelsAndHorzLines(
 
   horzLine.renderOrder = 999;
   scene.add(horzLine);
+
+  // add horizontal line separating clusters
+  lineYList.reverse();
+  headerList.forEach(
+    (header, index) => (headerYDict[header] = lineYList[index]),
+  );
+
+  clusterDividingHeaders.forEach((header) => {
+    const horzLineCluster = new THREE.Mesh(horzClusterLineGeo, blackMaterial);
+    horzLineCluster.position.set(lineStartX, headerYDict[header], 0);
+    horzLineCluster.renderOrder = 999;
+    scene.add(horzLineCluster);
+  });
+
   graphMesh.add(yAxisGroup);
 }
 

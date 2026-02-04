@@ -14,6 +14,8 @@ async function createIntensityHeatmap(path, data = null) {
   // get a list of the raw sample column headers from the csv
   const sampleHeaders = data.columns.filter((col) => col !== "Feature ID");
 
+  const clusterDividingHeaders = ["1000ppb", "D1S4", "D2S4", "D3S4"];
+
   // get a list of the sorted unique sample names from the csv.
   let sampleGroups = dataUtils.getUniqueSampleHeaders(data);
 
@@ -131,8 +133,13 @@ async function createIntensityHeatmap(path, data = null) {
     renderer.setClearColor(0xffffff, 1);
 
     // set dims and geometry for heatmap graph, and heatmap cells
-    const [graphGeometry, cellGeometry, horzLineGeo, vertLineGeo] =
-      heatmapUtils.getGeometries(dimsObject);
+    const [
+      graphGeometry,
+      cellGeometry,
+      horzLineGeo,
+      horzClusterLineGeo,
+      vertLineGeo,
+    ] = heatmapUtils.getGeometries(dimsObject);
 
     const vertLineLimit = 60; // diff in x zoomed coords for showing vertical line separators
 
@@ -189,6 +196,8 @@ async function createIntensityHeatmap(path, data = null) {
       sampleGroups,
       dimsObject,
       horzLineGeo,
+      horzClusterLineGeo,
+      clusterDividingHeaders,
       blackMaterial,
       graphMesh,
       scene,
@@ -327,9 +336,8 @@ async function createIntensityHeatmap(path, data = null) {
         const linesToRemove = [];
         scene.traverse((object) => {
           if (
-            object instanceof THREE.Mesh &&
-            object.geometry === horzLineGeo &&
-            object.material === blackMaterial
+            object.geometry === horzLineGeo ||
+            object.geometry === horzClusterLineGeo
           ) {
             linesToRemove.push(object);
           }
@@ -366,6 +374,8 @@ async function createIntensityHeatmap(path, data = null) {
           sampleGroups,
           dimsObject,
           horzLineGeo,
+          horzClusterLineGeo,
+          clusterDividingHeaders,
           blackMaterial,
           graphMesh,
           scene,
