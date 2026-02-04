@@ -608,23 +608,35 @@ export function getVertClusterLines(
   dimsObject,
   nFeatures,
   vertLineClusterGeo,
+  featureClusterDividers,
   blackMaterial,
   scene,
+  dataFlat,
 ) {
   // add vertline objects to array to display later after zooming
   let vertLineClusterObjects = [];
 
-  /// need to add final vertline on right side
-  const lineStartX = dimsObject.cellWidth * nFeatures - dimsObject.width / 2;
-  const lineY = dimsObject.cellHeight;
+  featureClusterDividers.forEach((featureId) => {
+    // Find the featureIndex for this featureId from dataFlat
+    const cellWithFeature = dataFlat.find(
+      (cell) => cell.featureId == featureId,
+    );
 
-  const vertLine = new THREE.Mesh(vertLineClusterGeo, blackMaterial);
-  vertLine.position.set(lineStartX + 10, lineY, 0);
-  vertLine.renderOrder = 999;
-  vertLineClusterObjects.push(vertLine);
-  scene.add(vertLine);
+    const featureIndex = cellWithFeature.featureIndex;
 
-  return vertLineClusterObjects;
+    // Calculate x position of vertLine
+    const lineX =
+      -dimsObject.width / 2 + dimsObject.cellWidth * (featureIndex + 1);
+
+    const vertLine = new THREE.Mesh(vertLineClusterGeo, blackMaterial);
+    vertLine.position.set(lineX, dimsObject.cellHeight, 0);
+    vertLine.renderOrder = 999;
+    vertLineClusterObjects.push(vertLine);
+  });
+
+  vertLineClusterObjects.forEach((object) => {
+    scene.add(object);
+  });
 }
 
 /**

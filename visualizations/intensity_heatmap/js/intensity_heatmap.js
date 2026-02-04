@@ -482,6 +482,17 @@ async function createIntensityHeatmap(path, data = null) {
       canvas,
       dimsObject,
       (featureOrder, groups) => {
+        // Remove existing vertical cluster lines from the scene
+        const linesToRemove = [];
+        scene.traverse((object) => {
+          if (object.geometry === vertClusterLineGeo) {
+            linesToRemove.push(object);
+          }
+        });
+        linesToRemove.forEach((line) => {
+          scene.remove(line);
+        });
+
         featureClusterDividers = groups;
 
         customFeatureOrder = featureOrder;
@@ -558,14 +569,17 @@ async function createIntensityHeatmap(path, data = null) {
         dataFlat = newDataFlat;
 
         // Add the vertical cluster lines
-        let vertClusterLineObjects = heatmapUtils.getVertClusterLines(
-          dimsObject,
-          nFeatures,
-          vertClusterLineGeo,
-          featureClusterDividers,
-          blackMaterial,
-          scene,
-        );
+        if (featureClusterDividers && featureClusterDividers.length > 0) {
+          heatmapUtils.getVertClusterLines(
+            dimsObject,
+            nFeatures,
+            vertClusterLineGeo,
+            featureClusterDividers,
+            blackMaterial,
+            scene,
+            dataFlat,
+          );
+        }
       },
     );
 
