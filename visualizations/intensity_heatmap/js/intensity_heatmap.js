@@ -60,6 +60,8 @@ async function createIntensityHeatmap(path, data = null) {
   );
 
   const sortedData = dataUtils.sortFeatures(dataWithMeta);
+  // Get the order of sortedData
+  let customFeatureOrder = null;
 
   // ======================================================================================================================
 
@@ -219,13 +221,29 @@ async function createIntensityHeatmap(path, data = null) {
               ? "Relative Feature"
               : null;
 
-      const dataToUse = dataDict[dataToShow];
+      let dataToUse = dataDict[dataToShow];
+
+      if (customFeatureOrder) {
+        dataToUse = customFeatureOrder
+          .map((featureId) =>
+            dataToUse.find((row) => row["Feature ID"] == featureId),
+          )
+          .filter((row) => row != undefined);
+      }
+
       const dataWithMeta = dataUtils.addDetectionCountSumMean(
         dataToUse,
         sampleHeaders,
         dataDict["Raw"],
       );
-      const sortedData = dataUtils.sortFeatures(dataWithMeta);
+
+      let sortedData = null;
+      if (customFeatureOrder) {
+        sortedData = dataWithMeta;
+      } else {
+        sortedData = dataUtils.sortFeatures(dataWithMeta);
+      }
+
       const newDataFlat = dataUtils.getFlattenedData(
         sortedData,
         sampleHeaders,
@@ -353,14 +371,29 @@ async function createIntensityHeatmap(path, data = null) {
           scene,
         );
 
-        // Recalculate data with appropriate transformation
-        const dataToUse = dataDict[dataToShow];
+        let dataToUse = dataDict[dataToShow];
+
+        if (customFeatureOrder) {
+          dataToUse = customFeatureOrder
+            .map((featureId) =>
+              dataToUse.find((row) => row["Feature ID"] == featureId),
+            )
+            .filter((row) => row != undefined);
+        }
+
         const dataWithMeta = dataUtils.addDetectionCountSumMean(
           dataToUse,
           sampleHeaders,
           dataDict["Raw"],
         );
-        const sortedData = dataUtils.sortFeatures(dataWithMeta);
+
+        let sortedData = null;
+        if (customFeatureOrder) {
+          sortedData = dataWithMeta;
+        } else {
+          sortedData = dataUtils.sortFeatures(dataWithMeta);
+        }
+
         const newDataFlat = dataUtils.getFlattenedData(
           sortedData,
           sampleHeaders,
@@ -410,8 +443,6 @@ async function createIntensityHeatmap(path, data = null) {
         // Update dataFlat reference for tooltips
         dataFlat = newDataFlat;
 
-        // ===================================================================================================================
-
         requestAnimationFrame(() => {
           // re-attach event listeners for the new y-axis labels
           const yAxisLabelDivs = document.querySelectorAll(".yAxisLabel");
@@ -439,7 +470,78 @@ async function createIntensityHeatmap(path, data = null) {
       canvas,
       dimsObject,
       (featureOrder) => {
-        console.log(featureOrder);
+        customFeatureOrder = featureOrder;
+        // Re-order data according to the feature order array
+        const dataToUse = dataDict[dataToShow];
+
+        const reorderedData = featureOrder
+          .map((featureId) =>
+            dataToUse.find((row) => row["Feature ID"] == featureId),
+          )
+          .filter((row) => row !== undefined);
+
+        const reorderedRawData = featureOrder
+          .map((featureId) =>
+            dataDict["Raw"].find((row) => row["Feature ID"] == featureId),
+          )
+          .filter((row) => row != undefined);
+
+        const dataWithMeta = dataUtils.addDetectionCountSumMean(
+          reorderedData,
+          sampleHeaders,
+          reorderedRawData,
+        );
+
+        const newDataFlat = dataUtils.getFlattenedData(
+          dataWithMeta,
+          sampleHeaders,
+          sampleGroups,
+        );
+
+        // Get new color counts for the selected data type
+        const [newColoredCount, newWhiteCount] =
+          dataUtils.getColorCounts(newDataFlat);
+
+        // Remove old meshes from the scene
+        heatmapGroup.remove(coloredMesh);
+        heatmapGroup.remove(whiteMesh);
+        // Dispose of old geometries and materials to free memory
+        coloredMesh.dispose();
+        whiteMesh.dispose();
+
+        // Create new meshes with correct counts
+        coloredMesh = heatmapUtils.createInstancedMesh(
+          cellGeometry,
+          coloredMaterial,
+          newColoredCount,
+        );
+
+        whiteMesh = heatmapUtils.createInstancedMesh(
+          cellGeometry,
+          whiteMaterial,
+          newWhiteCount,
+        );
+
+        coloredMesh.renderOrder = 998;
+        // Add new meshes to the group
+        heatmapGroup.add(coloredMesh);
+        heatmapGroup.add(whiteMesh);
+
+        // Set positions and colors for the new meshes
+        const newColoredCellInstances = heatmapUtils.setCellColorAndPos(
+          newDataFlat,
+          dimsObject,
+          coloredMesh,
+          whiteMesh,
+          colorDict[dataToShow],
+          dataToShow,
+        );
+
+        // Update the global coloredCellInstances reference
+        coloredCellInstances.length = 0;
+        coloredCellInstances.push(...newColoredCellInstances);
+        // Update dataFlat reference for tooltips
+        dataFlat = newDataFlat;
       },
     );
 
