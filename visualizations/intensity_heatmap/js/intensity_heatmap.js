@@ -139,6 +139,7 @@ async function createIntensityHeatmap(path, data = null) {
       horzLineGeo,
       horzClusterLineGeo,
       vertLineGeo,
+      vertClusterLineGeo,
     ] = heatmapUtils.getGeometries(dimsObject);
 
     const vertLineLimit = 60; // diff in x zoomed coords for showing vertical line separators
@@ -188,7 +189,7 @@ async function createIntensityHeatmap(path, data = null) {
     const graphMesh = new THREE.Mesh(graphGeometry, clearMaterial);
     scene.add(graphMesh);
 
-    // add title, x-axis label, y-axis labels, horizontal and vertical partition lines
+    // add title, x-axis label, y-axis labels and horizontal partition lines
     heatmapUtils.addTitle(canvas, dimsObject, graphMesh);
     heatmapUtils.addXAxisLabel(canvas, dimsObject, graphMesh);
     heatmapUtils.addYAxisLabelsAndHorzLines(
@@ -481,7 +482,6 @@ async function createIntensityHeatmap(path, data = null) {
       canvas,
       dimsObject,
       (featureOrder, groups) => {
-        console.log("groups: ", groups);
         featureClusterDividers = groups;
 
         customFeatureOrder = featureOrder;
@@ -556,6 +556,16 @@ async function createIntensityHeatmap(path, data = null) {
         coloredCellInstances.push(...newColoredCellInstances);
         // Update dataFlat reference for tooltips
         dataFlat = newDataFlat;
+
+        // Add the vertical cluster lines
+        let vertClusterLineObjects = heatmapUtils.getVertClusterLines(
+          dimsObject,
+          nFeatures,
+          vertClusterLineGeo,
+          featureClusterDividers,
+          blackMaterial,
+          scene,
+        );
       },
     );
 

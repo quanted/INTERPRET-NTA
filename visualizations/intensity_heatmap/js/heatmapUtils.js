@@ -153,6 +153,7 @@ export function getGeometries(dimsObject) {
     dimsObject.cellWidth / 10,
     dimsObject.height,
   );
+  const vertClusterLineGeo = new THREE.PlaneGeometry(3, dimsObject.height);
 
   return [
     graphGeometry,
@@ -160,6 +161,7 @@ export function getGeometries(dimsObject) {
     horzLineGeo,
     horzClusterLineGeo,
     vertLineGeo,
+    vertClusterLineGeo,
   ];
 }
 
@@ -600,6 +602,29 @@ export function getVertLines(
   vertLineObjects.push(vertLine);
 
   return vertLineObjects;
+}
+
+export function getVertClusterLines(
+  dimsObject,
+  nFeatures,
+  vertLineClusterGeo,
+  blackMaterial,
+  scene,
+) {
+  // add vertline objects to array to display later after zooming
+  let vertLineClusterObjects = [];
+
+  /// need to add final vertline on right side
+  const lineStartX = dimsObject.cellWidth * nFeatures - dimsObject.width / 2;
+  const lineY = dimsObject.cellHeight;
+
+  const vertLine = new THREE.Mesh(vertLineClusterGeo, blackMaterial);
+  vertLine.position.set(lineStartX + 10, lineY, 0);
+  vertLine.renderOrder = 999;
+  vertLineClusterObjects.push(vertLine);
+  scene.add(vertLine);
+
+  return vertLineClusterObjects;
 }
 
 /**
@@ -1186,8 +1211,6 @@ async function readOrderFromCSV(file) {
         groups.push(name);
       }
     }
-    console.log(names);
-    console.log(groups);
     return [names, groups];
   }
   return [lines, groups];
