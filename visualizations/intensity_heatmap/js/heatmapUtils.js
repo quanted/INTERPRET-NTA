@@ -153,7 +153,10 @@ export function getGeometries(dimsObject) {
     dimsObject.cellWidth / 10,
     dimsObject.height,
   );
-  const vertClusterLineGeo = new THREE.PlaneGeometry(3, dimsObject.height);
+  const vertClusterLineGeo = new THREE.PlaneGeometry(
+    dimsObject.cellWidth * 9,
+    dimsObject.height,
+  );
 
   return [
     graphGeometry,
