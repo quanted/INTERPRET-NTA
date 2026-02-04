@@ -477,6 +477,7 @@ async function createIntensityHeatmap(path, data = null) {
       },
     );
 
+    let vertLineClusterObjects = [];
     heatmapUtils.UploadFeatureOrderFile(
       graphMesh,
       canvas,
@@ -570,7 +571,7 @@ async function createIntensityHeatmap(path, data = null) {
 
         // Add the vertical cluster lines
         if (featureClusterDividers && featureClusterDividers.length > 0) {
-          heatmapUtils.getVertClusterLines(
+          vertLineClusterObjects = heatmapUtils.getVertClusterLines(
             dimsObject,
             nFeatures,
             vertClusterLineGeo,
@@ -661,6 +662,23 @@ async function createIntensityHeatmap(path, data = null) {
         camera,
         cameraDefaults,
       );
+
+      if (vertLineClusterObjects.length > 0) {
+        const rect = renderer.domElement.getBoundingClientRect();
+        mousePos.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        mousePos.y = -((e.clientY - rect.top) / rect.height) * 2 - 1;
+
+        raycaster.setFromCamera(mousePos, camera);
+        const intersects = raycaster.intersectObjects(vertLineClusterObjects);
+
+        vertLineClusterObjects.forEach((line) => {
+          if (intersects.length > 0 && intersects[0].object === line) {
+            line.visible = false;
+          } else {
+            line.visible = true;
+          }
+        });
+      }
     });
 
     canvas.addEventListener("mouseup", (e) => {

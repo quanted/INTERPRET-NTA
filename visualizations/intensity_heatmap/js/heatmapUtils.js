@@ -631,12 +631,18 @@ export function getVertClusterLines(
     const vertLine = new THREE.Mesh(vertLineClusterGeo, blackMaterial);
     vertLine.position.set(lineX, dimsObject.cellHeight, 0);
     vertLine.renderOrder = 999;
+
+    // Store original visibility state
+    vertLine.userData.originalVisible = true;
+
     vertLineClusterObjects.push(vertLine);
   });
 
   vertLineClusterObjects.forEach((object) => {
     scene.add(object);
   });
+
+  return vertLineClusterObjects;
 }
 
 /**
