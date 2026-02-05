@@ -153,10 +153,7 @@ export function getGeometries(dimsObject) {
     dimsObject.cellWidth / 10,
     dimsObject.height,
   );
-  const vertClusterLineGeo = new THREE.PlaneGeometry(
-    dimsObject.cellWidth * 9,
-    dimsObject.height,
-  );
+  const vertClusterLineGeo = new THREE.PlaneGeometry(3, dimsObject.height);
 
   return [
     graphGeometry,
@@ -1047,9 +1044,26 @@ export async function zoomTween(
       camera.bottom = updated.bottom;
 
       camera.updateProjectionMatrix();
+
+      if (
+        window.vertLineClusterObjects.length > 0 &&
+        dimsObject.cellWidth < 3
+      ) {
+        const currentScreenWidth = updated.right - updated.left;
+        let newWidth;
+
+        if (currentScreenWidth > vertLineLimit) {
+          newWidth = 3;
+        } else {
+          newWidth = dimsObject.cellWidth / 1.5;
+        }
+
+        window.vertLineClusterObjects.forEach((object) => {
+          object.scale.x = newWidth / 3;
+        });
+      }
     })
     .start();
-
   // when zooming out, reset controls
   if (skipTransformation) {
     controls.reset();

@@ -478,6 +478,7 @@ async function createIntensityHeatmap(path, data = null) {
     );
 
     let vertLineClusterObjects = [];
+    window.vertLineClusterObjects = vertLineClusterObjects;
     heatmapUtils.UploadFeatureOrderFile(
       graphMesh,
       canvas,
@@ -580,6 +581,7 @@ async function createIntensityHeatmap(path, data = null) {
             scene,
             dataFlat,
           );
+          window.vertLineClusterObjects = vertLineClusterObjects;
         }
       },
     );
@@ -671,13 +673,21 @@ async function createIntensityHeatmap(path, data = null) {
         raycaster.setFromCamera(mousePos, camera);
         const intersects = raycaster.intersectObjects(vertLineClusterObjects);
 
-        vertLineClusterObjects.forEach((line) => {
-          if (intersects.length > 0 && intersects[0].object === line) {
-            line.visible = false;
-          } else {
+        const currentScreenWidth = camera.right - camera.left;
+
+        if (currentScreenWidth > vertLineLimit && dimsObject.cellWidth < 3) {
+          vertLineClusterObjects.forEach((line) => {
+            if (intersects.length > 0 && intersects[0].object === line) {
+              line.visible = false;
+            } else {
+              line.visible = true;
+            }
+          });
+        } else {
+          vertLineClusterObjects.forEach((line) => {
             line.visible = true;
-          }
-        });
+          });
+        }
       }
     });
 
@@ -768,11 +778,11 @@ async function createIntensityHeatmap(path, data = null) {
 // // Use the global XLSX object provided by the CDN
 function loadHeatmap() {
   // fetch("./data/pooled_blood_INTERPRET_NTA_QAQC.xlsx")
+  // fetch("./data/pooledBloodStripped_NTA_INTERPRET_NTA_QAQC.xlsx")
   fetch("./data/WW2DW_INTERPRET_NTA_QAQC.xlsx")
     .then((response) => response.arrayBuffer()) // read file as array buffer
     .then((data) => {
       const workbook = XLSX.read(data, { type: "array" });
-
       // call the main function that cleans data and draws heatmap
       createIntensityHeatmap(workbook);
     });
