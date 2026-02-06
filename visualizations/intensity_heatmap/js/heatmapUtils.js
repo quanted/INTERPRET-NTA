@@ -64,11 +64,11 @@ export function setTheScene(canvasId, dimsObject) {
   // setup canvas and WebGL renderer
   let canvas = document.querySelector(`#${canvasId}`);
   const heatmapContainer = document.getElementById("heatmap-container");
-  heatmapContainer.style.position = 'relative;'
+  heatmapContainer.style.position = "relative;";
   if (canvas === null) {
     canvas = document.createElement("canvas");
     canvas.id = canvasId;
-    canvas.style.display = 'block';
+    canvas.style.display = "block";
     heatmapContainer.appendChild(canvas);
   }
   const renderer = new THREE.WebGLRenderer({
@@ -476,8 +476,6 @@ export function addYAxisLabelsAndHorzLines(
   blackMaterial,
   graphMesh,
   scene,
-  camera,
-  renderer,
 ) {
   // setup group for yAxis labels
   const yAxisGroup = new THREE.Group();
@@ -509,7 +507,10 @@ export function addYAxisLabelsAndHorzLines(
       canvRect.left + dimsObject.paddingWidth - dimsObject.actualWidth / 2; // shift to left
     labelX += -(labelWidth / 2) - 16; // right-align labels and add padding
 
-    let labelY = dimsObject.actualHeight / 2 + dimsObject.paddingHeight; // shift up
+    let labelY =
+      dimsObject.actualHeight / 2 +
+      dimsObject.paddingHeight +
+      dimsObject.cellHeight / 2; // shift up
     labelY +=
       dimsObject.cellHeight * (sampleGroups.length - index + 1) -
       labelHeight / 2; // center to correct row
@@ -540,37 +541,6 @@ export function addYAxisLabelsAndHorzLines(
     // ==========================================================================
   });
 
-  // Convert horizontal line world coordinates to screen coordinates
-  const horizontalLineScreenCoords = [];
-  const canvasRect = canvas.getBoundingClientRect();
-
-  lineYList.forEach((worldY, index) => {
-    // Create a vector at the line position in world space
-    const worldPosition = new THREE.Vector3(0, worldY, 0);
-
-    // Project to normalized device coordinates (-1 to +1)
-    const screenPosition = worldPosition.project(camera);
-
-    // Convert to screen pixels
-    const screenX =
-      ((screenPosition.x + 1) / 2) * canvasRect.width +
-      canvasRect.left +
-      window.scrollX;
-    const screenY =
-      ((-screenPosition.y + 1) / 2) * canvasRect.height +
-      canvasRect.top +
-      window.scrollY;
-
-    horizontalLineScreenCoords.push({
-      sampleName: headerList[headerList.length - 1 - index], // reverse order since lineYList was reversed
-      worldY: worldY,
-      screenX: screenX,
-      screenY: screenY,
-      top: screenY,
-      left: screenX,
-    });
-  });
-
   // add horizontal line on top
   const lineStartX =
     dimsObject.paddingWidth + dimsObject.width / 2 - dimsObject.actualWidth / 2;
@@ -599,8 +569,6 @@ export function addYAxisLabelsAndHorzLines(
   }
 
   graphMesh.add(yAxisGroup);
-
-  return horizontalLineScreenCoords;
 }
 
 /**
@@ -1460,39 +1428,41 @@ export function updateColorLegend(minValue, maxValue, dataType) {
   }
 }
 
-
 export function getHeatmapRectangleBoundaries(dimsObject) {
   // Calculate rectangle edges in THREE.js coordinates
   const left = -(dimsObject.actualWidth / 2) + dimsObject.paddingWidth;
   const right = left + dimsObject.width;
-  
-  const firstCellCenterY = (dimsObject.actualHeight / 2) - dimsObject.paddingHeight + dimsObject.cellHeight / 2;
-  const top = firstCellCenterY - dimsObject.cellHeight / 2 -20; //this 20 is arbitraty
-  
+
+  const firstCellCenterY =
+    dimsObject.actualHeight / 2 -
+    dimsObject.paddingHeight +
+    dimsObject.cellHeight / 2;
+  const top = firstCellCenterY - dimsObject.cellHeight / 2;
+
   const bottom = top - dimsObject.height;
-  
+
   const centerX = (left + right) / 2;
   const centerY = (top + bottom) / 2;
-  
+
   // Get the canvas position relative to the heatmap-container using offsetTop
-  const canvas = document.getElementById('heatmap');
-  
+  const canvas = document.getElementById("heatmap");
+
   // offsetTop gives us the position relative to the offsetParent (which should be heatmap-container)
   const canvasOffsetTop = canvas.offsetTop;
   const canvasOffsetLeft = canvas.offsetLeft;
-  
+
   // Convert to DOM coordinates
   function threeToDom(threeX, threeY) {
     return {
-      left: threeX + (dimsObject.actualWidth / 2) + canvasOffsetLeft,
-      top: -(threeY - (dimsObject.actualHeight / 2)) + canvasOffsetTop
+      left: threeX + dimsObject.actualWidth / 2 + canvasOffsetLeft,
+      top: -(threeY - dimsObject.actualHeight / 2) + canvasOffsetTop,
     };
   }
-  
+
   return {
     topCenter: threeToDom(centerX, top),
     bottomCenter: threeToDom(centerX, bottom),
     leftCenter: threeToDom(left, centerY),
-    rightCenter: threeToDom(right, centerY)
+    rightCenter: threeToDom(right, centerY),
   };
 }
