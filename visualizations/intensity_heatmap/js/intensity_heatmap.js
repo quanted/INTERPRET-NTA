@@ -188,6 +188,56 @@ async function createIntensityHeatmap(path, data = null) {
       dataToShow,
     );
 
+    const boundaries = heatmapUtils.getHeatmapRectangleBoundaries(dimsObject);
+
+    console.log(boundaries)
+    const heatmapContainer = document.getElementById("heatmap-container")
+
+    // Top span
+    const topSpan = document.createElement('span');
+    topSpan.id = 'boundary-top';
+    topSpan.style.position = 'absolute';
+    topSpan.style.left = boundaries.topCenter.left + 'px';
+    topSpan.style.top = boundaries.topCenter.top + 'px';
+    topSpan.textContent = 'Top'; // Optional: add text to see it
+    topSpan.style.backgroundColor = 'red'; // Optional: for visibility
+    topSpan.style.transform = 'translate(-50%, -50%)'; // Center the span on the point
+    heatmapContainer.appendChild(topSpan);
+
+    // Bottom span
+    const bottomSpan = document.createElement('span');
+    bottomSpan.id = 'boundary-bottom';
+    bottomSpan.style.position = 'absolute';
+    bottomSpan.style.left = boundaries.bottomCenter.left + 'px';
+    bottomSpan.style.top = boundaries.bottomCenter.top + 'px';
+    bottomSpan.textContent = 'Bottom'; // Optional
+    bottomSpan.style.backgroundColor = 'red'; // Optional
+    bottomSpan.style.transform = 'translate(-50%, -50%)'; // Center the span on the point
+    heatmapContainer.appendChild(bottomSpan);
+    
+    // Left span
+    const leftSpan = document.createElement('span');
+    leftSpan.id = 'boundary-left';
+    leftSpan.style.position = 'absolute';
+    leftSpan.style.left = boundaries.leftCenter.left + 'px';
+    leftSpan.style.top = boundaries.leftCenter.top + 'px';
+    leftSpan.textContent = 'Left'; // Optional
+    leftSpan.style.backgroundColor = 'red'; // Optional
+    leftSpan.style.transform = 'translate(-50%, -50%)'; // Center the span on the point
+    heatmapContainer.appendChild(leftSpan);
+    
+    // Right span
+    const rightSpan = document.createElement('span');
+    rightSpan.id = 'boundary-right';
+    rightSpan.style.position = 'absolute';
+    rightSpan.style.left = boundaries.rightCenter.left + 'px';
+    rightSpan.style.top = boundaries.rightCenter.top + 'px';
+    rightSpan.textContent = 'Right'; // Optional
+    rightSpan.style.backgroundColor = 'red'; // Optional
+    rightSpan.style.transform = 'translate(-50%, -50%)'; // Center the span on the point
+    heatmapContainer.appendChild(rightSpan);
+
+
     // add a transparent mesh to house the graph title/labels/partitions
     const graphMesh = new THREE.Mesh(graphGeometry, clearMaterial);
     scene.add(graphMesh);
@@ -814,8 +864,8 @@ async function createIntensityHeatmap(path, data = null) {
 // // Use the global XLSX object provided by the CDN
 function loadHeatmap() {
   // fetch("./data/pooled_blood_INTERPRET_NTA_QAQC.xlsx")
-  fetch("./data/pooledBloodStripped_NTA_INTERPRET_NTA_QAQC.xlsx")
-    // fetch("./data/WW2DW_INTERPRET_NTA_QAQC.xlsx")
+  // fetch("./data/pooledBloodStripped_NTA_INTERPRET_NTA_QAQC.xlsx")
+    fetch("./data/WW2DW_INTERPRET_NTA_QAQC.xlsx")
     .then((response) => response.arrayBuffer()) // read file as array buffer
     .then((data) => {
       const workbook = XLSX.read(data, { type: "array" });

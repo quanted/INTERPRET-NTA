@@ -64,9 +64,11 @@ export function setTheScene(canvasId, dimsObject) {
   // setup canvas and WebGL renderer
   let canvas = document.querySelector(`#${canvasId}`);
   const heatmapContainer = document.getElementById("heatmap-container");
+  heatmapContainer.style.position = 'relative;'
   if (canvas === null) {
     canvas = document.createElement("canvas");
     canvas.id = canvasId;
+    canvas.style.display = 'block';
     heatmapContainer.appendChild(canvas);
   }
   const renderer = new THREE.WebGLRenderer({
@@ -1456,4 +1458,41 @@ export function updateColorLegend(minValue, maxValue, dataType) {
       maxLabel.textContent = maxValue.toFixed(2);
     }
   }
+}
+
+
+export function getHeatmapRectangleBoundaries(dimsObject) {
+  // Calculate rectangle edges in THREE.js coordinates
+  const left = -(dimsObject.actualWidth / 2) + dimsObject.paddingWidth;
+  const right = left + dimsObject.width;
+  
+  const firstCellCenterY = (dimsObject.actualHeight / 2) - dimsObject.paddingHeight + dimsObject.cellHeight / 2;
+  const top = firstCellCenterY - dimsObject.cellHeight / 2 -20; //this 20 is arbitraty
+  
+  const bottom = top - dimsObject.height;
+  
+  const centerX = (left + right) / 2;
+  const centerY = (top + bottom) / 2;
+  
+  // Get the canvas position relative to the heatmap-container using offsetTop
+  const canvas = document.getElementById('heatmap');
+  
+  // offsetTop gives us the position relative to the offsetParent (which should be heatmap-container)
+  const canvasOffsetTop = canvas.offsetTop;
+  const canvasOffsetLeft = canvas.offsetLeft;
+  
+  // Convert to DOM coordinates
+  function threeToDom(threeX, threeY) {
+    return {
+      left: threeX + (dimsObject.actualWidth / 2) + canvasOffsetLeft,
+      top: -(threeY - (dimsObject.actualHeight / 2)) + canvasOffsetTop
+    };
+  }
+  
+  return {
+    topCenter: threeToDom(centerX, top),
+    bottomCenter: threeToDom(centerX, bottom),
+    leftCenter: threeToDom(left, centerY),
+    rightCenter: threeToDom(right, centerY)
+  };
 }
