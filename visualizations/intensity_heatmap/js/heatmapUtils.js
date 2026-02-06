@@ -85,7 +85,7 @@ export function setTheScene(canvasId, dimsObject) {
   // setup camera
   const left = -dimsObject.actualWidth / 2;
   const right = dimsObject.actualWidth / 2;
-  const top = dimsObject.actualHeight / 2;
+  const top = dimsObject.actualHeight / 2 + dimsObject.cellHeight / 2;
   const bottom = -dimsObject.actualHeight / 2;
   const near = -1;
   const far = 1;
@@ -474,6 +474,8 @@ export function addYAxisLabelsAndHorzLines(
   blackMaterial,
   graphMesh,
   scene,
+  camera,
+  renderer,
 ) {
   // setup group for yAxis labels
   const yAxisGroup = new THREE.Group();
@@ -536,6 +538,37 @@ export function addYAxisLabelsAndHorzLines(
     // ==========================================================================
   });
 
+  // Convert horizontal line world coordinates to screen coordinates
+  const horizontalLineScreenCoords = [];
+  const canvasRect = canvas.getBoundingClientRect();
+
+  lineYList.forEach((worldY, index) => {
+    // Create a vector at the line position in world space
+    const worldPosition = new THREE.Vector3(0, worldY, 0);
+
+    // Project to normalized device coordinates (-1 to +1)
+    const screenPosition = worldPosition.project(camera);
+
+    // Convert to screen pixels
+    const screenX =
+      ((screenPosition.x + 1) / 2) * canvasRect.width +
+      canvasRect.left +
+      window.scrollX;
+    const screenY =
+      ((-screenPosition.y + 1) / 2) * canvasRect.height +
+      canvasRect.top +
+      window.scrollY;
+
+    horizontalLineScreenCoords.push({
+      sampleName: headerList[headerList.length - 1 - index], // reverse order since lineYList was reversed
+      worldY: worldY,
+      screenX: screenX,
+      screenY: screenY,
+      top: screenY,
+      left: screenX,
+    });
+  });
+
   // add horizontal line on top
   const lineStartX =
     dimsObject.paddingWidth + dimsObject.width / 2 - dimsObject.actualWidth / 2;
@@ -564,6 +597,8 @@ export function addYAxisLabelsAndHorzLines(
   }
 
   graphMesh.add(yAxisGroup);
+
+  return horizontalLineScreenCoords;
 }
 
 /**

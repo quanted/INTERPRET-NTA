@@ -96,7 +96,7 @@ async function createIntensityHeatmap(path, data = null) {
     const margin = { top: 75, right: 0, bottom: 75, left: 0 };
     const width = 1300 - margin.left - margin.right;
     const height = 725 - margin.top - margin.bottom;
-    const paddingHeight = 40; // padding between title and top
+    const paddingHeight = 30; // padding between title and top
     const paddingWidth = 100;
     const actualWidth = width + paddingWidth * 2;
     const actualHeight = height + paddingHeight * 2;
@@ -195,7 +195,7 @@ async function createIntensityHeatmap(path, data = null) {
     // add title, x-axis label, y-axis labels and horizontal partition lines
     heatmapUtils.addTitle(canvas, dimsObject, graphMesh);
     heatmapUtils.addXAxisLabel(canvas, dimsObject, graphMesh);
-    heatmapUtils.addYAxisLabelsAndHorzLines(
+    const coords = heatmapUtils.addYAxisLabelsAndHorzLines(
       canvas,
       sampleGroups,
       dimsObject,
@@ -205,7 +205,13 @@ async function createIntensityHeatmap(path, data = null) {
       blackMaterial,
       graphMesh,
       scene,
+      camera,
+      renderer,
     );
+
+    console.log(coords);
+
+    document.getElementById("heatmap-title").style.top = `800px`;
 
     const coloredValues = dataFlat
       .filter((cell) => cell.color === "colored")
@@ -396,6 +402,8 @@ async function createIntensityHeatmap(path, data = null) {
           blackMaterial,
           graphMesh,
           scene,
+          camera,
+          renderer,
         );
 
         let dataToUse = dataDict[dataToShow];
@@ -806,8 +814,8 @@ async function createIntensityHeatmap(path, data = null) {
 // // Use the global XLSX object provided by the CDN
 function loadHeatmap() {
   // fetch("./data/pooled_blood_INTERPRET_NTA_QAQC.xlsx")
-  // fetch("./data/pooledBloodStripped_NTA_INTERPRET_NTA_QAQC.xlsx")
-  fetch("./data/WW2DW_INTERPRET_NTA_QAQC.xlsx")
+  fetch("./data/pooledBloodStripped_NTA_INTERPRET_NTA_QAQC.xlsx")
+    // fetch("./data/WW2DW_INTERPRET_NTA_QAQC.xlsx")
     .then((response) => response.arrayBuffer()) // read file as array buffer
     .then((data) => {
       const workbook = XLSX.read(data, { type: "array" });
