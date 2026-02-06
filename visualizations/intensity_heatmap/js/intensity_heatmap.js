@@ -15,7 +15,10 @@ async function createIntensityHeatmap(path, data = null) {
   const sampleHeaders = data.columns.filter((col) => col !== "Feature ID");
 
   // get a list of the sorted unique sample names from the csv.
-  let sampleGroups = dataUtils.getUniqueSampleHeaders(data);
+  const initialSampleGroups = dataUtils.getUniqueSampleHeaders(data);
+  const initialFeatures = data.map((item) => item["Feature ID"]);
+
+  let sampleGroups = initialSampleGroups;
 
   // replace null intensity values with 0
   const rawData = dataUtils.GetTransformedData(data);
@@ -332,6 +335,18 @@ async function createIntensityHeatmap(path, data = null) {
       canvas,
       dimsObject,
       (sampleOrder, groups) => {
+        //Handle missing sample names in uploaded file
+        if (sampleOrder.length < initialSampleGroups.length) {
+          if (groups) {
+            groups.push(sampleOrder[sampleOrder.length - 1]);
+          }
+          for (let item of initialSampleGroups) {
+            if (!sampleOrder.includes(item)) {
+              sampleOrder.push(item);
+            }
+          }
+        }
+
         sampleGroups = sampleOrder;
         sampleClusterDividers = groups;
         // Remove existing horizontal lines from the scene
@@ -484,6 +499,19 @@ async function createIntensityHeatmap(path, data = null) {
       canvas,
       dimsObject,
       (featureOrder, groups) => {
+        if (featureOrder.length < initialFeatures.length) {
+          if (groups) {
+            groups.push(featureOrder[featureOrder.length - 1]);
+          }
+          const setFeatureOrder = new Set(featureOrder);
+          for (let item of initialFeatures) {
+            if (!setFeatureOrder.has(item.toString())) {
+              console.log(item);
+              featureOrder.push(item);
+            }
+          }
+        }
+
         // Remove existing vertical cluster lines from the scene
         const linesToRemove = [];
         scene.traverse((object) => {

@@ -147,13 +147,13 @@ export function getGeometries(dimsObject) {
     dimsObject.apparentCellWidth,
     dimsObject.cellHeight,
   );
-  const horzClusterLineGeo = new THREE.PlaneGeometry(dimsObject.width, 3);
+  const horzClusterLineGeo = new THREE.PlaneGeometry(dimsObject.width, 4);
   const horzLineGeo = new THREE.PlaneGeometry(dimsObject.width, 0.5);
   const vertLineGeo = new THREE.PlaneGeometry(
     dimsObject.cellWidth / 10,
     dimsObject.height,
   );
-  const vertClusterLineGeo = new THREE.PlaneGeometry(3, dimsObject.height);
+  const vertClusterLineGeo = new THREE.PlaneGeometry(4, dimsObject.height);
 
   return [
     graphGeometry,
