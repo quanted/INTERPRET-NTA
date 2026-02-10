@@ -409,50 +409,13 @@ export function addTitle(canvas, dimsObject, graphMesh) {
   titleDiv.className = "title";
 
   // add the innerHTML
-  titleDiv.innerHTML = `Occurrence Intensity Heatmap\n`;
+  titleDiv.innerHTML = `Occurrence Intensity Heatmap`;
+  titleDiv.style.paddingBottom = "20px"
 
   // set the position
   const canvRect = canvas.getBoundingClientRect();
 }
 
-/**
- * Generates and adds x-axis label to the appropriate Mesh object.
- *
- * @param {HTMLCanvasElement} canvas The canvas element that holds the heatmap.
- * @param {object} thresholdData The object containing threshold parameters.
- * @param {object} dimsObject The object containing the widths/heights of graph and cells.
- * @param {THREE.Mesh} graphMesh The Mesh that is made to hold title and axes labels.
- */
-export function addXAxisLabel(canvas, dimsObject, graphMesh) {
-  // create and style div
-  const labelDiv = document.createElement("div");
-  labelDiv.className = "xAxisLabel";
-  labelDiv.style.color = "black";
-  labelDiv.style.fontSize = "20px";
-  labelDiv.style.backgroundColor = "transparent";
-  labelDiv.style.width = "auto";
-  labelDiv.style.display = "inline-block";
-
-  // set text
-  labelDiv.textContent = "Feature ID";
-
-  // set position
-  const canvRect = canvas.getBoundingClientRect();
-
-  let labelX =
-    -(dimsObject.actualWidth / 2) + canvRect.left + dimsObject.paddingWidth; // shift to left
-  labelX += dimsObject.width / 2; // center to graph
-
-  // value of 0 sets top to be `height` below graph?? shift up by this amount and account for padding
-  let labelY = dimsObject.paddingHeight + dimsObject.actualHeight / 2;
-
-  const xLabel = new CSS2DObject(labelDiv);
-  xLabel.position.set(labelX, labelY, 0);
-
-  // add to mesh
-  graphMesh.add(xLabel);
-  xLabel.layers.set(0);
-}
 
 /**
  * Adds the y-axis labels and horizontal lines that separate rows to the heatmap.
@@ -507,10 +470,13 @@ export function addYAxisLabelsAndHorzLines(
       canvRect.left + dimsObject.paddingWidth - dimsObject.actualWidth / 2; // shift to left
     labelX += -(labelWidth / 2) - 16; // right-align labels and add padding
 
-    let labelY = dimsObject.actualHeight / 2 + dimsObject.paddingHeight + dimsObject.cellHeight/2; // shift up
+    let labelY = dimsObject.actualHeight / 2 + dimsObject.paddingHeight; // shift up
+    // labelY +=
+    //   dimsObject.cellHeight * (sampleGroups.length - index + 1) -
+    //   labelHeight / 2; // center to correct row
     labelY +=
       dimsObject.cellHeight * (sampleGroups.length - index + 1) -
-      labelHeight / 2; // center to correct row
+      dimsObject.cellHeight / 2 + labelHeight/5; // center to correct row
 
     const labelLabel = new CSS2DObject(labelDiv);
     labelLabel.position.set(labelX, labelY, 0);
@@ -1305,20 +1271,10 @@ export function UploadSampleOrderFile(graphMesh, canvas, dimsObject, onSelect) {
   uploadContainer.appendChild(uploadButton);
   sampleOrderDiv.appendChild(uploadContainer);
 
-  // Calculate position
-  const canvRect = canvas.getBoundingClientRect();
-  let X =
-    -(dimsObject.actualWidth / 2) + canvRect.left + dimsObject.paddingWidth;
-  X += dimsObject.width - 1320; // Position to the right of the graph
+  const boundaryTop = getHeatmapRectangleBoundaries(dimsObject).topCenter.top
 
-  let Y = dimsObject.actualHeight / 2 - dimsObject.paddingHeight + dimsObject.cellHeight/2;
-  Y -= dimsObject.height / 2 - 1010; // Center vertically
-
-  // Create CSS2DObject and add to scene
-  const uploadLabel = new CSS2DObject(sampleOrderDiv);
-  uploadLabel.position.set(X, Y, 0);
-  graphMesh.add(uploadLabel);
-  uploadLabel.layers.set(0);
+  sampleOrderDiv.style.top = `${boundaryTop - 40}px`
+  document.getElementById("heatmap-container").appendChild(sampleOrderDiv)
 }
 
 /**
@@ -1377,20 +1333,13 @@ export function UploadFeatureOrderFile(
   uploadContainer.appendChild(uploadButton);
   featureOrderDiv.appendChild(uploadContainer);
 
-  // Calculate position
-  const canvRect = canvas.getBoundingClientRect();
-  let X =
-    -(dimsObject.actualWidth / 2) + canvRect.left + dimsObject.paddingWidth;
-  X += dimsObject.width - 652; // Position to the right of the graph
+  const boundaryLeft = getHeatmapRectangleBoundaries(dimsObject).bottomCenter.left
+  const boundaryBottom = getHeatmapRectangleBoundaries(dimsObject).bottomCenter.top
 
-  let Y = dimsObject.actualHeight / 2 - dimsObject.paddingHeight;
-  Y -= dimsObject.height / 2 - 330; // Center vertically
-
-  // Create CSS2DObject and add to scene
-  const uploadLabel = new CSS2DObject(featureOrderDiv);
-  uploadLabel.position.set(X, Y, 0);
-  graphMesh.add(uploadLabel);
-  uploadLabel.layers.set(0);
+  featureOrderDiv.style.top = `${boundaryBottom + 50}px`
+  featureOrderDiv.style.left = `${boundaryLeft}px`
+  featureOrderDiv.style.transform = "translate(-50%, -50%)"
+  document.getElementById("heatmap-container").appendChild(featureOrderDiv)
 }
 
 /**
@@ -1435,7 +1384,6 @@ export function getHeatmapRectangleBoundaries(dimsObject) {
   const top = dimsObject.actualHeight / 2 - dimsObject.paddingHeight + dimsObject.cellHeight/2;
   
   const bottom = top - dimsObject.height;
-  console.log(top-bottom)
   
   const centerX = (left + right) / 2;
   const centerY = (top + bottom) / 2;
