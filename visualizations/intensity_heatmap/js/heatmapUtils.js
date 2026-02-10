@@ -64,7 +64,7 @@ export function setTheScene(canvasId, dimsObject) {
   // setup canvas and WebGL renderer
   let canvas = document.querySelector(`#${canvasId}`);
   const heatmapContainer = document.getElementById("heatmap-container");
-  heatmapContainer.style.position = 'relative;'
+  heatmapContainer.style.position = 'relative'
   if (canvas === null) {
     canvas = document.createElement("canvas");
     canvas.id = canvasId;
@@ -88,7 +88,7 @@ export function setTheScene(canvasId, dimsObject) {
   const left = -dimsObject.actualWidth / 2;
   const right = dimsObject.actualWidth / 2;
   const top = dimsObject.actualHeight / 2 + dimsObject.cellHeight / 2;
-  const bottom = -dimsObject.actualHeight / 2;
+  const bottom = -dimsObject.actualHeight / 2 + dimsObject.cellHeight /2;
   const near = -1;
   const far = 1;
   const camera = new THREE.OrthographicCamera(
@@ -1432,9 +1432,10 @@ export function getHeatmapRectangleBoundaries(dimsObject) {
   const left = -(dimsObject.actualWidth / 2) + dimsObject.paddingWidth;
   const right = left + dimsObject.width;
   
-  const top = dimsObject.actualHeight / 2 - dimsObject.paddingHeight + 4;
+  const top = dimsObject.actualHeight / 2 - dimsObject.paddingHeight + dimsObject.cellHeight/2;
   
   const bottom = top - dimsObject.height;
+  console.log(top-bottom)
   
   const centerX = (left + right) / 2;
   const centerY = (top + bottom) / 2;
