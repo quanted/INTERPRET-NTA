@@ -64,11 +64,11 @@ export function setTheScene(canvasId, dimsObject) {
   // setup canvas and WebGL renderer
   let canvas = document.querySelector(`#${canvasId}`);
   const heatmapContainer = document.getElementById("heatmap-container");
-  heatmapContainer.style.position = 'relative'
+  heatmapContainer.style.position = "relative";
   if (canvas === null) {
     canvas = document.createElement("canvas");
     canvas.id = canvasId;
-    canvas.style.display = 'block';
+    canvas.style.display = "block";
     heatmapContainer.appendChild(canvas);
   }
   const renderer = new THREE.WebGLRenderer({
@@ -88,7 +88,7 @@ export function setTheScene(canvasId, dimsObject) {
   const left = -dimsObject.actualWidth / 2;
   const right = dimsObject.actualWidth / 2;
   const top = dimsObject.actualHeight / 2 + dimsObject.cellHeight / 2;
-  const bottom = -dimsObject.actualHeight / 2 + dimsObject.cellHeight /2;
+  const bottom = -dimsObject.actualHeight / 2 + dimsObject.cellHeight / 2;
   const near = -1;
   const far = 1;
   const camera = new THREE.OrthographicCamera(
@@ -410,12 +410,11 @@ export function addTitle(canvas, dimsObject, graphMesh) {
 
   // add the innerHTML
   titleDiv.innerHTML = `Occurrence Intensity Heatmap`;
-  titleDiv.style.paddingBottom = "20px"
+  titleDiv.style.paddingBottom = "5px";
 
   // set the position
   const canvRect = canvas.getBoundingClientRect();
 }
-
 
 /**
  * Adds the y-axis labels and horizontal lines that separate rows to the heatmap.
@@ -476,7 +475,8 @@ export function addYAxisLabelsAndHorzLines(
     //   labelHeight / 2; // center to correct row
     labelY +=
       dimsObject.cellHeight * (sampleGroups.length - index + 1) -
-      dimsObject.cellHeight / 2 + labelHeight/5; // center to correct row
+      dimsObject.cellHeight / 2 +
+      labelHeight / 5; // center to correct row
 
     const labelLabel = new CSS2DObject(labelDiv);
     labelLabel.position.set(labelX, labelY, 0);
@@ -532,7 +532,6 @@ export function addYAxisLabelsAndHorzLines(
   }
 
   graphMesh.add(yAxisGroup);
-
 }
 
 /**
@@ -1223,12 +1222,10 @@ async function readOrderFromCSV(file) {
 /**
  * Adds a File Upload Button to select data transformation type to display in the heatmap
  *
- * @param {THREE.Mesh} graphMesh The graph mesh used to hold titles, labels, etc.
- * @param {HTMLCanvasElement} canvas The canvas object that holds the heatmap.
  * @param {object} dimsObject The object containing the graph/cell dims.
  * @param {object} onSelect Function to perform on selection from the
  */
-export function UploadSampleOrderFile(graphMesh, canvas, dimsObject, onSelect) {
+export function UploadSampleOrderFile(dimsObject, onSelect) {
   // Create the container div
   const sampleOrderDiv = document.createElement("div");
   sampleOrderDiv.id = "sampleOrderDiv";
@@ -1258,8 +1255,9 @@ export function UploadSampleOrderFile(graphMesh, canvas, dimsObject, onSelect) {
   // Create upload button
   const uploadButton = document.createElement("button");
   uploadButton.textContent = "Upload Sample Order CSV";
-  uploadButton.className = "upload-button";
+  uploadButton.className = "button";
   uploadButton.style.height = "30px";
+  uploadButton.style.width = "180px";
   uploadButton.style.border = "1px solid rgb(204, 204, 204)";
   uploadButton.style.borderRadius = "5px";
   uploadButton.addEventListener("click", function () {
@@ -1271,26 +1269,19 @@ export function UploadSampleOrderFile(graphMesh, canvas, dimsObject, onSelect) {
   uploadContainer.appendChild(uploadButton);
   sampleOrderDiv.appendChild(uploadContainer);
 
-  const boundaryTop = getHeatmapRectangleBoundaries(dimsObject).topCenter.top
+  const boundaryTop = getHeatmapRectangleBoundaries(dimsObject).topCenter.top;
 
-  sampleOrderDiv.style.top = `${boundaryTop - 40}px`
-  document.getElementById("heatmap-container").appendChild(sampleOrderDiv)
+  sampleOrderDiv.style.top = `${boundaryTop - 40}px`;
+  document.getElementById("heatmap-container").appendChild(sampleOrderDiv);
 }
 
 /**
  * Adds a File Upload Button to select data transformation type to display in the heatmap
  *
- * @param {THREE.Mesh} graphMesh The graph mesh used to hold titles, labels, etc.
- * @param {HTMLCanvasElement} canvas The canvas object that holds the heatmap.
  * @param {object} dimsObject The object containing the graph/cell dims.
  * @param {object} onSelect Function to perform on selection from the
  */
-export function UploadFeatureOrderFile(
-  graphMesh,
-  canvas,
-  dimsObject,
-  onSelect,
-) {
+export function UploadFeatureOrderFile(dimsObject, onSelect) {
   // Create the container div
   const featureOrderDiv = document.createElement("div");
   featureOrderDiv.id = "featureOrderDiv";
@@ -1320,8 +1311,9 @@ export function UploadFeatureOrderFile(
   // Create upload button
   const uploadButton = document.createElement("button");
   uploadButton.textContent = "Upload Feature Order CSV";
-  uploadButton.className = "upload-button";
+  uploadButton.className = "button";
   uploadButton.style.height = "30px";
+  uploadButton.style.width = "180px";
   uploadButton.style.border = "1px solid rgb(204, 204, 204)";
   uploadButton.style.borderRadius = "5px";
   uploadButton.addEventListener("click", function () {
@@ -1333,13 +1325,45 @@ export function UploadFeatureOrderFile(
   uploadContainer.appendChild(uploadButton);
   featureOrderDiv.appendChild(uploadContainer);
 
-  const boundaryLeft = getHeatmapRectangleBoundaries(dimsObject).bottomCenter.left
-  const boundaryBottom = getHeatmapRectangleBoundaries(dimsObject).bottomCenter.top
+  const boundaryLeft =
+    getHeatmapRectangleBoundaries(dimsObject).bottomCenter.left;
+  const boundaryBottom =
+    getHeatmapRectangleBoundaries(dimsObject).bottomCenter.top;
 
-  featureOrderDiv.style.top = `${boundaryBottom + 50}px`
-  featureOrderDiv.style.left = `${boundaryLeft}px`
-  featureOrderDiv.style.transform = "translate(-50%, -50%)"
-  document.getElementById("heatmap-container").appendChild(featureOrderDiv)
+  featureOrderDiv.style.top = `${boundaryBottom + 50}px`;
+  featureOrderDiv.style.left = `${boundaryLeft}px`;
+  featureOrderDiv.style.transform = "translate(-50%, -50%)";
+  document.getElementById("heatmap-container").appendChild(featureOrderDiv);
+}
+
+/**
+ * Adds a Button that allows the user to download all transformed datasets.
+ *
+ * @param {object} onSelect Function to perform on selection from the
+ */
+export function exportDataButton(onSelect) {
+  // Create upload button
+  const exportButton = document.createElement("button");
+  exportButton.style.position = "absolute";
+  exportButton.textContent = "Download Intensity Values";
+  exportButton.className = "button";
+  exportButton.style.height = "30px";
+  exportButton.style.width = "175px";
+  exportButton.style.border = "1px solid rgb(204, 204, 204)";
+  exportButton.style.borderRadius = "5px";
+  exportButton.addEventListener("click", () => {
+    onSelect();
+  });
+
+  const heatmapElement = document.getElementById("heatmap");
+  const heatmapRect = heatmapElement.getBoundingClientRect();
+  const heatmapTop = heatmapRect.top + window.scrollY + 80;
+  const heatmapLeft = heatmapRect.left + heatmapRect.width + window.scrollX + 5;
+
+  exportButton.style.left = heatmapLeft + "px";
+  exportButton.style.top = heatmapTop + 287 + "px";
+
+  document.body.appendChild(exportButton);
 }
 
 /**
@@ -1375,38 +1399,40 @@ export function updateColorLegend(minValue, maxValue, dataType) {
   }
 }
 
-
 export function getHeatmapRectangleBoundaries(dimsObject) {
   // Calculate rectangle edges in THREE.js coordinates
   const left = -(dimsObject.actualWidth / 2) + dimsObject.paddingWidth;
   const right = left + dimsObject.width;
-  
-  const top = dimsObject.actualHeight / 2 - dimsObject.paddingHeight + dimsObject.cellHeight/2;
-  
+
+  const top =
+    dimsObject.actualHeight / 2 -
+    dimsObject.paddingHeight +
+    dimsObject.cellHeight / 2;
+
   const bottom = top - dimsObject.height;
-  
+
   const centerX = (left + right) / 2;
   const centerY = (top + bottom) / 2;
-  
+
   // Get the canvas position relative to the heatmap-container using offsetTop
-  const canvas = document.getElementById('heatmap');
-  
+  const canvas = document.getElementById("heatmap");
+
   // offsetTop gives us the position relative to the offsetParent (which should be heatmap-container)
   const canvasOffsetTop = canvas.offsetTop;
   const canvasOffsetLeft = canvas.offsetLeft;
-  
+
   // Convert to DOM coordinates
   function threeToDom(threeX, threeY) {
     return {
-      left: threeX + (dimsObject.actualWidth / 2) + canvasOffsetLeft,
-      top: -(threeY - (dimsObject.actualHeight / 2)) + canvasOffsetTop
+      left: threeX + dimsObject.actualWidth / 2 + canvasOffsetLeft,
+      top: -(threeY - dimsObject.actualHeight / 2) + canvasOffsetTop,
     };
   }
-  
+
   return {
     topCenter: threeToDom(centerX, top),
     bottomCenter: threeToDom(centerX, bottom),
     leftCenter: threeToDom(left, centerY),
-    rightCenter: threeToDom(right, centerY)
+    rightCenter: threeToDom(right, centerY),
   };
 }

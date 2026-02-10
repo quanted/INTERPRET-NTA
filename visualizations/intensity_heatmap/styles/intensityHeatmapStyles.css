@@ -8,7 +8,7 @@
   /* margin-bottom: 20px;  */
 }
 
-.upload-button:hover {
+.button:hover {
   background-color: rgb(226, 226, 226);
   cursor: pointer; /* Changes the cursor to a hand icon */
 }

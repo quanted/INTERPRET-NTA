@@ -196,9 +196,10 @@ async function createIntensityHeatmap(path, data = null) {
     xSpan.id = "boundary-bottom";
     xSpan.style.position = "absolute";
     xSpan.style.left = boundaries.bottomCenter.left + "px";
-    xSpan.style.top = boundaries.bottomCenter.top + 20+"px";
-    xSpan.style.fontSize = "20px"
+    xSpan.style.top = boundaries.bottomCenter.top + 20 + "px";
+    xSpan.style.fontSize = "20px";
     xSpan.textContent = "Feature ID"; // Optional
+    xSpan.style.width = "100px";
     xSpan.style.transform = "translate(-50%, -50%)"; // Center the span on the point
     heatmapContainer.appendChild(xSpan);
 
@@ -390,288 +391,321 @@ async function createIntensityHeatmap(path, data = null) {
       dataFlat = newDataFlat;
     });
 
-    heatmapUtils.UploadSampleOrderFile(
-      graphMesh,
-      canvas,
-      dimsObject,
-      (sampleOrder, groups) => {
-        //Handle missing sample names in uploaded file
-        if (sampleOrder.length < initialSampleGroups.length) {
-          if (groups) {
-            groups.push(sampleOrder[sampleOrder.length - 1]);
-          }
-          for (let item of initialSampleGroups) {
-            if (!sampleOrder.includes(item)) {
-              sampleOrder.push(item);
-            }
+    heatmapUtils.UploadSampleOrderFile(dimsObject, (sampleOrder, groups) => {
+      //Handle missing sample names in uploaded file
+      if (sampleOrder.length < initialSampleGroups.length) {
+        if (groups) {
+          groups.push(sampleOrder[sampleOrder.length - 1]);
+        }
+        for (let item of initialSampleGroups) {
+          if (!sampleOrder.includes(item)) {
+            sampleOrder.push(item);
           }
         }
+      }
 
-        sampleGroups = sampleOrder;
-        sampleClusterDividers = groups;
-        // Remove existing horizontal lines from the scene
-        const linesToRemove = [];
-        scene.traverse((object) => {
-          if (
-            object.geometry === horzLineGeo ||
-            object.geometry === horzClusterLineGeo
-          ) {
-            linesToRemove.push(object);
-          }
-        });
-        linesToRemove.forEach((line) => {
-          scene.remove(line);
-        });
-
-        // Remove the existing YAxisGroup from graphMesh
-        const groupsToRemove = [];
-        graphMesh.traverse((object) => {
-          if (
-            object instanceof THREE.Group &&
-            object.children.some(
-              (child) =>
-                child.element && child.element.className === "yAxisLabel",
-            )
-          ) {
-            groupsToRemove.push(object);
-          }
-        });
-        groupsToRemove.forEach((group) => {
-          group.children.forEach((child) => {
-            if (child.element && child.element.className === "yAxisLabel") {
-              child.element.remove();
-            }
-          });
-          graphMesh.remove(group);
-        });
-
-        // re-render Y-axis labels and horizontal lines with new sample order
-        heatmapUtils.addYAxisLabelsAndHorzLines(
-          canvas,
-          sampleGroups,
-          dimsObject,
-          horzLineGeo,
-          horzClusterLineGeo,
-          sampleClusterDividers,
-          blackMaterial,
-          graphMesh,
-          scene,
-        );
-
-        let dataToUse = dataDict[dataToShow];
-
-        if (customFeatureOrder) {
-          dataToUse = customFeatureOrder
-            .map((featureId) =>
-              dataToUse.find((row) => row["Feature ID"] == featureId),
-            )
-            .filter((row) => row != undefined);
+      sampleGroups = sampleOrder;
+      sampleClusterDividers = groups;
+      // Remove existing horizontal lines from the scene
+      const linesToRemove = [];
+      scene.traverse((object) => {
+        if (
+          object.geometry === horzLineGeo ||
+          object.geometry === horzClusterLineGeo
+        ) {
+          linesToRemove.push(object);
         }
+      });
+      linesToRemove.forEach((line) => {
+        scene.remove(line);
+      });
 
-        const dataWithMeta = dataUtils.addDetectionCountSumMean(
-          dataToUse,
-          sampleHeaders,
-          dataDict["Raw"],
-        );
-
-        let sortedData = null;
-        if (customFeatureOrder) {
-          sortedData = dataWithMeta;
-        } else {
-          sortedData = dataUtils.sortFeatures(dataWithMeta);
+      // Remove the existing YAxisGroup from graphMesh
+      const groupsToRemove = [];
+      graphMesh.traverse((object) => {
+        if (
+          object instanceof THREE.Group &&
+          object.children.some(
+            (child) =>
+              child.element && child.element.className === "yAxisLabel",
+          )
+        ) {
+          groupsToRemove.push(object);
         }
-
-        const newDataFlat = dataUtils.getFlattenedData(
-          sortedData,
-          sampleHeaders,
-          sampleGroups,
-        );
-
-        // Get new color counts for the selected data type
-        const [newColoredCount, newWhiteCount] =
-          dataUtils.getColorCounts(newDataFlat);
-        // Remove old meshes from the scene
-        heatmapGroup.remove(coloredMesh);
-        heatmapGroup.remove(whiteMesh);
-        // Dispose of old geometries and materials to free memory
-        coloredMesh.dispose();
-        whiteMesh.dispose();
-        // Create new meshes with correct counts
-        coloredMesh = heatmapUtils.createInstancedMesh(
-          cellGeometry,
-          coloredMaterial,
-          newColoredCount,
-        );
-
-        whiteMesh = heatmapUtils.createInstancedMesh(
-          cellGeometry,
-          whiteMaterial,
-          newWhiteCount,
-        );
-
-        coloredMesh.renderOrder = 998;
-        // Add new meshes to the group
-        heatmapGroup.add(coloredMesh);
-        heatmapGroup.add(whiteMesh);
-        // Set positions and colors for the new meshes
-
-        const newColoredCellInstances = heatmapUtils.setCellColorAndPos(
-          newDataFlat,
-          dimsObject,
-          coloredMesh,
-          whiteMesh,
-          colorDict[dataToShow],
-          dataToShow,
-        );
-
-        // Update the global coloredCellInstances reference
-        coloredCellInstances.length = 0;
-        coloredCellInstances.push(...newColoredCellInstances);
-        // Update dataFlat reference for tooltips
-        dataFlat = newDataFlat;
-
-        requestAnimationFrame(() => {
-          // re-attach event listeners for the new y-axis labels
-          const yAxisLabelDivs = document.querySelectorAll(".yAxisLabel");
-          yAxisLabelDivs.forEach((label) => {
-            label.addEventListener("mouseenter", (e) => {
-              heatmapUtils.mouseenterYAxisLabelEvent(
-                e,
-                label,
-                featureCounts,
-                yAxisTooltip,
-                dimsObject,
-              );
-            });
-
-            label.addEventListener("mouseout", () => {
-              heatmapUtils.mouseoutYAxisLabelEvent(null, label, yAxisTooltip);
-            });
-          });
-        });
-      },
-    );
-
-    let vertLineClusterObjects = [];
-    window.vertLineClusterObjects = vertLineClusterObjects;
-    heatmapUtils.UploadFeatureOrderFile(
-      graphMesh,
-      canvas,
-      dimsObject,
-      (featureOrder, groups) => {
-        if (featureOrder.length < initialFeatures.length) {
-          if (groups) {
-            groups.push(featureOrder[featureOrder.length - 1]);
-          }
-          const setFeatureOrder = new Set(featureOrder);
-          for (let item of initialFeatures) {
-            if (!setFeatureOrder.has(item.toString())) {
-              featureOrder.push(item);
-            }
-          }
-        }
-
-        // Remove existing vertical cluster lines from the scene
-        const linesToRemove = [];
-        scene.traverse((object) => {
-          if (object.geometry === vertClusterLineGeo) {
-            linesToRemove.push(object);
+      });
+      groupsToRemove.forEach((group) => {
+        group.children.forEach((child) => {
+          if (child.element && child.element.className === "yAxisLabel") {
+            child.element.remove();
           }
         });
-        linesToRemove.forEach((line) => {
-          scene.remove(line);
-        });
+        graphMesh.remove(group);
+      });
 
-        featureClusterDividers = groups;
+      // re-render Y-axis labels and horizontal lines with new sample order
+      heatmapUtils.addYAxisLabelsAndHorzLines(
+        canvas,
+        sampleGroups,
+        dimsObject,
+        horzLineGeo,
+        horzClusterLineGeo,
+        sampleClusterDividers,
+        blackMaterial,
+        graphMesh,
+        scene,
+      );
 
-        customFeatureOrder = featureOrder;
-        // Re-order data according to the feature order array
-        const dataToUse = dataDict[dataToShow];
+      let dataToUse = dataDict[dataToShow];
 
-        const reorderedData = featureOrder
+      if (customFeatureOrder) {
+        dataToUse = customFeatureOrder
           .map((featureId) =>
             dataToUse.find((row) => row["Feature ID"] == featureId),
           )
-          .filter((row) => row !== undefined);
-
-        const reorderedRawData = featureOrder
-          .map((featureId) =>
-            dataDict["Raw"].find((row) => row["Feature ID"] == featureId),
-          )
           .filter((row) => row != undefined);
+      }
 
-        const dataWithMeta = dataUtils.addDetectionCountSumMean(
-          reorderedData,
-          sampleHeaders,
-          reorderedRawData,
-        );
+      const dataWithMeta = dataUtils.addDetectionCountSumMean(
+        dataToUse,
+        sampleHeaders,
+        dataDict["Raw"],
+      );
 
-        const newDataFlat = dataUtils.getFlattenedData(
-          dataWithMeta,
-          sampleHeaders,
-          sampleGroups,
-        );
+      let sortedData = null;
+      if (customFeatureOrder) {
+        sortedData = dataWithMeta;
+      } else {
+        sortedData = dataUtils.sortFeatures(dataWithMeta);
+      }
 
-        // Get new color counts for the selected data type
-        const [newColoredCount, newWhiteCount] =
-          dataUtils.getColorCounts(newDataFlat);
+      const newDataFlat = dataUtils.getFlattenedData(
+        sortedData,
+        sampleHeaders,
+        sampleGroups,
+      );
 
-        // Remove old meshes from the scene
-        heatmapGroup.remove(coloredMesh);
-        heatmapGroup.remove(whiteMesh);
-        // Dispose of old geometries and materials to free memory
-        coloredMesh.dispose();
-        whiteMesh.dispose();
+      // Get new color counts for the selected data type
+      const [newColoredCount, newWhiteCount] =
+        dataUtils.getColorCounts(newDataFlat);
+      // Remove old meshes from the scene
+      heatmapGroup.remove(coloredMesh);
+      heatmapGroup.remove(whiteMesh);
+      // Dispose of old geometries and materials to free memory
+      coloredMesh.dispose();
+      whiteMesh.dispose();
+      // Create new meshes with correct counts
+      coloredMesh = heatmapUtils.createInstancedMesh(
+        cellGeometry,
+        coloredMaterial,
+        newColoredCount,
+      );
 
-        // Create new meshes with correct counts
-        coloredMesh = heatmapUtils.createInstancedMesh(
-          cellGeometry,
-          coloredMaterial,
-          newColoredCount,
-        );
+      whiteMesh = heatmapUtils.createInstancedMesh(
+        cellGeometry,
+        whiteMaterial,
+        newWhiteCount,
+      );
 
-        whiteMesh = heatmapUtils.createInstancedMesh(
-          cellGeometry,
-          whiteMaterial,
-          newWhiteCount,
-        );
+      coloredMesh.renderOrder = 998;
+      // Add new meshes to the group
+      heatmapGroup.add(coloredMesh);
+      heatmapGroup.add(whiteMesh);
+      // Set positions and colors for the new meshes
 
-        coloredMesh.renderOrder = 998;
-        // Add new meshes to the group
-        heatmapGroup.add(coloredMesh);
-        heatmapGroup.add(whiteMesh);
+      const newColoredCellInstances = heatmapUtils.setCellColorAndPos(
+        newDataFlat,
+        dimsObject,
+        coloredMesh,
+        whiteMesh,
+        colorDict[dataToShow],
+        dataToShow,
+      );
 
-        // Set positions and colors for the new meshes
-        const newColoredCellInstances = heatmapUtils.setCellColorAndPos(
-          newDataFlat,
-          dimsObject,
-          coloredMesh,
-          whiteMesh,
-          colorDict[dataToShow],
-          dataToShow,
-        );
+      // Update the global coloredCellInstances reference
+      coloredCellInstances.length = 0;
+      coloredCellInstances.push(...newColoredCellInstances);
+      // Update dataFlat reference for tooltips
+      dataFlat = newDataFlat;
 
-        // Update the global coloredCellInstances reference
-        coloredCellInstances.length = 0;
-        coloredCellInstances.push(...newColoredCellInstances);
-        // Update dataFlat reference for tooltips
-        dataFlat = newDataFlat;
+      requestAnimationFrame(() => {
+        // re-attach event listeners for the new y-axis labels
+        const yAxisLabelDivs = document.querySelectorAll(".yAxisLabel");
+        yAxisLabelDivs.forEach((label) => {
+          label.addEventListener("mouseenter", (e) => {
+            heatmapUtils.mouseenterYAxisLabelEvent(
+              e,
+              label,
+              featureCounts,
+              yAxisTooltip,
+              dimsObject,
+            );
+          });
 
-        // Add the vertical cluster lines
-        if (featureClusterDividers && featureClusterDividers.length > 0) {
-          vertLineClusterObjects = heatmapUtils.getVertClusterLines(
-            dimsObject,
-            nFeatures,
-            vertClusterLineGeo,
-            featureClusterDividers,
-            blackMaterial,
-            scene,
-            dataFlat,
-          );
-          window.vertLineClusterObjects = vertLineClusterObjects;
+          label.addEventListener("mouseout", () => {
+            heatmapUtils.mouseoutYAxisLabelEvent(null, label, yAxisTooltip);
+          });
+        });
+      });
+    });
+
+    let vertLineClusterObjects = [];
+    window.vertLineClusterObjects = vertLineClusterObjects;
+    heatmapUtils.UploadFeatureOrderFile(dimsObject, (featureOrder, groups) => {
+      if (featureOrder.length < initialFeatures.length) {
+        if (groups) {
+          groups.push(featureOrder[featureOrder.length - 1]);
         }
-      },
-    );
+        const setFeatureOrder = new Set(featureOrder);
+        for (let item of initialFeatures) {
+          if (!setFeatureOrder.has(item.toString())) {
+            featureOrder.push(item);
+          }
+        }
+      }
+
+      // Remove existing vertical cluster lines from the scene
+      const linesToRemove = [];
+      scene.traverse((object) => {
+        if (object.geometry === vertClusterLineGeo) {
+          linesToRemove.push(object);
+        }
+      });
+      linesToRemove.forEach((line) => {
+        scene.remove(line);
+      });
+
+      featureClusterDividers = groups;
+
+      customFeatureOrder = featureOrder;
+      // Re-order data according to the feature order array
+      const dataToUse = dataDict[dataToShow];
+
+      const reorderedData = featureOrder
+        .map((featureId) =>
+          dataToUse.find((row) => row["Feature ID"] == featureId),
+        )
+        .filter((row) => row !== undefined);
+
+      const reorderedRawData = featureOrder
+        .map((featureId) =>
+          dataDict["Raw"].find((row) => row["Feature ID"] == featureId),
+        )
+        .filter((row) => row != undefined);
+
+      const dataWithMeta = dataUtils.addDetectionCountSumMean(
+        reorderedData,
+        sampleHeaders,
+        reorderedRawData,
+      );
+
+      const newDataFlat = dataUtils.getFlattenedData(
+        dataWithMeta,
+        sampleHeaders,
+        sampleGroups,
+      );
+
+      // Get new color counts for the selected data type
+      const [newColoredCount, newWhiteCount] =
+        dataUtils.getColorCounts(newDataFlat);
+
+      // Remove old meshes from the scene
+      heatmapGroup.remove(coloredMesh);
+      heatmapGroup.remove(whiteMesh);
+      // Dispose of old geometries and materials to free memory
+      coloredMesh.dispose();
+      whiteMesh.dispose();
+
+      // Create new meshes with correct counts
+      coloredMesh = heatmapUtils.createInstancedMesh(
+        cellGeometry,
+        coloredMaterial,
+        newColoredCount,
+      );
+
+      whiteMesh = heatmapUtils.createInstancedMesh(
+        cellGeometry,
+        whiteMaterial,
+        newWhiteCount,
+      );
+
+      coloredMesh.renderOrder = 998;
+      // Add new meshes to the group
+      heatmapGroup.add(coloredMesh);
+      heatmapGroup.add(whiteMesh);
+
+      // Set positions and colors for the new meshes
+      const newColoredCellInstances = heatmapUtils.setCellColorAndPos(
+        newDataFlat,
+        dimsObject,
+        coloredMesh,
+        whiteMesh,
+        colorDict[dataToShow],
+        dataToShow,
+      );
+
+      // Update the global coloredCellInstances reference
+      coloredCellInstances.length = 0;
+      coloredCellInstances.push(...newColoredCellInstances);
+      // Update dataFlat reference for tooltips
+      dataFlat = newDataFlat;
+
+      // Add the vertical cluster lines
+      if (featureClusterDividers && featureClusterDividers.length > 0) {
+        vertLineClusterObjects = heatmapUtils.getVertClusterLines(
+          dimsObject,
+          nFeatures,
+          vertClusterLineGeo,
+          featureClusterDividers,
+          blackMaterial,
+          scene,
+          dataFlat,
+        );
+        window.vertLineClusterObjects = vertLineClusterObjects;
+      }
+    });
+
+    heatmapUtils.exportDataButton(() => {
+      const fileName = "Intensity_Heatmap_Transformed_Data.xlsx";
+
+      // Convert the data array to a worksheet
+      const worksheetRaw = XLSX.utils.json_to_sheet(rawData);
+      const worksheetLog10 = XLSX.utils.json_to_sheet(log10Data);
+      const worksheetRelative = XLSX.utils.json_to_sheet(relativeData);
+
+      // Create a new blank workbook and add the worksheet to the workbook
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheetRaw, "Raw");
+      XLSX.utils.book_append_sheet(workbook, worksheetLog10, "Log10");
+      XLSX.utils.book_append_sheet(workbook, worksheetRelative, "Relative");
+
+      // Generate the XLSX file data in binary string format
+      const xlsxData = XLSX.write(workbook, {
+        type: "binary",
+        bookType: "xlsx",
+      });
+
+      // Convert the binary string to a Blob object for download
+      function s2ab(s) {
+        const buf = new ArrayBuffer(s.length);
+        const view = new Uint8Array(buf);
+        for (let i = 0; i < s.length; ++i) view[i] = s.charCodeAt(i) & 0xff;
+        return buf;
+      }
+
+      const blob = new Blob([s2ab(xlsxData)], {
+        type: "application/octet-stream",
+      });
+
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = fileName;
+
+      document.body.appendChild(link);
+      link.click();
+
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+    });
 
     let vertLineObjects = heatmapUtils.getVertLines(
       dimsObject,
@@ -865,8 +899,8 @@ async function createIntensityHeatmap(path, data = null) {
 // // Use the global XLSX object provided by the CDN
 function loadHeatmap() {
   // fetch("./data/pooled_blood_INTERPRET_NTA_QAQC.xlsx")
-  // fetch("./data/pooledBloodStripped_NTA_INTERPRET_NTA_QAQC.xlsx")
-  fetch("./data/WW2DW_INTERPRET_NTA_QAQC.xlsx")
+  fetch("./data/pooledBloodStripped_NTA_INTERPRET_NTA_QAQC.xlsx")
+    // fetch("./data/WW2DW_INTERPRET_NTA_QAQC.xlsx")
     .then((response) => response.arrayBuffer()) // read file as array buffer
     .then((data) => {
       const workbook = XLSX.read(data, { type: "array" });
