@@ -653,6 +653,7 @@ export function buildTooltip() {
   tooltip.style.display = "none";
   tooltip.style.whiteSpace = "pre";
   tooltip.className = "tooltip";
+  tooltip.id = "feature-tooltip";
   tooltip.style.width = "250px";
 
   document.body.appendChild(tooltip);
@@ -744,6 +745,7 @@ export function mousemoveCellEvent(
   scene,
   camera,
   cameraDefaults,
+  boundaries,
 ) {
   // first handle on-hover tooltips, get mouse position
   const rect = renderer.domElement.getBoundingClientRect();
@@ -775,11 +777,12 @@ export function mousemoveCellEvent(
     if (cellData) {
       const sampleName = cellData.sampleName;
 
-      const heatmapElement = document.getElementById("heatmap");
-      const heatmapRect = heatmapElement.getBoundingClientRect();
-      const heatmapTop = heatmapRect.top + window.scrollY + 80;
-      const heatmapLeft =
-        heatmapRect.left + heatmapRect.width + window.scrollX + 5;
+      const tooltipTop = boundaries.leftCenter.top - 150;
+      const tooltipLeft = boundaries.rightCenter.left + 20;
+
+      tooltip.style.left = tooltipLeft + "px";
+      tooltip.style.top = tooltipTop + "px";
+
       tooltip.innerHTML = `<div style="background-color: white; color: black; padding: 5px; border-radius: 3px; border: solid 1px white; margin-bottom: 0px"><b>Feature ID</b>: ${
         cellData.featureId
       }\n<b>Sample Name</b>: ${sampleName}\n<b>Abundance</b>: <span style="color: black; padding: ${
@@ -789,8 +792,7 @@ export function mousemoveCellEvent(
       )}</span></div>This feature occurs in \n${
         cellData["num_detections"]
       } sample(s)`;
-      tooltip.style.left = heatmapLeft + "px";
-      tooltip.style.top = heatmapTop + 20 + "px";
+
       tooltip.style.display = "block";
     } else {
       tooltip.style.display = "none";
@@ -1052,18 +1054,13 @@ export async function zoomTween(
 /**
  * Adds the color gradient legend to the canvas
  *
- * @param {HTMLCanvasElement} canvas The canvas object that holds the heatmap.
- * @param {object} dimsObject The object containing the graph/cell dims.
- * @param {THREE.Mesh} graphMesh The graph mesh used to hold titles, labels, etc.
  * @param {number} minValue The smallest non-zero intensity value accross all occurrences in the data
  * @param {number} maxValue The largest intensity value accross all occurrences in the data
  * @param {boolean} dataView Data Type displayed in the visualization.
  * @param {object[]} Color list of lowest and highest rgb values for the gradient legend
  */
 export function addColorLegend(
-  canvas,
-  dimsObject,
-  graphMesh,
+  boundaries,
   minValue,
   maxValue,
   dataView,
@@ -1118,13 +1115,12 @@ export function addColorLegend(
   legendDiv.appendChild(gradientBar);
   legendDiv.appendChild(labelsDiv);
 
-  const heatmapElement = document.getElementById("heatmap");
-  const heatmapRect = heatmapElement.getBoundingClientRect();
-  const heatmapTop = heatmapRect.top + window.scrollY + 80;
-  const heatmapLeft = heatmapRect.left + heatmapRect.width + window.scrollX + 5;
+  const legendTop = boundaries.leftCenter.top - 8;
+  const legendLeft = boundaries.rightCenter.left + 20;
 
-  legendDiv.style.left = heatmapLeft + "px";
-  legendDiv.style.top = heatmapTop + 159 + "px";
+  legendDiv.style.left = legendLeft + "px";
+  legendDiv.style.top = legendTop + "px";
+
   legendDiv.style.display = "block";
 
   document.body.appendChild(legendDiv);
@@ -1133,12 +1129,9 @@ export function addColorLegend(
 /**
  * Adds a dropdown menu to select data transformation type to display in the heatmap
  *
- * @param {THREE.Mesh} graphMesh The graph mesh used to hold titles, labels, etc.
- * @param {HTMLCanvasElement} canvas The canvas object that holds the heatmap.
- * @param {object} dimsObject The object containing the graph/cell dims.
  * @param {object} onSelect Function to perform on selection from the
  */
-export function addDropdown(graphMesh, canvas, dimsObject, onSelect) {
+export function addDropdown(boundaries, onSelect) {
   const dropdownDiv = document.createElement("div");
   dropdownDiv.id = "dropdown";
   dropdownDiv.style.position = "absolute";
@@ -1171,16 +1164,14 @@ export function addDropdown(graphMesh, canvas, dimsObject, onSelect) {
 
   dropdownDiv.appendChild(menu);
 
-  const heatmapElement = document.getElementById("heatmap");
-  const heatmapRect = heatmapElement.getBoundingClientRect();
-  const heatmapTop = heatmapRect.top + window.scrollY + 80;
-  const heatmapLeft = heatmapRect.left + heatmapRect.width + window.scrollX + 5;
-
-  dropdownDiv.style.left = heatmapLeft + "px";
-  dropdownDiv.style.top = heatmapTop + 250 + "px";
   dropdownDiv.style.display = "block";
-
   document.body.appendChild(dropdownDiv);
+
+  const Top = boundaries.leftCenter.top + 82;
+  const Left = boundaries.rightCenter.left + 20;
+
+  dropdownDiv.style.left = Left + "px";
+  dropdownDiv.style.top = Top + "px";
 }
 
 // Function to read the sample order from a CSV file
@@ -1222,10 +1213,9 @@ async function readOrderFromCSV(file) {
 /**
  * Adds a File Upload Button to select data transformation type to display in the heatmap
  *
- * @param {object} dimsObject The object containing the graph/cell dims.
  * @param {object} onSelect Function to perform on selection from the
  */
-export function UploadSampleOrderFile(dimsObject, onSelect) {
+export function UploadSampleOrderFile(boundaries, onSelect) {
   // Create the container div
   const sampleOrderDiv = document.createElement("div");
   sampleOrderDiv.id = "sampleOrderDiv";
@@ -1269,7 +1259,7 @@ export function UploadSampleOrderFile(dimsObject, onSelect) {
   uploadContainer.appendChild(uploadButton);
   sampleOrderDiv.appendChild(uploadContainer);
 
-  const boundaryTop = getHeatmapRectangleBoundaries(dimsObject).topCenter.top;
+  const boundaryTop = boundaries.topCenter.top;
 
   sampleOrderDiv.style.top = `${boundaryTop - 40}px`;
   document.getElementById("heatmap-container").appendChild(sampleOrderDiv);
@@ -1281,7 +1271,7 @@ export function UploadSampleOrderFile(dimsObject, onSelect) {
  * @param {object} dimsObject The object containing the graph/cell dims.
  * @param {object} onSelect Function to perform on selection from the
  */
-export function UploadFeatureOrderFile(dimsObject, onSelect) {
+export function UploadFeatureOrderFile(boundaries, onSelect) {
   // Create the container div
   const featureOrderDiv = document.createElement("div");
   featureOrderDiv.id = "featureOrderDiv";
@@ -1325,13 +1315,11 @@ export function UploadFeatureOrderFile(dimsObject, onSelect) {
   uploadContainer.appendChild(uploadButton);
   featureOrderDiv.appendChild(uploadContainer);
 
-  const boundaryLeft =
-    getHeatmapRectangleBoundaries(dimsObject).bottomCenter.left;
-  const boundaryBottom =
-    getHeatmapRectangleBoundaries(dimsObject).bottomCenter.top;
+  const boundaryLeft = boundaries.bottomCenter.left;
+  const boundaryBottom = boundaries.bottomCenter.top;
 
   featureOrderDiv.style.top = `${boundaryBottom + 50}px`;
-  featureOrderDiv.style.left = `${boundaryLeft}px`;
+  featureOrderDiv.style.left = `${boundaryLeft - 10}px`;
   featureOrderDiv.style.transform = "translate(-50%, -50%)";
   document.getElementById("heatmap-container").appendChild(featureOrderDiv);
 }
@@ -1341,11 +1329,14 @@ export function UploadFeatureOrderFile(dimsObject, onSelect) {
  *
  * @param {object} onSelect Function to perform on selection from the
  */
-export function exportDataButton(onSelect) {
+export function exportDataButton(boundaries, onSelect) {
+  console.log(boundaries);
   // Create upload button
   const exportButton = document.createElement("button");
   exportButton.style.position = "absolute";
   exportButton.textContent = "Download Intensity Values";
+  exportButton.className = "button";
+  exportButton.id = "export-button";
   exportButton.className = "button";
   exportButton.style.height = "30px";
   exportButton.style.width = "175px";
@@ -1355,13 +1346,11 @@ export function exportDataButton(onSelect) {
     onSelect();
   });
 
-  const heatmapElement = document.getElementById("heatmap");
-  const heatmapRect = heatmapElement.getBoundingClientRect();
-  const heatmapTop = heatmapRect.top + window.scrollY + 80;
-  const heatmapLeft = heatmapRect.left + heatmapRect.width + window.scrollX + 5;
+  const Top = boundaries.leftCenter.top + 118;
+  const Left = boundaries.rightCenter.left + 20;
 
-  exportButton.style.left = heatmapLeft + "px";
-  exportButton.style.top = heatmapTop + 287 + "px";
+  exportButton.style.left = Left + "px";
+  exportButton.style.top = Top + "px";
 
   document.body.appendChild(exportButton);
 }

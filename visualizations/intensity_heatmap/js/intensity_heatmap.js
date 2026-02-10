@@ -193,7 +193,7 @@ async function createIntensityHeatmap(path, data = null) {
 
     // x-Axis span
     const xSpan = document.createElement("span");
-    xSpan.id = "boundary-bottom";
+    xSpan.id = "xaxis-label";
     xSpan.style.position = "absolute";
     xSpan.style.left = boundaries.bottomCenter.left + "px";
     xSpan.style.top = boundaries.bottomCenter.top + 20 + "px";
@@ -274,9 +274,7 @@ async function createIntensityHeatmap(path, data = null) {
     const minValue = Math.min(...coloredValues);
     const maxValue = Math.max(...coloredValues);
     heatmapUtils.addColorLegend(
-      canvas,
-      dimsObject,
-      graphMesh,
+      boundaries,
       minValue,
       maxValue,
       dataToShow,
@@ -284,7 +282,7 @@ async function createIntensityHeatmap(path, data = null) {
     );
 
     // Add dropdown menu with proper mesh recreation
-    heatmapUtils.addDropdown(graphMesh, canvas, dimsObject, (selection) => {
+    heatmapUtils.addDropdown(boundaries, (selection) => {
       // Recalculate data with appropriate transformation
       dataToShow =
         selection === "Log10"
@@ -391,7 +389,7 @@ async function createIntensityHeatmap(path, data = null) {
       dataFlat = newDataFlat;
     });
 
-    heatmapUtils.UploadSampleOrderFile(dimsObject, (sampleOrder, groups) => {
+    heatmapUtils.UploadSampleOrderFile(boundaries, (sampleOrder, groups) => {
       //Handle missing sample names in uploaded file
       if (sampleOrder.length < initialSampleGroups.length) {
         if (groups) {
@@ -550,7 +548,7 @@ async function createIntensityHeatmap(path, data = null) {
 
     let vertLineClusterObjects = [];
     window.vertLineClusterObjects = vertLineClusterObjects;
-    heatmapUtils.UploadFeatureOrderFile(dimsObject, (featureOrder, groups) => {
+    heatmapUtils.UploadFeatureOrderFile(boundaries, (featureOrder, groups) => {
       if (featureOrder.length < initialFeatures.length) {
         if (groups) {
           groups.push(featureOrder[featureOrder.length - 1]);
@@ -664,7 +662,7 @@ async function createIntensityHeatmap(path, data = null) {
       }
     });
 
-    heatmapUtils.exportDataButton(() => {
+    heatmapUtils.exportDataButton(boundaries, () => {
       const fileName = "Intensity_Heatmap_Transformed_Data.xlsx";
 
       // Convert the data array to a worksheet
@@ -784,6 +782,7 @@ async function createIntensityHeatmap(path, data = null) {
         scene,
         camera,
         cameraDefaults,
+        boundaries,
       );
 
       if (vertLineClusterObjects.length > 0) {
@@ -861,6 +860,18 @@ async function createIntensityHeatmap(path, data = null) {
 
     canvas.addEventListener("mousemove", () => {
       if (zoomed) {
+        document.getElementById("featureOrderDiv").style.top =
+          `${boundaries.bottomCenter.top + 90}px`;
+        document.getElementById("xaxis-label").style.top =
+          `${boundaries.bottomCenter.top + 60}px`;
+        document.getElementById("feature-tooltip").style.left =
+          `${boundaries.rightCenter.left + 114}px`;
+        document.getElementById("intensityLegend").style.left =
+          `${boundaries.rightCenter.left + 114}px`;
+        document.getElementById("dropdown").style.left =
+          `${boundaries.rightCenter.left + 114}px`;
+        document.getElementById("export-button").style.left =
+          `${boundaries.rightCenter.left + 114}px`;
         orbitControls.enablePan = true;
         orbitControls.mouseButtons.RIGHT = THREE.MOUSE.PAN;
         orbitControls.mouseButtons.LEFT = THREE.MOUSE.PAN;
@@ -871,6 +882,18 @@ async function createIntensityHeatmap(path, data = null) {
           z: 0,
         };
       } else {
+        document.getElementById("featureOrderDiv").style.top =
+          `${boundaries.bottomCenter.top + 50}px`;
+        document.getElementById("xaxis-label").style.top =
+          `${boundaries.bottomCenter.top + 20}px`;
+        document.getElementById("feature-tooltip").style.left =
+          `${boundaries.rightCenter.left + 20}px`;
+        document.getElementById("intensityLegend").style.left =
+          `${boundaries.rightCenter.left + 20}px`;
+        document.getElementById("dropdown").style.left =
+          `${boundaries.rightCenter.left + 20}px`;
+        document.getElementById("export-button").style.left =
+          `${boundaries.rightCenter.left + 20}px`;
         orbitControls.enablePan = false;
       }
     });
